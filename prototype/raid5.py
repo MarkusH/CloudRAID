@@ -55,12 +55,13 @@ def split(infile, dev1, dev2, parity):
 
         else:
             char = ord(chars[0])
-            p = 0
-            for L in [0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1]:
-                a = char & L
-                p <<= 1
-                if a == 0:
-                    p |= 1
+            #p = 0
+            #for L in [0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1]:
+            #    a = char & L
+            #    p <<= 1
+            #    if a == 0:
+            #        p |= 1
+            p = (~char) + 256 # 1st-complement
             fp_out[(parity_pos + 1) % 3].write(bytes(chr(char)))
             fp_out[parity_pos].write(bytes(chr(p)))
 
@@ -90,9 +91,8 @@ def merge(outfile, dev1, dev2, parity):
         if (l ^ r) != p:
             print('[WARNING] parity does not match the values of device 1 and 2')
         out = 0
-        index = 7
-        for L in [0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1]:
-            if index == 3:
+        for L in [0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]:
+            if L == 0x08:
                 fp.write(bytes(chr(out)))
                 out = 0
 
@@ -102,8 +102,6 @@ def merge(outfile, dev1, dev2, parity):
             out <<= 1
             if (r & L) > 0:
                 out |= 1
-
-            index -= 1
 
         parity_pos = (parity_pos + 1) % 3
 
