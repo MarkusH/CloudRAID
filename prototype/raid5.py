@@ -4,6 +4,10 @@
 import sys
 
 
+EXPONENTS_TUPLES = [(2**(15 - x), 2**(15 - x - 1)) for x in range(0, 15, 2)]
+EXPONENTS = [2**(15 - x) for x in range(0, 15)]
+
+
 def main():
     if len(sys.argv) != 6:
         print('You have to specify <split|merge> <infile|outfile> <dev1> <dev2> <parity>')
@@ -27,24 +31,13 @@ def split(infile, dev1, dev2, parity):
         index = 7
         if len(chars) == 2:
             char = ord(chars[0])
-            for L, R in [(0x80, 0x40), (0x20, 0x10), (0x8, 0x4), (0x2, 0x1)]:
-                set_left = char & L
-                set_right = char & R
+            char <<= 8
+            char |= ord(chars[1])
+            for L, R in EXPONENTS_TUPLES:
 
-                if set_left > 0:
+                if char & L > 0:
                     a = a | 2**index
-                if set_right > 0:
-                    b = b | 2**index
-
-                index -= 1
-            char = ord(chars[1])
-            for L, R in [(0x80, 0x40), (0x20, 0x10), (0x8, 0x4), (0x2, 0x1)]:
-                set_left = char & L
-                set_right = char & R
-
-                if set_left > 0:
-                    a = a | 2**index
-                if set_right > 0:
+                if char & R > 0:
                     b = b | 2**index
 
                 index -= 1
@@ -55,12 +48,6 @@ def split(infile, dev1, dev2, parity):
 
         else:
             char = ord(chars[0])
-            #p = 0
-            #for L in [0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1]:
-            #    a = char & L
-            #    p <<= 1
-            #    if a == 0:
-            #        p |= 1
             p = (~char) + 256 # 1st-complement
             fp_out[(parity_pos + 1) % 3].write(bytes(chr(char)))
             fp_out[parity_pos].write(bytes(chr(p)))
@@ -91,7 +78,7 @@ def merge(outfile, dev1, dev2, parity):
         if (l ^ r) != p:
             print('[WARNING] parity does not match the values of device 1 and 2')
         out = 0
-        for L in [0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01]:
+        for L in EXPONENTS:
             if L == 0x08:
                 fp.write(bytes(chr(out)))
                 out = 0
