@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 
 import sys
@@ -26,7 +26,7 @@ def split(infile, dev1, dev2, parity):
         a = b = 0
         index = 7
         if len(chars) == 2:
-            char = chars[0]
+            char = ord(chars[0])
             for L, R in [(0x80, 0x40), (0x20, 0x10), (0x8, 0x4), (0x2, 0x1)]:
                 set_left = char & L
                 set_right = char & R
@@ -37,7 +37,7 @@ def split(infile, dev1, dev2, parity):
                     b = b | 2**index
 
                 index -= 1
-            char = chars[1]
+            char = ord(chars[1])
             for L, R in [(0x80, 0x40), (0x20, 0x10), (0x8, 0x4), (0x2, 0x1)]:
                 set_left = char & L
                 set_right = char & R
@@ -49,20 +49,20 @@ def split(infile, dev1, dev2, parity):
 
                 index -= 1
 
-            fp_out[(parity_pos + 1) % 3].write(bytes(chr(a), 'iso-8859-1'))
-            fp_out[(parity_pos + 2) % 3].write(bytes(chr(b), 'iso-8859-1'))
-            fp_out[parity_pos].write(bytes(chr(a ^ b), 'iso-8859-1'))
+            fp_out[(parity_pos + 1) % 3].write(bytes(chr(a)))
+            fp_out[(parity_pos + 2) % 3].write(bytes(chr(b)))
+            fp_out[parity_pos].write(bytes(chr(a ^ b)))
 
         else:
-            char = chars[0]
+            char = ord(chars[0])
             p = 0
             for L in [0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1]:
                 a = char & L
                 p <<= 1
                 if a == 0:
                     p |= 1
-            fp_out[(parity_pos + 1) % 3].write(bytes(chr(char), 'iso-8859-1'))
-            fp_out[parity_pos].write(bytes(chr(p), 'iso-8859-1'))
+            fp_out[(parity_pos + 1) % 3].write(bytes(chr(char)))
+            fp_out[parity_pos].write(bytes(chr(p)))
 
         parity_pos = (parity_pos + 1) % 3
 
@@ -93,7 +93,7 @@ def merge(outfile, dev1, dev2, parity):
         index = 7
         for L in [0x80, 0x40, 0x20, 0x10, 0x8, 0x4, 0x2, 0x1]:
             if index == 3:
-                fp.write(bytes(chr(out), 'iso-8859-1'))
+                fp.write(bytes(chr(out)))
                 out = 0
 
             out <<= 1
@@ -107,7 +107,7 @@ def merge(outfile, dev1, dev2, parity):
 
         parity_pos = (parity_pos + 1) % 3
 
-        fp.write(bytes(chr(out), 'iso-8859-1'))
+        fp.write(bytes(chr(out)))
         l = fp_in[(parity_pos + 1) % 3].read(1)
         r = fp_in[(parity_pos + 2) % 3].read(1)
         p = fp_in[parity_pos].read(1)
@@ -117,7 +117,7 @@ def merge(outfile, dev1, dev2, parity):
         p = ord(p)
         if l ^ p != 0xFF:
             print('[WARNING] parity does not match the values of device 1 and 2')
-        fp.write(bytes(chr(l), 'iso-8859-1'))
+        fp.write(bytes(chr(l)))
 
 
 if __name__ == "__main__":
