@@ -19,10 +19,9 @@ def main():
 
 def split(infile, dev1, dev2, parity):
     fp = open(infile, 'rb')
-    fp_l = open(dev1, 'wb')
-    fp_r = open(dev2, 'wb')
-    fp_p = open(parity, 'wb')
+    fp_out = [open(dev1, 'wb'), open(dev2, 'wb'), open(parity, 'wb')]
     chars = fp.read(2)
+    parity_pos = 2
     while chars:
         a = b = 0
         index = 7
@@ -50,9 +49,9 @@ def split(infile, dev1, dev2, parity):
 
                 index -= 1
 
-            fp_l.write(bytes(chr(a), 'iso-8859-1'))
-            fp_r.write(bytes(chr(b), 'iso-8859-1'))
-            fp_p.write(bytes(chr(a ^ b), 'iso-8859-1'))
+            fp_out[(parity_pos + 1) % 3].write(bytes(chr(a), 'iso-8859-1'))
+            fp_out[(parity_pos + 2) % 3].write(bytes(chr(b), 'iso-8859-1'))
+            fp_out[parity_pos].write(bytes(chr(a ^ b), 'iso-8859-1'))
 
         else:
             char = chars[0]
@@ -62,25 +61,27 @@ def split(infile, dev1, dev2, parity):
                 p <<= 1
                 if a == 0:
                     p |= 1
-            fp_l.write(bytes(chr(char), 'iso-8859-1'))
-            fp_p.write(bytes(chr(p), 'iso-8859-1'))
+            fp_out[(parity_pos + 1) % 3].write(bytes(chr(char), 'iso-8859-1'))
+            fp_out[parity_pos].write(bytes(chr(p), 'iso-8859-1'))
+
+        parity_pos = (parity_pos + 1) % 3
 
         chars = fp.read(2)
     fp.close()
-    fp_l.close()
-    fp_r.close()
-    fp_p.close()
+    fp_out[0].close()
+    fp_out[1].close()
+    fp_out[2].close()
 
 
 def merge(outfile, dev1, dev2, parity):
     fp = open(outfile, 'wb')
-    fp_l = open(dev1, 'rb')
-    fp_r = open(dev2, 'rb')
-    fp_p = open(parity, 'rb')
+    fp_in = [open(dev1, 'rb'), open(dev2, 'rb'), open(parity, 'rb')]
 
-    l = fp_l.read(1)
-    r = fp_r.read(1)
-    p = fp_p.read(1)
+    parity_pos = 2
+
+    l = fp_in[(parity_pos + 1) % 3].read(1)
+    r = fp_in[(parity_pos + 2) % 3].read(1)
+    p = fp_in[parity_pos].read(1)
 
     while l and r and p:
         l = ord(l)
@@ -104,10 +105,12 @@ def merge(outfile, dev1, dev2, parity):
 
             index -= 1
 
+        parity_pos = (parity_pos + 1) % 3
+
         fp.write(bytes(chr(out), 'iso-8859-1'))
-        l = fp_l.read(1)
-        r = fp_r.read(1)
-        p = fp_p.read(1)
+        l = fp_in[(parity_pos + 1) % 3].read(1)
+        r = fp_in[(parity_pos + 2) % 3].read(1)
+        p = fp_in[parity_pos].read(1)
 
     if l and p: # the original file was longer by 8 bit
         l = ord(l)
