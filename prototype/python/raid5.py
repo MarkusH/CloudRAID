@@ -9,8 +9,10 @@ EXPONENTS_TUPLES = [(2**(15 - x), 2**(15 - x - 1)) for x in range(0, 15, 2)]
 EXPONENTS = [2**(7 - x) for x in range(0, 8)]
 
 
-def main(): if len(sys.argv) != 6: print('You have to specify <split|merge> '
-        '<infile|outfile> <dev0> <dev1> <dev2>')
+def main():
+    if len(sys.argv) != 6:
+        print('You have to specify <split|merge> <infile|outfile> '
+              '<dev0> <dev1> <dev2>')
         exit(1)
     if sys.argv[1].lower() == 'split':
         split(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
