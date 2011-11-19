@@ -5,7 +5,7 @@ import sys
 
 
 EXPONENTS_TUPLES = [(2**(15 - x), 2**(15 - x - 1)) for x in range(0, 15, 2)]
-EXPONENTS = [2**(15 - x) for x in range(0, 15)]
+EXPONENTS = [2**(7 - x) for x in range(0, 8)]
 
 
 def main():
