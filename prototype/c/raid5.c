@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _DEBUG
+    #define DEBUGPRINT(...)     printf(__VA_ARGS__);
+#else
+    #define DEBUGPRINT(...)
+#endif
 
 unsigned short EXPONENTS_LONG_FIRST[] = {
     0x8000,         0x2000,
@@ -32,82 +37,52 @@ void split(FILE* in, FILE* devices[]) {
     }
 
     rlen = fread(chars, 1, sizeof(char) * 2, in);
-    #ifdef _DEBUG
-    printf("rlen = %d\n", rlen);
-    printf("BEGIN WHILE\n");
-    #endif
+    DEBUGPRINT("rlen = %d\n", rlen);
+    DEBUGPRINT("BEGIN WHILE\n");
     while (rlen > 0) {
-        #ifdef _DEBUG
-        printf("NEXT ITERATION\n");
-        #endif
+        DEBUGPRINT("NEXT ITERATION\n");
         a = 0;
         b = 0;
         if (rlen == 2) {
             index = 7;
-            #ifdef _DEBUG
-            printf("chars[0] = %u\n", chars[0]);
-            printf("chars[1] = %u\n", chars[1]);
-            #endif
+            DEBUGPRINT("chars[0] = %u\n", chars[0]);
+            DEBUGPRINT("chars[1] = %u\n", chars[1]);
             c = chars[0];
-            #ifdef _DEBUG
-            printf("c = %u\n", c);
-            #endif
+            DEBUGPRINT("c = %u\n", c);
             c <<= 8;
-            #ifdef _DEBUG
-            printf("c = %u\n", c);
-            #endif
+            DEBUGPRINT("c = %u\n", c);
             c |= chars[1];
-            #ifdef _DEBUG
-            printf("c = %u\n", c);
-            #endif
+            DEBUGPRINT("c = %u\n", c);
             /* We only need every second element from this range */
-            #ifdef _DEBUG
-            printf("BEGIN FOR\n");
-            #endif
+            DEBUGPRINT("BEGIN FOR\n");
             for (i = 0; i <= 7; i++) {
-                #ifdef _DEBUG
-                printf("i = %u\n", i);
-                printf("EXPONENTS_LONG_FIRST[i] = %u\n", EXPONENTS_LONG_FIRST[i]);
-                #endif
+                DEBUGPRINT("i = %u\n", i);
+                DEBUGPRINT("EXPONENTS_LONG_FIRST[i] = %u\n", EXPONENTS_LONG_FIRST[i]);
                 if (c & EXPONENTS_LONG_FIRST[i]) {
-                    #ifdef _DEBUG
-                    printf("a = %u\n", a);
-                    #endif
+                    DEBUGPRINT("a = %u\n", a);
                     a |= (1 << index);
-                    #ifdef _DEBUG
-                    printf("a = %u\n", a);
-                    #endif
+                    DEBUGPRINT("a = %u\n", a);
                 }
-                #ifdef _DEBUG
-                printf("EXPONENTS_LONG_SECOND[i + 1] = %u\n", EXPONENTS_LONG_SECOND[i]);
-                #endif
+                DEBUGPRINT("EXPONENTS_LONG_SECOND[i + 1] = %u\n", EXPONENTS_LONG_SECOND[i]);
                 if (c & EXPONENTS_LONG_SECOND[i]) {
-                    #ifdef _DEBUG
-                    printf("b = %u\n", b);
-                    #endif
+                    DEBUGPRINT("b = %u\n", b);
                     b |= (1 << index);
-                    #ifdef _DEBUG
-                    printf("b = %u\n", b);
-                    #endif
+                    DEBUGPRINT("b = %u\n", b);
                 }
                 index--;
             }
             p = a ^ b;
-            #ifdef _DEBUG
-            printf("WRITING a = %u\n", a);
-            printf("WRITING b = %u\n", b);
-            printf("WRITING p = %u\n", p);
-            #endif
+            DEBUGPRINT("WRITING a = %u\n", a);
+            DEBUGPRINT("WRITING b = %u\n", b);
+            DEBUGPRINT("WRITING p = %u\n", p);
             fwrite(&a, 1, sizeof(char), devices[(parity_pos + 1) % 3]);
             fwrite(&b, 1, sizeof(char), devices[(parity_pos + 2) % 3]);
             fwrite(&p, 1, sizeof(char), devices[parity_pos]);
         } else if (rlen == 1) {
             a = chars[0];
             p = (~a) + 256;
-            #ifdef _DEBUG
-            printf("WRITING a = %u\n", a);
-            printf("WRITING p = %u\n", p);
-            #endif
+            DEBUGPRINT("WRITING a = %u\n", a);
+            DEBUGPRINT("WRITING p = %u\n", p);
             fwrite(&a, 1, sizeof(char), devices[(parity_pos + 1) % 3]);
             fwrite(&p, 1, sizeof(char), devices[parity_pos]);
         } else {
@@ -115,13 +90,9 @@ void split(FILE* in, FILE* devices[]) {
             exit(0x12);
         }
         parity_pos = (parity_pos + 1) % 3;
-        #ifdef _DEBUG
-        printf("parity_pos = %u\n", parity_pos);
-        #endif
+        DEBUGPRINT("parity_pos = %u\n", parity_pos);
         rlen = fread(chars, 1, sizeof(char) * 2, in);
-        #ifdef _DEBUG
-        printf("\n--------------------------------------------------\n\n");
-        #endif
+        DEBUGPRINT("\n--------------------------------------------------\n\n");
     }
     free(chars);
 }
@@ -134,77 +105,53 @@ void merge(FILE* out, FILE* devices[]) {
     alen = fread(&a, 1, sizeof(char), devices[(parity_pos + 1) % 3]);
     blen = fread(&b, 1, sizeof(char), devices[(parity_pos + 2) % 3]);
     plen = fread(&p, 1, sizeof(char), devices[parity_pos]);
-    #ifdef _DEBUG
-    printf("alen = %d\n", alen);
-    printf("blen = %d\n", blen);
-    printf("plen = %d\n", plen);
-    printf("BEGIN WHILE\n");
-    #endif
+    DEBUGPRINT("alen = %d\n", alen);
+    DEBUGPRINT("blen = %d\n", blen);
+    DEBUGPRINT("plen = %d\n", plen);
+    DEBUGPRINT("BEGIN WHILE\n");
     while (alen > 0 && blen > 0 && plen > 0) {
-        #ifdef _DEBUG
-        printf("NEXT ITERATION\n");
-        printf("a = %d\n", a);
-        printf("b = %d\n", b);
-        printf("p = %d\n", p);
-        #endif
+        DEBUGPRINT("NEXT ITERATION\n");
+        DEBUGPRINT("a = %d\n", a);
+        DEBUGPRINT("b = %d\n", b);
+        DEBUGPRINT("p = %d\n", p);
         if ((a ^ b) != p) {
             printf("[WARNING] Parity does not match!");
         }
         c = 0;
         for (i = 0; i <= 7; i++) {
-            #ifdef _DEBUG
-            printf("i = %u\n", i);
-            printf("EXPONENTS_SHORT[i] = %u\n", EXPONENTS_SHORT[i]);
-            #endif
+            DEBUGPRINT("i = %u\n", i);
+            DEBUGPRINT("EXPONENTS_SHORT[i] = %u\n", EXPONENTS_SHORT[i]);
             if (EXPONENTS_SHORT[i] == 0x08) {
-                #ifdef _DEBUG
-                printf("WRITING c = %u\n", c);
-                #endif
+                DEBUGPRINT("WRITING c = %u\n", c);
                 fwrite(&c, 1, sizeof(char), out);
                 c = 0;
-                #ifdef _DEBUG
-                printf("RESET c = %u\n", c);
-                #endif
+                DEBUGPRINT("RESET c = %u\n", c);
             }
-            #ifdef _DEBUG
-            printf("c = %u\n", c);
-            #endif
+            DEBUGPRINT("c = %u\n", c);
             c <<= 1;
-            #ifdef _DEBUG
-            printf("c = %u\n", c);
-            #endif
+            DEBUGPRINT("c = %u\n", c);
             if ((a & EXPONENTS_SHORT[i]) > 0) {
                 c |= 1;
-                #ifdef _DEBUG
-                printf("UPDATE by primary device   c = %u\n", c);
-                #endif
+                DEBUGPRINT("UPDATE by primary device   c = %u\n", c);
             }
             c <<= 1;
-            #ifdef _DEBUG
-            printf("c = %u\n", c);
-            #endif
+            DEBUGPRINT("c = %u\n", c);
             if ((b & EXPONENTS_SHORT[i]) > 0) {
                 c |= 1;
-                #ifdef _DEBUG
-                printf("UPDATE by secondary device   c = %u\n", c);
-                #endif
+                DEBUGPRINT("UPDATE by secondary device   c = %u\n", c);
             }
         }
         parity_pos = (parity_pos + 1) % 3;
-        #ifdef _DEBUG
-        printf("parity_pos = %u\n", parity_pos);
-        printf("WRITING c = %u\n", c);
-        #endif
+        DEBUGPRINT("parity_pos = %u\n", parity_pos);
+        DEBUGPRINT("WRITING c = %u\n", c);
         fwrite(&c, 1, sizeof(char), out);
         alen = fread(&a, 1, sizeof(char), devices[(parity_pos + 1) % 3]);
         blen = fread(&b, 1, sizeof(char), devices[(parity_pos + 2) % 3]);
         plen = fread(&p, 1, sizeof(char), devices[parity_pos]);
-        #ifdef _DEBUG
-        printf("alen = %d\n", alen);
-        printf("blen = %d\n", blen);
-        printf("plen = %d\n", plen);
-        printf("\n--------------------------------------------------\n\n");
-        #endif
+        DEBUGPRINT("alen = %d\n", alen);
+        DEBUGPRINT("blen = %d\n", blen);
+        DEBUGPRINT("plen = %d\n", plen);
+        DEBUGPRINT("\n--------------------------------------------------\n\n");
     }
 
     if (alen > 0 && plen > 0) {
@@ -226,9 +173,7 @@ int main(int argc, const char* argv[]) {
     }
 
     if (strcmp(argv[1], "split") == 0) {
-        #ifdef _DEBUG
-        printf("BEGIN open files\n");
-        #endif
+        DEBUGPRINT("BEGIN open files\n");
         fp = fopen(argv[2], "rb");
         if (fp == NULL) {
             printf("Read error\n");
@@ -237,14 +182,10 @@ int main(int argc, const char* argv[]) {
         devices[0] = fopen(argv[3], "wb");
         devices[1] = fopen(argv[4], "wb");
         devices[2] = fopen(argv[5], "wb");
-        #ifdef _DEBUG
-        printf("END open files\n");
-        printf("BEGIN split\n");
-        #endif
+        DEBUGPRINT("END open files\n");
+        DEBUGPRINT("BEGIN split\n");
         split(fp, devices);
-        #ifdef _DEBUG
-        printf("END split\n");
-        #endif
+        DEBUGPRINT("END split\n");
     } else if (strcmp(argv[1], "merge") == 0) {
         fp = fopen(argv[2], "wb");
         devices[0] = fopen(argv[3], "rb");
@@ -262,15 +203,11 @@ int main(int argc, const char* argv[]) {
 
     /* we can close all files here since we only reach this part of the code if
      * we have opened the files */
-    #ifdef _DEBUG
-    printf("BEGIN close files\n");
-    #endif
+    DEBUGPRINT("BEGIN close files\n");
     fclose(fp);
     fclose(devices[0]);
     fclose(devices[1]);
     fclose(devices[2]);
-    #ifdef _DEBUG
-    printf("END close files\n");
-    #endif
+    DEBUGPRINT("END close files\n");
     return 0;
 }
