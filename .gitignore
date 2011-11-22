@@ -2,4 +2,4 @@ bin/
 .settings/
 .classpath
 .project
-.class
+*.class
