@@ -83,7 +83,7 @@ public class Raid5 {
 		while (charNum > 0) {
 			int a = 0, b = 0;
 
-			// we check whether we have read 1 or 2 bytes. And since we allways
+			// we check whether we have read 1 or 2 bytes. And since we always
 			// read two bytes, we can decide here, if the input file has an odd
 			// file size
 			if (charNum == 2) {
@@ -137,8 +137,8 @@ public class Raid5 {
 	 * `dev1`.
 	 * 
 	 * @param outfile
-	 *            The filepath to the output file that should be splittet for
-	 *            the RAID
+	 *            The filepath to the output file that should be split for the
+	 *            RAID
 	 * @param dev0
 	 *            The filepath to the first device file
 	 * @param dev1
@@ -158,7 +158,7 @@ public class Raid5 {
 		// `Raid5.split()` for further information
 		int parityPos = 2;
 
-		// we read the 3 separat bytes, that we combine to 2
+		// we read the 3 separate bytes, that we combine to 2
 		int l = in[(parityPos + 1) % 3].read();
 		int r = in[(parityPos + 2) % 3].read();
 		int p = in[parityPos].read();
@@ -214,6 +214,11 @@ public class Raid5 {
 						.println("[WARNING] parity does not match the values of device 1 and 2'");
 			out.write(l);
 		}
+
+		out.close();
+		in[0].close();
+		in[1].close();
+		in[2].close();
 
 	}
 

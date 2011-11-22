@@ -1,0 +1,11 @@
+Execute the following steps:
+cd <this dir>
+javac RaidAccessInterface.java
+(if you want to build the header file, run: 'javah -classpath .:<this dir> RaidAccessInterface')
+Find out the directories of 'jni.h' and 'jni_md.h'
+gcc -I <path to jni.h> -I <path to jni_md.h> -shared raid5.c -o libraid5.so -fPIC
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<this path>
+
+example:
+run: java RaidAccessInterface
+or : time java RaidAccessInterface
