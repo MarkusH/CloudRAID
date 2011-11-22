@@ -213,17 +213,19 @@ int main(int argc, const char* argv[]) {
     return 0;
 }
 
-/* Java-Interface
- * Compile with gcc -I /usr/lib/jvm/java-7-openjdk/include/ -I
- * /usr/lib/jvm/java-7-openjdk/include/linux/ -shared raid5.c -o libraid5.so
- * -fPIC*/
+/* 
+ * Implements the splitInterface method defined in the Java RaidAccessInterface
+ * class.
+ */
 JNIEXPORT void JNICALL Java_RaidAccessInterface_splitInterface
   (JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4) {
+    /* Convert the Java Strings to char arrays for usage in this C program. */
     const char *in = (*env)->GetStringUTFChars(env, str1, 0);
     const char *out1 = (*env)->GetStringUTFChars(env, str2, 0);
     const char *out2 = (*env)->GetStringUTFChars(env, str3, 0);
     const char *out3 = (*env)->GetStringUTFChars(env, str4, 0);
 
+    /* Generate file pointers. */
     FILE *fp;
     FILE *devices[3];
 
@@ -232,26 +234,35 @@ JNIEXPORT void JNICALL Java_RaidAccessInterface_splitInterface
     devices[1] = fopen(out2, "wb");
     devices[2] = fopen(out3, "wb");
 
+    /* Invoke the native split method. */
     split(fp, devices);
 
+    /* Close the files.  */
     fclose(fp);
     fclose(devices[0]);
     fclose(devices[1]);
     fclose(devices[2]);
 
+    /* Clean the memory. / Release the char arrays.  */
     (*env)->ReleaseStringUTFChars(env, str1, in);
     (*env)->ReleaseStringUTFChars(env, str2, out1);
     (*env)->ReleaseStringUTFChars(env, str3, out2);
     (*env)->ReleaseStringUTFChars(env, str4, out3);
 }
 
+/*
+ * Implements the mergeInterface method defined in the Java RaidAccessInterface
+ * class.
+ */
 JNIEXPORT void JNICALL Java_RaidAccessInterface_mergeInterface
   (JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4) {
+    /* Convert the Java Strings to char arrays for usage in the C program.  */
     const char *out = (*env)->GetStringUTFChars(env, str1, 0);
     const char *in1 = (*env)->GetStringUTFChars(env, str2, 0);
     const char *in2 = (*env)->GetStringUTFChars(env, str3, 0);
     const char *in3 = (*env)->GetStringUTFChars(env, str4, 0);
 
+    /* Generate file pointers. */
     FILE *fp;
     FILE *devices[3];
 
@@ -260,13 +271,16 @@ JNIEXPORT void JNICALL Java_RaidAccessInterface_mergeInterface
     devices[1] = fopen(in2, "rb");
     devices[2] = fopen(in3, "rb");
 
+    /* Invoke the native merge method. */
     merge(fp, devices);
 
+    /* Close the files. */
     fclose(fp);
     fclose(devices[0]);
     fclose(devices[1]);
     fclose(devices[2]);
 
+    /* Clean the memory. / Release the char arrays. */
     (*env)->ReleaseStringUTFChars(env, str1, out);
     (*env)->ReleaseStringUTFChars(env, str2, in1);
     (*env)->ReleaseStringUTFChars(env, str3, in2);
