@@ -8,3 +8,8 @@ To build and install the library, run the following commands:
 
     make
     make install
+
+For debugging support run:
+
+    make DEBUG=1
+    make install

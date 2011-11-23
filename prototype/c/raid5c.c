@@ -8,6 +8,7 @@
     #define DEBUGPRINT(...)
 #endif
 
+#ifdef USE_BITS
 unsigned short EXPONENTS_LONG_FIRST[] = {
     0x8000,         0x2000,
     0x0800,         0x0200,
@@ -23,12 +24,15 @@ unsigned short EXPONENTS_LONG_SECOND[] = {
 unsigned short EXPONENTS_SHORT[] = {
     0x80, 0x40, 0x20, 0x10,
     0x08, 0x04, 0x02, 0x01};
+#endif
 
 void split(FILE* in, FILE* devices[]) {
-    unsigned char* chars, a, b, p;
-    unsigned char parity_pos = 2, index, i;
-    size_t rlen;
+    unsigned char* chars, a, b, p, parity_pos = 2;
+#ifdef USE_BITS
+    unsigned char index, i;
     unsigned short c;
+#endif
+    size_t rlen;
 
     /* allocate memory that contains the two characters we read at once */
     chars = (unsigned char*) malloc(sizeof(char) * 2);
@@ -42,12 +46,15 @@ void split(FILE* in, FILE* devices[]) {
     DEBUGPRINT("BEGIN WHILE\n");
     while (rlen > 0) {
         DEBUGPRINT("NEXT ITERATION\n");
+#ifdef USE_BITS
         a = 0;
         b = 0;
+#endif
         if (rlen == 2) {
-            index = 7;
             DEBUGPRINT("chars[0] = %u\n", chars[0]);
             DEBUGPRINT("chars[1] = %u\n", chars[1]);
+#ifdef USE_BITS
+            index = 7;
             c = chars[0];
             DEBUGPRINT("c = %u\n", c);
             c <<= 8;
@@ -72,6 +79,11 @@ void split(FILE* in, FILE* devices[]) {
                 }
                 index--;
             }
+#endif
+#ifdef USE_BYTES
+            a = chars[0];
+            b = chars[1];
+#endif
             p = a ^ b;
             DEBUGPRINT("WRITING a = %u\n", a);
             DEBUGPRINT("WRITING b = %u\n", b);
@@ -99,8 +111,10 @@ void split(FILE* in, FILE* devices[]) {
 }
 
 void merge(FILE* out, FILE* devices[]) {
-    unsigned char a, b, c, p;
-    unsigned char parity_pos = 2, i;
+    unsigned char a, b, p, parity_pos = 2;
+#ifdef USE_BITS
+    unsigned char c, i;
+#endif
     size_t alen, blen, plen;
 
     alen = fread(&a, 1, sizeof(char), devices[(parity_pos + 1) % 3]);
@@ -118,6 +132,7 @@ void merge(FILE* out, FILE* devices[]) {
         if ((a ^ b) != p) {
             printf("[WARNING] Parity does not match!");
         }
+#ifdef USE_BITS
         c = 0;
         for (i = 0; i <= 7; i++) {
             DEBUGPRINT("i = %u\n", i);
@@ -142,10 +157,15 @@ void merge(FILE* out, FILE* devices[]) {
                 DEBUGPRINT("UPDATE by secondary device   c = %u\n", c);
             }
         }
-        parity_pos = (parity_pos + 1) % 3;
-        DEBUGPRINT("parity_pos = %u\n", parity_pos);
         DEBUGPRINT("WRITING c = %u\n", c);
         fwrite(&c, 1, sizeof(char), out);
+#endif
+#ifdef USE_BYTES
+        fwrite(&a, 1, sizeof(char), out);
+        fwrite(&b, 1, sizeof(char), out);
+#endif
+        parity_pos = (parity_pos + 1) % 3;
+        DEBUGPRINT("parity_pos = %u\n", parity_pos);
         alen = fread(&a, 1, sizeof(char), devices[(parity_pos + 1) % 3]);
         blen = fread(&b, 1, sizeof(char), devices[(parity_pos + 2) % 3]);
         plen = fread(&p, 1, sizeof(char), devices[parity_pos]);
