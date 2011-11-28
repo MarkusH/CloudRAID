@@ -74,8 +74,10 @@ public class Config extends HashMap<String, String> {
 		try {
 			System.out.println("Path to config file: " + CONFIG_FILE);
 			doc = docBuilder.parse(new File(CONFIG_FILE));
-		} catch (SAXException | IOException e) {
-			// TODO Auto-generated catch block
+		} catch (SAXException e) {
+			e.printStackTrace();
+			return;
+		} catch (IOException e) {
 			e.printStackTrace();
 			return;
 		}
