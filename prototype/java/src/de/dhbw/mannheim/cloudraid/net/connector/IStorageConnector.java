@@ -3,7 +3,7 @@ package de.dhbw.mannheim.cloudraid.net.connector;
 import java.io.InputStream;
 
 /**
- * Defines the methods to be implemented by classes that are used to connect do
+ * Defines the methods to be implemented by classes that are used to connect to
  * cloud services.
  * 
  * @author Florian Bausch
