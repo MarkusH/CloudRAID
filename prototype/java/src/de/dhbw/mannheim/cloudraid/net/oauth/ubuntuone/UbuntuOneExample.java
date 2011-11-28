@@ -1,5 +1,10 @@
 package de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -74,6 +79,30 @@ public class UbuntuOneExample {
         request.addHeader("GData-Version", "3.0");
         response = request.send();
         System.out.println("Got it! Lets see what we found...");
+        System.out.println();
+        System.out.println(response.getCode());
+        System.out.println(response.getBody());
+        
+        // do a PUT
+        System.out.println();
+        System.out.println("Now we're going to put a file...");
+        request = new OAuthRequest(Verb.PUT, CONTENT_ROOT + "/content/~/Ubuntu%20One/file2.txt");
+        service.signRequest(accessToken, request);
+        request.addHeader("GData-Version", "3.0");
+        File f = new File("/tmp/file2.txt");
+        byte[] fileBytes = new byte[(int) f.length()];
+        InputStream fis;
+		try {
+			fis = new FileInputStream("/tmp/file2.txt");
+			fis.read(fileBytes);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
+        request.addPayload(fileBytes);
+        response = request.send();
+        System.out.println("Got it! Lets see the server's answer...");
         System.out.println();
         System.out.println(response.getCode());
         System.out.println(response.getBody());
