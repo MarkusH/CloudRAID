@@ -5,3 +5,4 @@ bin/
 *.cproject
 *.class
 *.so
+*.bak

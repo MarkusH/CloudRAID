@@ -1,7 +1,7 @@
 /**
  *
  */
-package de.dhbw.mannheim.cloudraid.net.connector.ubuntuone;
+package de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -9,8 +9,10 @@ import java.net.UnknownHostException;
 import org.scribe.builder.api.DefaultApi10a;
 import org.scribe.extractors.HeaderExtractor;
 import org.scribe.extractors.RequestTokenExtractor;
+import org.scribe.model.OAuthConfig;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
+import org.scribe.oauth.OAuthService;
 
 /**
  * @author Markus Holtermann
@@ -58,5 +60,21 @@ public class UbuntuOneApi extends DefaultApi10a {
     @Override
     public HeaderExtractor getHeaderExtractor() {
         return new UbuntuOneHeaderExtractor();
+    }
+
+    /**
+     * Returns the {@link OAuthService} for this Api
+     * 
+     * @param apiKey
+     *            Key
+     * @param apiSecret
+     *            Api Secret
+     * @param callback
+     *            OAuth callback (either URL or 'oob')
+     * @param scope
+     *            OAuth scope (optional)
+     */
+    public UbuntuOneService createService(OAuthConfig config) {
+        return new UbuntuOneService(this, config);
     }
 }

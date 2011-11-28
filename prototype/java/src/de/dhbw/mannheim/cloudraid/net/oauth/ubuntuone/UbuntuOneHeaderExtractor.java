@@ -1,7 +1,7 @@
 /**
  *
  */
-package de.dhbw.mannheim.cloudraid.net.connector.ubuntuone;
+package de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone;
 
 import java.util.Arrays;
 import java.util.Collections;
