@@ -1,9 +1,10 @@
 package de.dhbw.mannheim.cloudraid.net.connector;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -16,11 +17,17 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.dhbw.mannheim.cloudraid.util.Config;
+
 public class SugarSyncConnector implements IStorageConnector {
 
 	private String token = "";
 	private String username, password, accessKeyId, privateAccessKey;
 	private DocumentBuilder docBuilder;
+	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
+	private final static String USER_INFO_URL = "https://api.sugarsync.com/user";
+
+	private String baseURL = null;
 
 	/**
 	 * Does some stuff with the SugarSync API
@@ -101,36 +108,6 @@ public class SugarSyncConnector implements IStorageConnector {
 		return con;
 	}
 
-	public static void main(String[] args) {
-		try {
-			if (args.length != 5) {
-				System.err
-						.println("usage: username password accessKey privateAccessKey resource");
-				System.out
-						.println("example for 'resource': 'Sample Documents/SugarSync QuickStart Guide.pdf'");
-				return;
-			}
-			SugarSyncConnector ssc = new SugarSyncConnector(args[0], args[1],
-					args[2], args[3]);
-			ssc.connect("");
-
-			InputStream is = ssc.get(args[4]);
-			File f = new File("/tmp/" + args[4]);
-			f.getParentFile().mkdirs();
-			FileOutputStream fos = new FileOutputStream(f);
-
-			byte[] inputBytes = new byte[02000];
-			int readLength;
-			while ((readLength = is.read(inputBytes)) >= 0) {
-				fos.write(inputBytes, 0, readLength);
-			}
-			System.out.println("Done.");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-	}
-
 	/**
 	 * Connects to the SugarSync cloud service.
 	 * 
@@ -141,8 +118,8 @@ public class SugarSyncConnector implements IStorageConnector {
 	public boolean connect(String service) {
 		try {
 			// Get the Access Token
-			HttpsURLConnection con = SugarSyncConnector.getConnection(
-					"https://api.sugarsync.com/authorization", "", "POST");
+			HttpsURLConnection con = SugarSyncConnector.getConnection(AUTH_URL,
+					"", "POST");
 			con.setDoOutput(true);
 			con.setRequestProperty("Content-Type",
 					"application/xml; charset=UTF-8");
@@ -164,11 +141,45 @@ public class SugarSyncConnector implements IStorageConnector {
 		}
 	}
 
+	/**
+	 * Puts a resource to the SugarSync folder.
+	 * 
+	 * @param resource
+	 *            The path (relative to /tmp) to the file to upload.
+	 * @return true, if it could be uploaded.
+	 */
 	@Override
 	public boolean put(String resource) {
-		// TODO Auto-generated method stub
-		// String parentResource = this.getResourceURL(resource.substring(0,
-		// resource.lastIndexOf("/")));
+		File f = new File("/tmp/" + resource);
+		if (f.length() > Config.MAX_FILE_SIZE) {
+			System.err.println("File too big");
+		} else if (!f.exists()) {
+			System.err.println("File does not exist");
+		} else {
+			try {
+				String parent;
+				if (resource.contains("/"))
+					parent = this.getResourceURL(resource.substring(0,
+							resource.lastIndexOf("/") + 1), true);
+				else
+					parent = this.getResourceURL("", true);
+				// HttpsURLConnection con;
+				// String resourceURL = this.findFileInFolder(
+				// resource.substring(resource.lastIndexOf("/") + 1),
+				// parent);
+				// con = SugarSyncConnector.getConnection(resourceURL + "/data",
+				// this.token, "GET");
+				// con.setDoInput(true);
+
+				this.createFile(
+						resource.substring(resource.lastIndexOf("/") + 1),
+						new FileInputStream(f), parent);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
+			return true;
+		}
 		return false;
 	}
 
@@ -185,10 +196,11 @@ public class SugarSyncConnector implements IStorageConnector {
 		try {
 			String parent;
 			if (resource.contains("/"))
-				parent = this.getResourceURL(resource.substring(0,
-						resource.lastIndexOf("/") + 1));
+				parent = this.getResourceURL(
+						resource.substring(0, resource.lastIndexOf("/") + 1),
+						false);
 			else
-				parent = this.getResourceURL("");
+				parent = this.getResourceURL("", false);
 			HttpsURLConnection con;
 			String resourceURL = this.findFileInFolder(
 					resource.substring(resource.lastIndexOf("/") + 1), parent
@@ -233,24 +245,16 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * 
 	 * @param resource
 	 *            The folder to be found.
+	 * @param createResource
+	 *            Create missing folders.
 	 * @return The URL to the folder.
 	 */
-	private String getResourceURL(String resource) {
+	private String getResourceURL(String resource, boolean createResource) {
 		try {
-			HttpsURLConnection con = SugarSyncConnector.getConnection(
-					"https://api.sugarsync.com/user", this.token, "GET");
-			con.setDoInput(true);
-
-			// Build the XML tree.
-			Document doc = docBuilder.parse(con.getInputStream());
-			Element node = (Element) doc.getDocumentElement()
-					.getElementsByTagName("syncfolders").item(0);
-			String folder = node.getTextContent().trim();
-
-			folder = this.findFolderInFolder("Magic Briefcase", folder);
-
+			String folder = this.getBaseUrl();
 			System.out.println(folder);
 			while (resource.contains("/")) {
+				String parent = folder;
 				folder += "/contents?type=folder";
 				String nextName = resource.substring(0, resource.indexOf("/"));
 				System.out.println(resource);
@@ -258,6 +262,11 @@ public class SugarSyncConnector implements IStorageConnector {
 				folder = this.findFolderInFolder(nextName, folder);
 
 				resource = resource.substring(resource.indexOf("/") + 1);
+				if (createResource && folder == null) {
+					this.createFolder(nextName, parent);
+					folder = this.findFolderInFolder(nextName, parent
+							+ "/contents?type=folder");
+				}
 			}
 			return folder;
 		} catch (Exception e) {
@@ -335,4 +344,131 @@ public class SugarSyncConnector implements IStorageConnector {
 		return null;
 	}
 
+	/**
+	 * Loads and caches the URL to the 'Magic Briefcase' folder.
+	 * 
+	 * @return The URL to the 'Magic Briefcase' folder on SugarSync.
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws ParserConfigurationException
+	 */
+	private String getBaseUrl() throws IOException, SAXException,
+			ParserConfigurationException {
+		if (baseURL == null) {
+			HttpsURLConnection con = SugarSyncConnector.getConnection(
+					USER_INFO_URL, this.token, "GET");
+			con.setDoInput(true);
+
+			// Build the XML tree.
+			Document doc = docBuilder.parse(con.getInputStream());
+			Element node = (Element) doc.getDocumentElement()
+					.getElementsByTagName("syncfolders").item(0);
+			String folder = node.getTextContent().trim();
+
+			this.baseURL = this.findFolderInFolder("Magic Briefcase", folder);
+		}
+		return this.baseURL;
+	}
+
+	/**
+	 * Creates a folder on SugarSync.
+	 * 
+	 * @param name
+	 *            The name of the folder.
+	 * @param parent
+	 *            The URL to the parent folder.
+	 * @throws IOException
+	 */
+	private void createFolder(String name, String parent) throws IOException {
+		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<folder>" + "\t<displayName>" + name + "</displayName>"
+				+ "</folder>";
+		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
+				this.token, "POST");
+		con.setRequestProperty("Content-Type", "text/xml");
+		con.setDoOutput(true);
+		con.setDoInput(true);
+		con.getOutputStream().write(request.getBytes());
+		InputStream is = con.getInputStream();
+		int i;
+		while ((i = is.read()) >= 0) {
+			System.out.print((char) i);
+		}
+	}
+
+	/**
+	 * Creates a file on SugarSync.
+	 * 
+	 * @param name
+	 *            The file name.
+	 * @param is
+	 *            The InputStream to the file to upload.
+	 * @param parent
+	 *            The URL to the parent.
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws ParserConfigurationException
+	 */
+	private void createFile(String name, InputStream is, String parent)
+			throws IOException, SAXException, ParserConfigurationException {
+		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<file>" + "\t<displayName>" + name + "</displayName>"
+				+ "\t<mediaType>image/png</mediaType>" + "</file>";
+		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
+				this.token, "POST");
+		con.setRequestProperty("Content-Type", "text/xml");
+		con.setDoOutput(true);
+		con.getOutputStream().write(request.getBytes());
+		InputStream cis = con.getInputStream();
+		System.out.println(con.getResponseCode() + ": "
+				+ con.getResponseMessage());
+		int i;
+		while ((i = cis.read()) >= 0) {
+			System.out.print((char) i);
+		}
+		String file = this.findFileInFolder(name, parent
+				+ "/contents?type=file")
+				+ "/data";
+
+		con = SugarSyncConnector.getConnection(file, this.token, "PUT");
+		con.setDoOutput(true);
+		con.setRequestProperty("Content-Type", "image/png");
+		OutputStream os = con.getOutputStream();
+		while ((i = is.read()) >= 0) {
+			os.write(i);
+		}
+		System.out.println(con.getResponseCode() + ": "
+				+ con.getResponseMessage());
+	}
+
+	public static void main(String[] args) {
+		try {
+			if (args.length != 5) {
+				System.err
+						.println("usage: username password accessKey privateAccessKey resource");
+				System.out
+						.println("example for 'resource': 'Sample Documents/SugarSync QuickStart Guide.pdf'");
+				return;
+			}
+			SugarSyncConnector ssc = new SugarSyncConnector(args[0], args[1],
+					args[2], args[3]);
+			ssc.connect("");
+
+			// InputStream is = ssc.get(args[4]);
+			// File f = new File("/tmp/" + args[4]);
+			// f.getParentFile().mkdirs();
+			// FileOutputStream fos = new FileOutputStream(f);
+			//
+			// byte[] inputBytes = new byte[02000];
+			// int readLength;
+			// while ((readLength = is.read(inputBytes)) >= 0) {
+			// fos.write(inputBytes, 0, readLength);
+			// }
+			System.out.println("Done.");
+			ssc.put(args[4]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+	}
 }
