@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -172,8 +173,8 @@ public class SugarSyncConnector implements IStorageConnector {
 				// con.setDoInput(true);
 
 				this.createFile(
-						resource.substring(resource.lastIndexOf("/") + 1),
-						new FileInputStream(f), parent);
+						resource.substring(resource.lastIndexOf("/") + 1), f,
+						parent);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return false;
@@ -215,10 +216,36 @@ public class SugarSyncConnector implements IStorageConnector {
 		}
 	}
 
+	/**
+	 * Permanently deletes a file from the SugarSync servers.
+	 * 
+	 * @param resource
+	 *            The resource to be deleted.
+	 * @return true, if the resource could be deleted, false, if not.
+	 */
 	@Override
 	public boolean delete(String resource) {
-		// TODO Auto-generated method stub
-		return false;
+		try {
+			String parent;
+			if (resource.contains("/"))
+				parent = this.getResourceURL(
+						resource.substring(0, resource.lastIndexOf("/") + 1),
+						false);
+			else
+				parent = this.getResourceURL("", false);
+			HttpsURLConnection con;
+			String resourceURL = this.findFileInFolder(
+					resource.substring(resource.lastIndexOf("/") + 1), parent
+							+ "/contents?type=file");
+			con = SugarSyncConnector.getConnection(resourceURL, this.token,
+					"DELETE");
+			System.out.println(con.getResponseCode() + ": "
+					+ con.getResponseMessage());
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	@Override
@@ -401,39 +428,42 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * 
 	 * @param name
 	 *            The file name.
-	 * @param is
-	 *            The InputStream to the file to upload.
+	 * @param f
+	 *            The file to be uploaded.
 	 * @param parent
 	 *            The URL to the parent.
 	 * @throws IOException
 	 * @throws SAXException
 	 * @throws ParserConfigurationException
 	 */
-	private void createFile(String name, InputStream is, String parent)
+	private void createFile(String name, File f, String parent)
 			throws IOException, SAXException, ParserConfigurationException {
-		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<file>" + "\t<displayName>" + name + "</displayName>"
-				+ "\t<mediaType>image/png</mediaType>" + "</file>";
+		String mime = new MimetypesFileTypeMap().getContentType(f);
+		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><file><displayName>"
+				+ name
+				+ "</displayName><mediaType>"
+				+ mime
+				+ "</mediaType></file>";
 		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
 				this.token, "POST");
 		con.setRequestProperty("Content-Type", "text/xml");
 		con.setDoOutput(true);
 		con.getOutputStream().write(request.getBytes());
-		InputStream cis = con.getInputStream();
+		InputStream is = con.getInputStream();
 		System.out.println(con.getResponseCode() + ": "
 				+ con.getResponseMessage());
-		int i;
-		while ((i = cis.read()) >= 0) {
-			System.out.print((char) i);
-		}
+
 		String file = this.findFileInFolder(name, parent
 				+ "/contents?type=file")
 				+ "/data";
 
 		con = SugarSyncConnector.getConnection(file, this.token, "PUT");
 		con.setDoOutput(true);
-		con.setRequestProperty("Content-Type", "image/png");
+		con.setRequestProperty("Content-Type", mime);
 		OutputStream os = con.getOutputStream();
+
+		is = new FileInputStream(f);
+		int i;
 		while ((i = is.read()) >= 0) {
 			os.write(i);
 		}
@@ -466,6 +496,9 @@ public class SugarSyncConnector implements IStorageConnector {
 			// }
 			System.out.println("Done.");
 			ssc.put(args[4]);
+			System.out.println("Uploading done.");
+			ssc.delete(args[4]);
+			System.out.println("Deleting done.");
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
