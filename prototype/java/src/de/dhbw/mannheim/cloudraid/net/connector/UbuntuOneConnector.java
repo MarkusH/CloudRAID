@@ -2,10 +2,12 @@ package de.dhbw.mannheim.cloudraid.net.connector;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -13,17 +15,13 @@ import org.scribe.model.Token;
 import org.scribe.model.Verb;
 import org.scribe.utils.URLUtils;
 
+import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
+import de.dhbw.mannheim.cloudraid.net.model.ubuntuone.UbuntuOneVolumeModel;
 import de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneApi;
 import de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneService;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
 public class UbuntuOneConnector implements IStorageConnector {
-
-	private String username = null;
-	private String password = null;
-	private Token ctoken = null;
-	private Token stoken = null;
-	private UbuntuOneService service;
 
 	public static void main(String[] args) {
 		try {
@@ -40,34 +38,21 @@ public class UbuntuOneConnector implements IStorageConnector {
 				System.err.println("Connection Error!");
 				System.exit(2);
 			}
-
-			if (uoc.put(args[4])) {
-				System.out.println("File uploaded");
-			} else {
-				System.err.println("Upload error!");
-				System.exit(3);
-			}
-
-			InputStream is = uoc.get(args[4]);
-			if (is != null) {
-				File f = new File("/tmp/" + args[4] + ".new");
-				f.getParentFile().mkdirs();
-				FileOutputStream fos = new FileOutputStream(f);
-
-				byte[] inputBytes = new byte[1024];
-				int readLength;
-				while ((readLength = is.read(inputBytes)) >= 0) {
-					fos.write(inputBytes, 0, readLength);
-				}
-				System.out.println("File downloaded");
-			} else {
-				System.err.println("Download error!");
-			}
+			uoc.test();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
 	}
+
+	private String username = null;
+	private String password = null;
+	private Token ctoken = null;
+	private Token stoken = null;
+
+	private UbuntuOneService service;
+
+	private HashMap<String, UbuntuOneVolumeModel> volumes = new HashMap<String, UbuntuOneVolumeModel>();
 
 	/**
 	 * This constructor initializes the UbuntuOneConnector with a username and
@@ -128,6 +113,181 @@ public class UbuntuOneConnector implements IStorageConnector {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean connect(String service) {
+		if (this.ctoken != null && this.stoken != null) {
+			// We already have the two token sets and will try to use them
+			this.service = (UbuntuOneService) new ServiceBuilder()
+					.provider(UbuntuOneApi.class)
+					.apiKey(this.ctoken.getToken())
+					.apiSecret(this.ctoken.getSecret()).build();
+		} else {
+			this.service = (UbuntuOneService) new ServiceBuilder()
+					.provider(UbuntuOneApi.class).apiKey(this.username)
+					.apiSecret(this.password).build();
+			this.stoken = this.service.getRequestToken();
+			this.ctoken = this.service.getAccessToken(this.stoken);
+		}
+
+		Response response = sendRequest(Verb.GET,
+				this.service.getApiBaseEndpoint() + "account/");
+		if (response.getCode() == 200) {
+			return true;
+		}
+		return false;
+	}
+
+	public VolumeModel createVolume(String name) {
+		if (this.volumes.containsKey(name)) {
+			return this.volumes.get(name);
+		}
+		Response response = sendRequest(Verb.PUT,
+				this.service.getFileStorageEndpoint() + "volumes/~/" + name
+						+ "/");
+		if (response.getCode() == 200) {
+			try {
+				UbuntuOneVolumeModel volume = new UbuntuOneVolumeModel(
+						response.getBody());
+				this.volumes.put(volume.getName(), volume);
+				return volume;
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean delete(String resource) {
+		return false;
+	}
+
+	public void deleteVolume(String name) {
+		if (this.volumes.containsKey(name)) {
+			Response response = sendRequest(Verb.DELETE,
+					this.service.getFileStorageEndpoint() + "volumes/~/" + name
+							+ "/");
+			if (response.getCode() == 200) {
+				this.volumes.remove(name);
+			}
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public InputStream get(String resource) {
+		Response response = sendRequest(Verb.GET,
+				this.service.getContentRootEndpoint() + "~/Ubuntu%20One/"
+						+ resource);
+		if (response.getCode() == 200) {
+			return response.getStream();
+		} else {
+			return null;
+		}
+	}
+
+	public VolumeModel getVolume(String name) {
+		if (this.volumes.containsKey(name)) {
+			return this.volumes.get(name);
+		}
+		Response response = sendRequest(Verb.GET,
+				this.service.getFileStorageEndpoint() + "volumes/~/" + name
+						+ "/");
+		if (response.getCode() == 200) {
+			try {
+				UbuntuOneVolumeModel volume = new UbuntuOneVolumeModel(
+						response.getBody());
+				this.volumes.put(volume.getName(), volume);
+				return volume;
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String head(String resource) {
+		return null;
+	}
+
+	public void loadVolumes() {
+		Response response = sendRequest(Verb.GET,
+				this.service.getFileStorageEndpoint() + "volumes");
+		if (response.getCode() == 200) {
+			try {
+				JSONArray vs = new JSONArray(response.getBody());
+				for (int i = 0; i < vs.length(); i++) {
+					UbuntuOneVolumeModel volume = new UbuntuOneVolumeModel(
+							vs.getJSONObject(i));
+					if (this.volumes.containsKey(volume.getName())) {
+						this.volumes.get(volume.getName()).addMetadata(
+								volume.getMetadata());
+					} else {
+						this.volumes.put(volume.getName(), volume);
+					}
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String[] options(String resource) {
+		return null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String post(String resource, String parent) {
+		return null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean put(String resource) {
+		File f = new File("/tmp/" + resource);
+		if (f.length() > Config.MAX_FILE_SIZE) {
+			System.err.println("File too big.");
+		} else {
+			byte[] fileBytes = new byte[(int) f.length()];
+			InputStream fis;
+			try {
+				fis = new FileInputStream("/tmp/" + resource);
+				fis.read(fileBytes);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			Response response = sendRequest(Verb.PUT,
+					this.service.getContentRootEndpoint() + "~/Ubuntu%20One/"
+							+ URLUtils.percentEncode(resource), fileBytes);
+			if (response.getCode() == 201) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Creates a {@link org.scribe.model.OAuthRequest} to <code>endpoint</code>
 	 * as a HTTP <code>verb</code> Request Method. The request is signed with
 	 * the secret customer and application keys.
@@ -175,107 +335,12 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return response;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean connect(String service) {
-		if (this.ctoken != null && this.stoken != null) {
-			// We already have the two token sets and will try to use them
-			this.service = (UbuntuOneService) new ServiceBuilder()
-					.provider(UbuntuOneApi.class)
-					.apiKey(this.ctoken.getToken())
-					.apiSecret(this.ctoken.getSecret()).build();
-		} else {
-			this.service = (UbuntuOneService) new ServiceBuilder()
-					.provider(UbuntuOneApi.class).apiKey(this.username)
-					.apiSecret(this.password).build();
-			this.stoken = this.service.getRequestToken();
-			this.ctoken = this.service.getAccessToken(this.stoken);
-		}
-
-		Response response = sendRequest(Verb.GET,
-				this.service.getApiBaseEndpoint() + "account/");
-		if (response.getCode() == 200) {
-			return true;
-		}
-		return false;
+	public void test() {
+		this.loadVolumes();
+		System.out.println(this.volumes);
+		this.createVolume("CloudRAID");
+		System.out.println(this.volumes);
+		this.deleteVolume("CloudRAID");
+		System.out.println(this.volumes);
 	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean put(String resource) {
-		File f = new File("/tmp/" + resource);
-		if (f.length() > Config.MAX_FILE_SIZE) {
-			System.err.println("File too big.");
-		} else {
-			byte[] fileBytes = new byte[(int) f.length()];
-			InputStream fis;
-			try {
-				fis = new FileInputStream("/tmp/" + resource);
-				fis.read(fileBytes);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			}
-			Response response = sendRequest(Verb.PUT,
-					this.service.getContentRootEndpoint() + "~/Ubuntu%20One/"
-							+ URLUtils.percentEncode(resource), fileBytes);
-			if (response.getCode() == 201) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public InputStream get(String resource) {
-		Response response = sendRequest(Verb.GET,
-				this.service.getContentRootEndpoint() + "~/Ubuntu%20One/"
-						+ resource);
-		if (response.getCode() == 200) {
-			return response.getStream();
-		} else {
-			return null;
-		}
-
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean delete(String resource) {
-		return false;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String post(String resource, String parent) {
-		return null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String[] options(String resource) {
-		return null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String head(String resource) {
-		return null;
-	}
-
 }

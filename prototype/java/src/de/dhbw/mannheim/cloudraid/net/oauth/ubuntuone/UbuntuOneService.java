@@ -43,6 +43,83 @@ public class UbuntuOneService implements OAuthService {
 		this.password = config.getApiSecret();
 	}
 
+	private void addOAuthParams(OAuthRequest request, Token token) {
+		request.addOAuthParameter(OAuthConstants.TIMESTAMP, api
+				.getTimestampService().getTimestampInSeconds());
+		request.addOAuthParameter(OAuthConstants.TOKEN, token.getToken());
+		request.addOAuthParameter(OAuthConstants.NONCE, api
+				.getTimestampService().getNonce());
+		request.addOAuthParameter(OAuthConstants.CONSUMER_KEY,
+				this.config.getApiKey());
+		request.addOAuthParameter(OAuthConstants.SIGN_METHOD, api
+				.getSignatureService().getSignatureMethod());
+		request.addOAuthParameter(OAuthConstants.VERSION, getVersion());
+	}
+
+	private void addSignature(OAuthRequest request, Token token) {
+		String oauthHeader = api.getHeaderExtractor().extract(request);
+		String signature = getSignature(request, token);
+		oauthHeader = oauthHeader + ", " + OAuthConstants.SIGNATURE + "=\""
+				+ URLUtils.percentEncode(signature) + "\"";
+		request.addHeader(OAuthConstants.HEADER, oauthHeader);
+		System.err
+				.println("[DEBUG] UbuntuOneService.addSignature(): Authorization = "
+						+ request.getHeaders().get("Authorization"));
+	}
+
+	/**
+	 * Returns the customer token!
+	 * 
+	 * @see de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneService#getAccessToken(Token,
+	 *      Verifier)
+	 * @param requestToken
+	 * @return
+	 */
+	public Token getAccessToken(Token requestToken) {
+		return this.getAccessToken(requestToken, new Verifier(this.email));
+	}
+
+	/**
+	 * Returns the customer token!
+	 */
+	@Override
+	public Token getAccessToken(Token requestToken, Verifier verifier) {
+		OAuthRequest request = new OAuthRequest(Verb.GET,
+				api.getAccessTokenEndpoint() + this.email);
+
+		signRequest(requestToken, request);
+
+		Response response = request.send();
+		System.err
+				.println("[DEBUG] UbuntuOneService.getAccessToken(): response.getCode() = "
+						+ response.getCode());
+		System.err
+				.println("[DEBUG] UbuntuOneService.getAccessToken(): response.getHeaders() = "
+						+ response.getHeaders());
+		System.err
+				.println("[DEBUG] UbuntuOneService.getAccessToken(): response.getBody() = "
+						+ response.getBody());
+
+		return new Token(this.config.getApiKey(), this.config.getApiSecret());
+	}
+
+	public String getApiBaseEndpoint() {
+		return this.api.getApiBaseEndpoint();
+	}
+
+	@Override
+	public String getAuthorizationUrl(Token requestToken) {
+		return "";
+	}
+
+	public String getContentRootEndpoint() {
+		return this.api.getContentRootEndpoint();
+	}
+
+	public String getFileStorageEndpoint() {
+		return this.api.getFileStorageEndpoint();
+	}
+
 	/**
 	 * Here we get our consumer token and api token that will be used by this
 	 * application
@@ -95,64 +172,19 @@ public class UbuntuOneService implements OAuthService {
 		return stoken;
 	}
 
-	/**
-	 * Returns the customer token!
-	 * 
-	 * @see de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneService#getAccessToken(Token,
-	 *      Verifier)
-	 * @param requestToken
-	 * @return
-	 */
-	public Token getAccessToken(Token requestToken) {
-		return this.getAccessToken(requestToken, new Verifier(this.email));
+	private String getSignature(OAuthRequest request, Token token) {
+		String baseString = api.getBaseStringExtractor().extract(request);
+		return api.getSignatureService().getSignature(baseString,
+				this.config.getApiSecret(), token.getSecret());
 	}
 
-	/**
-	 * Returns the customer token!
-	 */
 	@Override
-	public Token getAccessToken(Token requestToken, Verifier verifier) {
-		OAuthRequest request = new OAuthRequest(Verb.GET,
-				api.getAccessTokenEndpoint() + this.email);
-
-		signRequest(requestToken, request);
-
-		Response response = request.send();
-		System.err
-				.println("[DEBUG] UbuntuOneService.getAccessToken(): response.getCode() = "
-						+ response.getCode());
-		System.err
-				.println("[DEBUG] UbuntuOneService.getAccessToken(): response.getHeaders() = "
-						+ response.getHeaders());
-		System.err
-				.println("[DEBUG] UbuntuOneService.getAccessToken(): response.getBody() = "
-						+ response.getBody());
-
-		return new Token(this.config.getApiKey(), this.config.getApiSecret());
+	public String getVersion() {
+		return VERSION;
 	}
 
-	private void addOAuthParams(OAuthRequest request, Token token) {
-		request.addOAuthParameter(OAuthConstants.TIMESTAMP, api
-				.getTimestampService().getTimestampInSeconds());
-		request.addOAuthParameter(OAuthConstants.TOKEN, token.getToken());
-		request.addOAuthParameter(OAuthConstants.NONCE, api
-				.getTimestampService().getNonce());
-		request.addOAuthParameter(OAuthConstants.CONSUMER_KEY,
-				this.config.getApiKey());
-		request.addOAuthParameter(OAuthConstants.SIGN_METHOD, api
-				.getSignatureService().getSignatureMethod());
-		request.addOAuthParameter(OAuthConstants.VERSION, getVersion());
-	}
-
-	private void addSignature(OAuthRequest request, Token token) {
-		String oauthHeader = api.getHeaderExtractor().extract(request);
-		String signature = getSignature(request, token);
-		oauthHeader = oauthHeader + ", " + OAuthConstants.SIGNATURE + "=\""
-				+ URLUtils.percentEncode(signature) + "\"";
-		request.addHeader(OAuthConstants.HEADER, oauthHeader);
-		System.err
-				.println("[DEBUG] UbuntuOneService.addSignature(): Authorization = "
-						+ request.getHeaders().get("Authorization"));
+	public String getVolumeURLByName(String name) {
+		return this.api.getFileStorageEndpoint() + "volumes/~/" + name + "/";
 	}
 
 	@Override
@@ -165,29 +197,5 @@ public class UbuntuOneService implements OAuthService {
 				+ request);
 		addSignature(request, accessToken);
 
-	}
-
-	private String getSignature(OAuthRequest request, Token token) {
-		String baseString = api.getBaseStringExtractor().extract(request);
-		return api.getSignatureService().getSignature(baseString,
-				this.config.getApiSecret(), token.getSecret());
-	}
-
-	@Override
-	public String getVersion() {
-		return VERSION;
-	}
-
-	@Override
-	public String getAuthorizationUrl(Token requestToken) {
-		return "";
-	}
-
-	public String getApiBaseEndpoint() {
-		return this.api.getApiBaseEndpoint();
-	}
-
-	public String getContentRootEndpoint() {
-		return this.api.getContentRootEndpoint();
 	}
 }
