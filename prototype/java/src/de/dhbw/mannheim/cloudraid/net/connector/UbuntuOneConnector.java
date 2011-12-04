@@ -164,7 +164,10 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 */
 	@Override
 	public boolean delete(String resource) {
-		return false;
+		Response response = sendRequest(Verb.DELETE,
+				this.service.getFileStorageEndpoint() + "~/Ubuntu%20One/"
+						+ URLUtils.percentEncode(resource));
+		return (response.getCode() == 200 || response.getCode() == 404);
 	}
 
 	public void deleteVolume(String name) {
@@ -172,7 +175,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 			Response response = sendRequest(Verb.DELETE,
 					this.service.getFileStorageEndpoint() + "volumes/~/" + name
 							+ "/");
-			if (response.getCode() == 200) {
+			if (response.getCode() == 200 || response.getCode() == 404) {
 				this.volumes.remove(name);
 			}
 		}
@@ -338,9 +341,13 @@ public class UbuntuOneConnector implements IStorageConnector {
 	public void test() {
 		this.loadVolumes();
 		System.out.println(this.volumes);
+
 		this.createVolume("CloudRAID");
 		System.out.println(this.volumes);
+
 		this.deleteVolume("CloudRAID");
 		System.out.println(this.volumes);
+
+		this.delete("test.txt");
 	}
 }

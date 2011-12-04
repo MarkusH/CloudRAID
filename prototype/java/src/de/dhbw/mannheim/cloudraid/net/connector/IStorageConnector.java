@@ -6,7 +6,7 @@ import java.io.InputStream;
  * Defines the methods to be implemented by classes that are used to connect to
  * cloud services.
  * 
- * @author Florian Bausch
+ * @author Florian Bausch, Markus Holtermann
  * 
  */
 public interface IStorageConnector {
@@ -19,11 +19,15 @@ public interface IStorageConnector {
 	public boolean connect(String service);
 
 	/**
-	 * Changes a file on a cloud service.
+	 * Deletes a file on a cloud service.
 	 * 
-	 * @return true, if the file could be changed; false, if not.
+	 * In case that the requested file <b>does not exist</b> (HTTP 404) or that
+	 * the removal <b>was successful</b> (HTTP 200), the implementation has to
+	 * return <code>true</code>!
+	 * 
+	 * @return true, if the file could be deleted; false, if not.
 	 */
-	public boolean put(String resource);
+	public boolean delete(String resource);
 
 	/**
 	 * Gets a file from a cloud service.
@@ -33,18 +37,11 @@ public interface IStorageConnector {
 	public InputStream get(String resource);
 
 	/**
-	 * Deletes a file on a cloud service.
+	 * Returns meta data for a resource.
 	 * 
-	 * @return true, if the file could be deleted; false, if not.
+	 * @return The meta data.
 	 */
-	public boolean delete(String resource);
-
-	/**
-	 * Sends a file to a cloud service.
-	 * 
-	 * @return The link to the new file on the cloud service.
-	 */
-	public String post(String resource, String parent);
+	public String head(String resource);
 
 	/**
 	 * Returns the options available for a resource.
@@ -54,10 +51,17 @@ public interface IStorageConnector {
 	public String[] options(String resource);
 
 	/**
-	 * Returns meta data for a resource.
+	 * Sends a file to a cloud service.
 	 * 
-	 * @return The meta data.
+	 * @return The link to the new file on the cloud service.
 	 */
-	public String head(String resource);
+	public String post(String resource, String parent);
+
+	/**
+	 * Changes a file on a cloud service.
+	 * 
+	 * @return true, if the file could be changed; false, if not.
+	 */
+	public boolean put(String resource);
 
 }
