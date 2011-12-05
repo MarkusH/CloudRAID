@@ -26,10 +26,60 @@ public class SugarSyncConnector implements IStorageConnector {
 	private String token = "";
 	private String username, password, accessKeyId, privateAccessKey;
 	private DocumentBuilder docBuilder;
+	private String baseURL = null;
 	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
 	private final static String USER_INFO_URL = "https://api.sugarsync.com/user";
 
-	private String baseURL = null;
+	/**
+	 * Creates an HTTPS connection with some predefined values
+	 * 
+	 * @return A preconfigured connection.
+	 */
+	private static HttpsURLConnection getConnection(String address,
+			String authToken, String method) throws IOException {
+		HttpsURLConnection con = (HttpsURLConnection) new URL(address)
+				.openConnection();
+		con.setRequestMethod(method);
+		con.setRequestProperty("User-Agent", "CloudRAID");
+		con.setRequestProperty("Accept", "*/*");
+		con.setRequestProperty("Authorization", authToken);
+
+		return con;
+	}
+
+	public static void main(String[] args) {
+		try {
+			if (args.length != 5) {
+				System.err
+						.println("usage: username password accessKey privateAccessKey resource");
+				System.out
+						.println("example for 'resource': 'Sample Documents/SugarSync QuickStart Guide.pdf'");
+				return;
+			}
+			SugarSyncConnector ssc = new SugarSyncConnector(args[0], args[1],
+					args[2], args[3]);
+			ssc.connect("");
+
+			ssc.put(args[4]);
+			System.out.println("Uploading done.");
+			InputStream is = ssc.get(args[4]);
+			File f = new File("/tmp/" + args[4]);
+			f.getParentFile().mkdirs();
+			FileOutputStream fos = new FileOutputStream(f);
+
+			byte[] inputBytes = new byte[02000];
+			int readLength;
+			while ((readLength = is.read(inputBytes)) >= 0) {
+				fos.write(inputBytes, 0, readLength);
+			}
+			System.out.println("Getting done.");
+			ssc.delete(args[4]);
+			System.out.println("Deleting done.");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+	}
 
 	/**
 	 * Does some stuff with the SugarSync API
@@ -57,23 +107,6 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	/**
-	 * Creates an HTTPS connection with some predefined values
-	 * 
-	 * @return A preconfigured connection.
-	 */
-	private static HttpsURLConnection getConnection(String address,
-			String authToken, String method) throws IOException {
-		HttpsURLConnection con = (HttpsURLConnection) new URL(address)
-				.openConnection();
-		con.setRequestMethod(method);
-		con.setRequestProperty("User-Agent", "CloudRAID");
-		con.setRequestProperty("Accept", "*/*");
-		con.setRequestProperty("Authorization", authToken);
-
-		return con;
-	}
-
-	/**
 	 * Connects to the SugarSync cloud service.
 	 * 
 	 * @param service
@@ -90,19 +123,16 @@ public class SugarSyncConnector implements IStorageConnector {
 					"application/xml; charset=UTF-8");
 
 			// Create authentication request
-			String authReq = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<authRequest>"
-					+ "\n\t<username>"
-					+ username
-					+ "</username>\n\t<password>"
-					+ password
-					+ "</password>"
-					+ "\n\t<accessKeyId>"
-					+ accessKeyId
-					+ "</accessKeyId>"
-					+ "\n\t<privateAccessKey>"
-					+ privateAccessKey
-					+ "</privateAccessKey>"
-					+ "\n</authRequest>";
+			StringBuilder authReqBuilder = new StringBuilder(
+					"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<authRequest><username>");
+			authReqBuilder.append(username).append("</username><password>");
+			authReqBuilder.append(password).append(
+					"</password>\n\t<accessKeyId>");
+			authReqBuilder.append(accessKeyId).append(
+					"</accessKeyId><privateAccessKey>");
+			authReqBuilder.append(privateAccessKey).append(
+					"</privateAccessKey></authRequest>");
+			String authReq = authReqBuilder.toString();
 
 			con.connect();
 			con.getOutputStream().write(authReq.getBytes());
@@ -113,365 +143,6 @@ public class SugarSyncConnector implements IStorageConnector {
 		} catch (Exception e) {
 			return false;
 		}
-	}
-
-	/**
-	 * Puts a resource to the SugarSync folder.
-	 * 
-	 * @param resource
-	 *            The path (relative to /tmp) to the file to upload.
-	 * @return true, if it could be uploaded.
-	 */
-	@Override
-	public boolean put(String resource) {
-		File f = new File("/tmp/" + resource);
-		if (f.length() > Config.MAX_FILE_SIZE) {
-			System.err.println("File too big");
-		} else if (!f.exists()) {
-			System.err.println("File does not exist");
-		} else {
-			try {
-				String parent;
-				if (resource.contains("/"))
-					parent = this.getResourceURL(resource.substring(0,
-							resource.lastIndexOf("/") + 1), true);
-				else
-					parent = this.getResourceURL("", true);
-
-				this.createFile(
-						resource.substring(resource.lastIndexOf("/") + 1), f,
-						parent);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return false;
-			}
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Gets a resource (file)
-	 * 
-	 * @param the
-	 *            path on the SugarSync system.
-	 * @return Either an InputStream, if resource could be found, or
-	 *         <code>null</code>, if the resource could not be found.
-	 */
-	@Override
-	public InputStream get(String resource) {
-		try {
-			String parent;
-			if (resource.contains("/"))
-				parent = this.getResourceURL(
-						resource.substring(0, resource.lastIndexOf("/") + 1),
-						false);
-			else
-				parent = this.getResourceURL("", false);
-			String resourceURL = this.findFileInFolder(
-					resource.substring(resource.lastIndexOf("/") + 1), parent
-							+ "/contents?type=file");
-
-			HttpsURLConnection con;
-			con = SugarSyncConnector.getConnection(resourceURL + "/data",
-					this.token, "GET");
-			con.setDoInput(true);
-
-			return con.getInputStream();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	/**
-	 * Permanently deletes a file from the SugarSync servers.
-	 * 
-	 * @param resource
-	 *            The resource to be deleted.
-	 * @return true, if the resource could be deleted, false, if not.
-	 */
-	@Override
-	public boolean delete(String resource) {
-		try {
-			String parent;
-			if (resource.contains("/"))
-				parent = this.getResourceURL(
-						resource.substring(0, resource.lastIndexOf("/") + 1),
-						false);
-			else
-				parent = this.getResourceURL("", false);
-			String resourceURL = this.findFileInFolder(
-					resource.substring(resource.lastIndexOf("/") + 1), parent
-							+ "/contents?type=file");
-			HttpsURLConnection con;
-			con = SugarSyncConnector.getConnection(resourceURL, this.token,
-					"DELETE");
-
-			con.connect();
-			System.out.println(con.getResponseCode() + ": "
-					+ con.getResponseMessage());
-			con.disconnect();
-			while (this.isFolderEmpty(parent)) {
-				String oldParent = parent;
-				parent = this.getParentFolder(parent);
-
-				con = SugarSyncConnector.getConnection(oldParent, this.token,
-						"DELETE");
-
-				con.connect();
-				System.out.println(con.getResponseCode() + ": "
-						+ con.getResponseMessage());
-				con.disconnect();
-			}
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	@Override
-	public String post(String resource, String parent) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String[] options(String resource) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String head(String resource) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * Runs recursively through the folders in 'Magic Briefcase' to find the
-	 * specified folder.
-	 * 
-	 * @param resource
-	 *            The folder to be found.
-	 * @param createResource
-	 *            Create missing folders.
-	 * @return The URL to the folder.
-	 */
-	private String getResourceURL(String resource, boolean createResource) {
-		try {
-			String folder = this.getBaseUrl();
-			System.out.println(folder);
-			while (resource.contains("/")) {
-				String parent = folder;
-				this.isFolderEmpty(folder);
-				folder += "/contents?type=folder";
-				String nextName = resource.substring(0, resource.indexOf("/"));
-				System.out.println(resource);
-
-				folder = this.findFolderInFolder(nextName, folder);
-
-				resource = resource.substring(resource.indexOf("/") + 1);
-				if (createResource && folder == null) {
-					this.createFolder(nextName, parent);
-					folder = this.findFolderInFolder(nextName, parent
-							+ "/contents?type=folder");
-				}
-			}
-			return folder;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	/**
-	 * Checks, if a folder is in the specific folder on the SugarSync servers.
-	 * 
-	 * @param name
-	 *            The folder name.
-	 * @param parent
-	 *            The URL to the parent folder.
-	 * @return The URL to the file, or null, if it could not be found.
-	 * @throws SAXException
-	 * @throws IOException
-	 * @throws ParserConfigurationException
-	 */
-	private String findFolderInFolder(String name, String parent)
-			throws ParserConfigurationException, SAXException, IOException {
-		Document doc;
-		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.token, "GET");
-		con.setDoInput(true);
-
-		// Build the XML tree.
-		con.connect();
-		doc = docBuilder.parse(con.getInputStream());
-		con.disconnect();
-		NodeList nl = doc.getDocumentElement().getElementsByTagName(
-				"collection");
-		for (int i = 0; i < nl.getLength(); i++) {
-			String displayName = ((Element) nl.item(i))
-					.getElementsByTagName("displayName").item(0)
-					.getTextContent();
-			if (displayName.equalsIgnoreCase(name)) {
-				return ((Element) nl.item(i)).getElementsByTagName("ref")
-						.item(0).getTextContent();
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Checks, if a file is in the specific folder on the SugarSync servers.
-	 * 
-	 * @param name
-	 *            The file name.
-	 * @param parent
-	 *            The URL to the parent folder.
-	 * @return The URL to the file, or null, if it could not be found.
-	 * @throws SAXException
-	 * @throws IOException
-	 * @throws ParserConfigurationException
-	 */
-	private String findFileInFolder(String name, String parent)
-			throws SAXException, IOException, ParserConfigurationException {
-		Document doc;
-		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.token, "GET");
-		con.setDoInput(true);
-
-		// Build the XML tree.
-		con.connect();
-		doc = docBuilder.parse(con.getInputStream());
-		con.disconnect();
-		NodeList nl = doc.getDocumentElement().getElementsByTagName("file");
-		for (int i = 0; i < nl.getLength(); i++) {
-			String displayName = ((Element) nl.item(i))
-					.getElementsByTagName("displayName").item(0)
-					.getTextContent();
-			if (displayName.equalsIgnoreCase(name)) {
-				return ((Element) nl.item(i)).getElementsByTagName("ref")
-						.item(0).getTextContent();
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Returns the parent folder of a folder
-	 * 
-	 * @param folder
-	 *            The URL to the folder.
-	 * @return The URL of the parent folder.
-	 * @throws IOException
-	 * @throws SAXException
-	 */
-	private String getParentFolder(String folder) throws IOException,
-			SAXException {
-		HttpsURLConnection con = SugarSyncConnector.getConnection(folder,
-				this.token, "GET");
-		con.setDoInput(true);
-
-		con.connect();
-		Document doc = this.docBuilder.parse(con.getInputStream());
-		con.disconnect();
-
-		return doc.getDocumentElement().getElementsByTagName("parent").item(0)
-				.getTextContent();
-	}
-
-	/**
-	 * Returns if a folder is empty and can be deleted.
-	 * 
-	 * @param folder
-	 *            The URL of the folder.
-	 * @return true, if the folder is empty.
-	 * @throws IOException
-	 * @throws SAXException
-	 */
-	private boolean isFolderEmpty(String folder) throws IOException,
-			SAXException {
-		HttpsURLConnection con = SugarSyncConnector.getConnection(folder
-				+ "/contents", this.token, "GET");
-		con.setDoInput(true);
-
-		con.connect();
-		Document doc = this.docBuilder.parse(con.getInputStream());
-		con.disconnect();
-
-		if (!doc.getDocumentElement().hasAttribute("end")
-				|| !doc.getDocumentElement().getAttribute("end").equals("0"))
-			return false;
-
-		con = SugarSyncConnector.getConnection(folder, this.token, "GET");
-		con.setDoInput(true);
-
-		con.connect();
-		doc = this.docBuilder.parse(con.getInputStream());
-		con.disconnect();
-
-		return !doc.getDocumentElement().getElementsByTagName("displayName")
-				.item(0).getTextContent().equals("Magic Briefcase");
-	}
-
-	/**
-	 * Loads and caches the URL to the 'Magic Briefcase' folder.
-	 * 
-	 * @return The URL to the 'Magic Briefcase' folder on SugarSync.
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
-	 */
-	private String getBaseUrl() throws IOException, SAXException,
-			ParserConfigurationException {
-		if (baseURL == null) {
-			HttpsURLConnection con = SugarSyncConnector.getConnection(
-					USER_INFO_URL, this.token, "GET");
-			con.setDoInput(true);
-
-			// Build the XML tree.
-			con.connect();
-			Document doc = docBuilder.parse(con.getInputStream());
-			con.disconnect();
-
-			Element node = (Element) doc.getDocumentElement()
-					.getElementsByTagName("syncfolders").item(0);
-			String folder = node.getTextContent().trim();
-
-			this.baseURL = this.findFolderInFolder("Magic Briefcase", folder);
-		}
-		return this.baseURL;
-	}
-
-	/**
-	 * Creates a folder on SugarSync.
-	 * 
-	 * @param name
-	 *            The name of the folder.
-	 * @param parent
-	 *            The URL to the parent folder.
-	 * @throws IOException
-	 */
-	private void createFolder(String name, String parent) throws IOException {
-		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<folder>" + "\t<displayName>" + name + "</displayName>"
-				+ "</folder>";
-		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.token, "POST");
-		con.setRequestProperty("Content-Type", "text/xml");
-		con.setDoOutput(true);
-		con.setDoInput(true);
-
-		con.connect();
-		con.getOutputStream().write(request.getBytes());
-		InputStream is = con.getInputStream();
-		int i;
-		while ((i = is.read()) >= 0) {
-			System.out.print((char) i);
-		}
-		con.disconnect();
 	}
 
 	/**
@@ -527,37 +198,381 @@ public class SugarSyncConnector implements IStorageConnector {
 		con.disconnect();
 	}
 
-	public static void main(String[] args) {
+	/**
+	 * Creates a folder on SugarSync.
+	 * 
+	 * @param name
+	 *            The name of the folder.
+	 * @param parent
+	 *            The URL to the parent folder.
+	 * @throws IOException
+	 */
+	private void createFolder(String name, String parent) throws IOException {
+		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+				+ "<folder>" + "\t<displayName>" + name + "</displayName>"
+				+ "</folder>";
+		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
+				this.token, "POST");
+		con.setRequestProperty("Content-Type", "text/xml");
+		con.setDoOutput(true);
+		con.setDoInput(true);
+
+		con.connect();
+		con.getOutputStream().write(request.getBytes());
+		InputStream is = con.getInputStream();
+		int i;
+		while ((i = is.read()) >= 0) {
+			System.out.print((char) i);
+		}
+		con.disconnect();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public boolean delete(String resource) {
+		String parent;
+		if (resource.contains("/"))
+			parent = this
+					.getResourceURL(resource.substring(0,
+							resource.lastIndexOf("/") + 1), false);
+		else
+			parent = this.getResourceURL("", false);
+
+		if (parent == null) {
+			return true;
+		}
+
+		String resourceURL;
 		try {
-			if (args.length != 5) {
-				System.err
-						.println("usage: username password accessKey privateAccessKey resource");
-				System.out
-						.println("example for 'resource': 'Sample Documents/SugarSync QuickStart Guide.pdf'");
-				return;
-			}
-			SugarSyncConnector ssc = new SugarSyncConnector(args[0], args[1],
-					args[2], args[3]);
-			ssc.connect("");
-
-			ssc.put(args[4]);
-			System.out.println("Uploading done.");
-			InputStream is = ssc.get(args[4]);
-			File f = new File("/tmp/" + args[4]);
-			f.getParentFile().mkdirs();
-			FileOutputStream fos = new FileOutputStream(f);
-
-			byte[] inputBytes = new byte[02000];
-			int readLength;
-			while ((readLength = is.read(inputBytes)) >= 0) {
-				fos.write(inputBytes, 0, readLength);
-			}
-			System.out.println("Getting done.");
-			ssc.delete(args[4]);
-			System.out.println("Deleting done.");
+			resourceURL = this.findFileInFolder(
+					resource.substring(resource.lastIndexOf("/") + 1), parent
+							+ "/contents?type=file");
 		} catch (Exception e) {
 			e.printStackTrace();
-			return;
+			return true;
 		}
+
+		HttpsURLConnection con = null;
+		try {
+			con = SugarSyncConnector.getConnection(resourceURL, this.token,
+					"DELETE");
+			con.connect();
+			con.disconnect();
+		} catch (Exception e) {
+			e.printStackTrace();
+			int returnCode = -1;
+			try {
+				returnCode = con.getResponseCode();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			if (!(returnCode == 404 || returnCode == 204)) {
+				return false;
+			}
+		}
+
+		try {
+			while (this.isFolderEmpty(parent)) {
+				String oldParent = parent;
+				parent = this.getParentFolder(parent);
+
+				con = SugarSyncConnector.getConnection(oldParent, this.token,
+						"DELETE");
+
+				con.connect();
+				System.out.println(con.getResponseCode() + ": "
+						+ con.getResponseMessage());
+				con.disconnect();
+			}
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return true;
+		}
+	}
+
+	/**
+	 * Checks, if a file is in the specific folder on the SugarSync servers.
+	 * 
+	 * @param name
+	 *            The file name.
+	 * @param parent
+	 *            The URL to the parent folder.
+	 * @return The URL to the file, or null, if it could not be found.
+	 * @throws SAXException
+	 * @throws IOException
+	 * @throws ParserConfigurationException
+	 */
+	private String findFileInFolder(String name, String parent)
+			throws SAXException, IOException, ParserConfigurationException {
+		Document doc;
+		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
+				this.token, "GET");
+		con.setDoInput(true);
+
+		// Build the XML tree.
+		con.connect();
+		doc = docBuilder.parse(con.getInputStream());
+		con.disconnect();
+		NodeList nl = doc.getDocumentElement().getElementsByTagName("file");
+		for (int i = 0; i < nl.getLength(); i++) {
+			String displayName = ((Element) nl.item(i))
+					.getElementsByTagName("displayName").item(0)
+					.getTextContent();
+			if (displayName.equalsIgnoreCase(name)) {
+				return ((Element) nl.item(i)).getElementsByTagName("ref")
+						.item(0).getTextContent();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Checks, if a folder is in the specific folder on the SugarSync servers.
+	 * 
+	 * @param name
+	 *            The folder name.
+	 * @param parent
+	 *            The URL to the parent folder.
+	 * @return The URL to the file, or null, if it could not be found.
+	 * @throws SAXException
+	 * @throws IOException
+	 * @throws ParserConfigurationException
+	 */
+	private String findFolderInFolder(String name, String parent)
+			throws ParserConfigurationException, SAXException, IOException {
+		Document doc;
+		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
+				this.token, "GET");
+		con.setDoInput(true);
+
+		// Build the XML tree.
+		con.connect();
+		doc = docBuilder.parse(con.getInputStream());
+		con.disconnect();
+		NodeList nl = doc.getDocumentElement().getElementsByTagName(
+				"collection");
+		for (int i = 0; i < nl.getLength(); i++) {
+			String displayName = ((Element) nl.item(i))
+					.getElementsByTagName("displayName").item(0)
+					.getTextContent();
+			if (displayName.equalsIgnoreCase(name)) {
+				return ((Element) nl.item(i)).getElementsByTagName("ref")
+						.item(0).getTextContent();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Gets a resource (file)
+	 * 
+	 * @param the
+	 *            path on the SugarSync system.
+	 * @return Either an InputStream, if resource could be found, or
+	 *         <code>null</code>, if the resource could not be found.
+	 */
+	@Override
+	public InputStream get(String resource) {
+		try {
+			String parent;
+			if (resource.contains("/"))
+				parent = this.getResourceURL(
+						resource.substring(0, resource.lastIndexOf("/") + 1),
+						false);
+			else
+				parent = this.getResourceURL("", false);
+			String resourceURL = this.findFileInFolder(
+					resource.substring(resource.lastIndexOf("/") + 1), parent
+							+ "/contents?type=file");
+
+			HttpsURLConnection con;
+			con = SugarSyncConnector.getConnection(resourceURL + "/data",
+					this.token, "GET");
+			con.setDoInput(true);
+
+			return con.getInputStream();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * Loads and caches the URL to the 'Magic Briefcase' folder.
+	 * 
+	 * @return The URL to the 'Magic Briefcase' folder on SugarSync.
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws ParserConfigurationException
+	 */
+	private String getBaseUrl() throws IOException, SAXException,
+			ParserConfigurationException {
+		if (baseURL == null) {
+			HttpsURLConnection con = SugarSyncConnector.getConnection(
+					USER_INFO_URL, this.token, "GET");
+			con.setDoInput(true);
+
+			// Build the XML tree.
+			con.connect();
+			Document doc = docBuilder.parse(con.getInputStream());
+			con.disconnect();
+
+			Element node = (Element) doc.getDocumentElement()
+					.getElementsByTagName("syncfolders").item(0);
+			String folder = node.getTextContent().trim();
+
+			this.baseURL = this.findFolderInFolder("Magic Briefcase", folder);
+		}
+		return this.baseURL;
+	}
+
+	/**
+	 * Returns the parent folder of a folder
+	 * 
+	 * @param folder
+	 *            The URL to the folder.
+	 * @return The URL of the parent folder.
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	private String getParentFolder(String folder) throws IOException,
+			SAXException {
+		HttpsURLConnection con = SugarSyncConnector.getConnection(folder,
+				this.token, "GET");
+		con.setDoInput(true);
+
+		con.connect();
+		Document doc = this.docBuilder.parse(con.getInputStream());
+		con.disconnect();
+
+		return doc.getDocumentElement().getElementsByTagName("parent").item(0)
+				.getTextContent();
+	}
+
+	/**
+	 * Runs recursively through the folders in 'Magic Briefcase' to find the
+	 * specified folder.
+	 * 
+	 * @param resource
+	 *            The folder to be found.
+	 * @param createResource
+	 *            Create missing folders.
+	 * @return The URL to the folder.
+	 */
+	private String getResourceURL(String resource, boolean createResource) {
+		try {
+			String folder = this.getBaseUrl();
+			System.out.println(folder);
+			while (resource.contains("/")) {
+				String parent = folder;
+				this.isFolderEmpty(folder);
+				folder += "/contents?type=folder";
+				String nextName = resource.substring(0, resource.indexOf("/"));
+				System.out.println(resource);
+
+				folder = this.findFolderInFolder(nextName, folder);
+
+				resource = resource.substring(resource.indexOf("/") + 1);
+				if (createResource && folder == null) {
+					this.createFolder(nextName, parent);
+					folder = this.findFolderInFolder(nextName, parent
+							+ "/contents?type=folder");
+				}
+			}
+			return folder;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public String head(String resource) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * Returns if a folder is empty and can be deleted.
+	 * 
+	 * @param folder
+	 *            The URL of the folder.
+	 * @return true, if the folder is empty.
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	private boolean isFolderEmpty(String folder) throws IOException,
+			SAXException {
+		HttpsURLConnection con = SugarSyncConnector.getConnection(folder
+				+ "/contents", this.token, "GET");
+		con.setDoInput(true);
+
+		con.connect();
+		Document doc = this.docBuilder.parse(con.getInputStream());
+		con.disconnect();
+
+		if (!doc.getDocumentElement().hasAttribute("end")
+				|| !doc.getDocumentElement().getAttribute("end").equals("0"))
+			return false;
+
+		con = SugarSyncConnector.getConnection(folder, this.token, "GET");
+		con.setDoInput(true);
+
+		con.connect();
+		doc = this.docBuilder.parse(con.getInputStream());
+		con.disconnect();
+
+		return !doc.getDocumentElement().getElementsByTagName("displayName")
+				.item(0).getTextContent().equals("Magic Briefcase");
+	}
+
+	@Override
+	public String[] options(String resource) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String post(String resource, String parent) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * Puts a resource to the SugarSync folder.
+	 * 
+	 * @param resource
+	 *            The path (relative to /tmp) to the file to upload.
+	 * @return true, if it could be uploaded.
+	 */
+	@Override
+	public boolean put(String resource) {
+		File f = new File("/tmp/" + resource);
+		if (f.length() > Config.MAX_FILE_SIZE) {
+			System.err.println("File too big");
+		} else if (!f.exists()) {
+			System.err.println("File does not exist");
+		} else {
+			try {
+				String parent;
+				if (resource.contains("/"))
+					parent = this.getResourceURL(resource.substring(0,
+							resource.lastIndexOf("/") + 1), true);
+				else
+					parent = this.getResourceURL("", true);
+
+				this.createFile(
+						resource.substring(resource.lastIndexOf("/") + 1), f,
+						parent);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
+			return true;
+		}
+		return false;
 	}
 }
