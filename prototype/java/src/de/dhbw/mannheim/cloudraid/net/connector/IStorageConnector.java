@@ -1,6 +1,7 @@
 package de.dhbw.mannheim.cloudraid.net.connector;
 
 import java.io.InputStream;
+import java.util.HashMap;
 
 /**
  * Defines the methods to be implemented by classes that are used to connect to
@@ -16,7 +17,19 @@ public interface IStorageConnector {
 	 * 
 	 * @return true, if the connection could be established; false, if not.
 	 */
-	public boolean connect(String service);
+	public boolean connect();
+
+	/**
+	 * Create a new instance of the <code>connector</code>.
+	 * 
+	 * @param parameter
+	 *            The given HashMap contains the parameters as key-value pairs
+	 *            that a <code>connector</code> should use during
+	 *            initialization.
+	 * 
+	 * @return Returns a new initialized instance of the <code>connector</code>.
+	 */
+	public IStorageConnector create(HashMap<String, String> parameter);
 
 	/**
 	 * Deletes a file on a cloud service.

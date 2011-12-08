@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.HashMap;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.net.ssl.HttpsURLConnection;
@@ -56,9 +57,15 @@ public class SugarSyncConnector implements IStorageConnector {
 						.println("example for 'resource': 'Sample Documents/SugarSync QuickStart Guide.pdf'");
 				return;
 			}
-			SugarSyncConnector ssc = new SugarSyncConnector(args[0], args[1],
-					args[2], args[3]);
-			ssc.connect("");
+			HashMap<String, String> params = new HashMap<String, String>(4);
+			params.put("username", args[0]);
+			params.put("password", args[1]);
+			params.put("accessKey", args[2]);
+			params.put("privateAccessKey", args[3]);
+			IStorageConnector ssc = StorageConnectorFactory
+					.create("de.dhbw.mannheim.cloudraid.net.connector.SugarSyncConnector",
+							params);
+			ssc.connect();
 
 			ssc.put(args[4]);
 			System.out.println("Uploading done.");
@@ -82,38 +89,13 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	/**
-	 * Does some stuff with the SugarSync API
-	 * 
-	 * @param username
-	 * @param password
-	 * @param accessKeyId
-	 * @param privateAccessKey
-	 */
-	public SugarSyncConnector(String username, String password,
-			String accessKeyId, String privateAccessKey) {
-		this.password = password;
-		this.username = username;
-		this.accessKeyId = accessKeyId;
-		this.privateAccessKey = privateAccessKey;
-		docBuilder = null;
-		try {
-			docBuilder = DocumentBuilderFactory.newInstance()
-					.newDocumentBuilder();
-			docBuilder.setErrorHandler(null);
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	/**
 	 * Connects to the SugarSync cloud service.
 	 * 
 	 * @param service
 	 * @return true, if the service could be connected, false, if not.
 	 */
 	@Override
-	public boolean connect(String service) {
+	public boolean connect() {
 		try {
 			// Get the Access Token
 			HttpsURLConnection con = SugarSyncConnector.getConnection(AUTH_URL,
@@ -143,6 +125,45 @@ public class SugarSyncConnector implements IStorageConnector {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+
+	/**
+	 * This function initializes the SugarSyncConnector.
+	 * 
+	 * @param param
+	 *            There are two creation modes. In case the tokens already
+	 *            exist, the HashMap has to contain the following keys:
+	 *            <ul>
+	 *            <li><code>username</li>
+	 *            <li><code>customer_secret</code></li>
+	 *            <li><code>accessKeyId</code></li>
+	 *            <li><code>privateAccessKey</code></li>
+	 *            </ul>
+	 */
+	@Override
+	public IStorageConnector create(HashMap<String, String> parameter) {
+		if (parameter.containsKey("username")
+				&& parameter.containsKey("password")
+				&& parameter.containsKey("accessKeyId")
+				&& parameter.containsKey("privateAccessKey")) {
+			this.username = parameter.get("username");
+			this.password = parameter.get("password");
+			this.accessKeyId = parameter.get("username");
+			this.privateAccessKey = parameter.get("password");
+		} else {
+			System.err
+					.println("username, password, accessKeyId and privateAccessKey have to be set during creation!");
+		}
+		docBuilder = null;
+		try {
+			docBuilder = DocumentBuilderFactory.newInstance()
+					.newDocumentBuilder();
+			docBuilder.setErrorHandler(null);
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return this;
 	}
 
 	/**

@@ -30,15 +30,21 @@ public class UbuntuOneConnector implements IStorageConnector {
 						.println("usage: <customer_key> <customer_secret> <token_key> <token_secret> <resource>");
 				System.exit(1);
 			}
-			UbuntuOneConnector uoc = new UbuntuOneConnector(args[0], args[1],
-					args[2], args[3]);
-			if (uoc.connect("")) {
+			HashMap<String, String> params = new HashMap<String, String>(4);
+			params.put("customer_key", args[0]);
+			params.put("customer_secret", args[1]);
+			params.put("token_key", args[2]);
+			params.put("token_secret", args[3]);
+			IStorageConnector uoc = StorageConnectorFactory
+					.create("de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector",
+							params);
+			if (uoc.connect()) {
 				System.out.println("Connected");
 			} else {
 				System.err.println("Connection Error!");
 				System.exit(2);
 			}
-			uoc.test();
+			((UbuntuOneConnector) uoc).test();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -55,68 +61,10 @@ public class UbuntuOneConnector implements IStorageConnector {
 	private HashMap<String, UbuntuOneVolumeModel> volumes = new HashMap<String, UbuntuOneVolumeModel>();
 
 	/**
-	 * This constructor initializes the UbuntuOneConnector with a username and
-	 * password combination. During the
-	 * {@link de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#connect(String)}
-	 * process a customer and an application token is retrieved in a 2-way
-	 * handshake. The tokens should be stored in the config with a salt to
-	 * prevent the application from creating new ones on each connect process.
-	 * 
-	 * @param username
-	 *            The email address or username to access the UbuntuOne account
-	 * @param password
-	 *            The password for the given account
-	 */
-	public UbuntuOneConnector(String username, String password) {
-		this.username = username;
-		this.password = password;
-	}
-
-	/**
-	 * This constructor initializes the UbuntuOneConnector directly with the
-	 * customer and application tokens. During the
-	 * {@link de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#connect(String)}
-	 * process the given tokens are used. If <code>connect()</code> returns
-	 * false, one has to authenticate with a username and password
-	 * {@link de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#UbuntuOneConnector(String, String)}
-	 * .
-	 * 
-	 * @param customer_key
-	 *            The customer public key
-	 * @param customer_secret
-	 *            The customer secret key
-	 * @param token_key
-	 *            The application public key
-	 * @param token_secret
-	 *            The application secret key
-	 */
-	public UbuntuOneConnector(String customer_key, String customer_secret,
-			String token_key, String token_secret) {
-		this.ctoken = new Token(customer_key, customer_secret);
-		this.stoken = new Token(token_key, token_secret);
-	}
-
-	/**
-	 * Similar to the String-based contructor
-	 * {@link de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#UbuntuOneConnector(String, String, String, String)}
-	 * , but takes the customer and application tokens as
-	 * {@link org.scribe.model.Token}
-	 * 
-	 * @param ctoken
-	 *            The customer token
-	 * @param stoken
-	 *            The application token
-	 */
-	public UbuntuOneConnector(Token ctoken, Token stoken) {
-		this.ctoken = ctoken;
-		this.stoken = stoken;
-	}
-
-	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public boolean connect(String service) {
+	public boolean connect() {
 		if (this.ctoken != null && this.stoken != null) {
 			// We already have the two token sets and will try to use them
 			this.service = (UbuntuOneService) new ServiceBuilder()
@@ -137,6 +85,51 @@ public class UbuntuOneConnector implements IStorageConnector {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * This function initializes the UbuntuOneConnector with the customer and
+	 * application tokens. During the
+	 * {@link de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#connect(String)}
+	 * process the given tokens are used. If <code>connect()</code> returns
+	 * false, this class has to be reinstanciated and initialized with username
+	 * and password.
+	 * 
+	 * @param param
+	 *            There are two creation modes. In case the tokens already
+	 *            exist, the HashMap has to contain the following keys:
+	 *            <ul>
+	 *            <li><code>customer_key</li>
+	 *            <li><code>customer_secret</code></li>
+	 *            <li><code>token_key</code></li>
+	 *            <li><code>token_secret</code></li>
+	 *            </ul>
+	 *            or
+	 *            <ul>
+	 *            <li><code>username</code></li>
+	 *            <li><code>password</code></li>
+	 *            </ul>
+	 * 
+	 */
+	@Override
+	public IStorageConnector create(HashMap<String, String> parameter) {
+		if (parameter.containsKey("customer_key")
+				&& parameter.containsKey("customer_secret")
+				&& parameter.containsKey("token_key")
+				&& parameter.containsKey("token_secret")) {
+			this.ctoken = new Token(parameter.get("customer_key"),
+					parameter.get("customer_secret"));
+			this.stoken = new Token(parameter.get("token_key"),
+					parameter.get("token_secret"));
+		} else if (parameter.containsKey("username")
+				&& parameter.containsKey("password")) {
+			this.username = parameter.get("username");
+			this.password = parameter.get("password");
+		} else {
+			System.err
+					.println("Either customer_key, customer_secret, token_key and token_secret or username and password have to be set during creation!");
+		}
+		return this;
 	}
 
 	public VolumeModel createVolume(String name) {
@@ -295,7 +288,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * as a HTTP <code>verb</code> Request Method. The request is signed with
 	 * the secret customer and application keys.
 	 * 
-	 * {@link http://tools.ietf.org/html/rfc2616#section-5.1.1}.
+	 * HTTP Request Methods: http://tools.ietf.org/html/rfc2616#section-5.1.1
 	 * 
 	 * @param verb
 	 *            The HTTP Request Method
