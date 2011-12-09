@@ -73,7 +73,7 @@ public class SugarSyncConnector implements IStorageConnector {
 				fos.write(inputBytes, 0, readLength);
 			}
 			System.out.println("Getting done.");
-			ssc.delete(args[4]);
+			System.out.println(ssc.delete(args[4]));
 			System.out.println("Deleting done.");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -564,9 +564,26 @@ public class SugarSyncConnector implements IStorageConnector {
 				else
 					parent = this.getResourceURL("", true);
 
-				this.createFile(
-						resource.substring(resource.lastIndexOf("/") + 1), f,
-						parent);
+				String fileName = resource
+						.substring(resource.lastIndexOf("/") + 1);
+				String resourceURL = this.findFileInFolder(fileName, parent
+						+ "/contents?type=file");
+				try {
+					if (resourceURL != null) {
+						System.err
+								.println("The file already exists. DELETE it. "
+										+ resourceURL);
+						HttpsURLConnection con = SugarSyncConnector
+								.getConnection(resourceURL, this.token,
+										"DELETE");
+						con.connect();
+						con.disconnect();
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				this.createFile(fileName, f, parent);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return false;
