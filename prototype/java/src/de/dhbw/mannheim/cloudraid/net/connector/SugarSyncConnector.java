@@ -68,6 +68,7 @@ public class SugarSyncConnector implements IStorageConnector {
 			ssc.connect();
 
 			ssc.put(args[4]);
+			ssc.put(args[4]);
 			System.out.println("Uploading done.");
 			InputStream is = ssc.get(args[4]);
 			File f = new File("/tmp/" + args[4]);
@@ -144,11 +145,11 @@ public class SugarSyncConnector implements IStorageConnector {
 	public IStorageConnector create(HashMap<String, String> parameter) {
 		if (parameter.containsKey("username")
 				&& parameter.containsKey("password")
-				&& parameter.containsKey("accessKeyId")
+				&& parameter.containsKey("accessKey")
 				&& parameter.containsKey("privateAccessKey")) {
 			this.username = parameter.get("username");
 			this.password = parameter.get("password");
-			this.accessKeyId = parameter.get("accessKeyId");
+			this.accessKeyId = parameter.get("accessKey");
 			this.privateAccessKey = parameter.get("privateAccessKey");
 		} else {
 			System.err
@@ -597,7 +598,11 @@ public class SugarSyncConnector implements IStorageConnector {
 						HttpsURLConnection con = SugarSyncConnector
 								.getConnection(resourceURL, this.token,
 										"DELETE");
+						con.setDoInput(true);
 						con.connect();
+						InputStream is = con.getInputStream();
+						while (is.read() >= 0) {
+						}
 						con.disconnect();
 					}
 				} catch (Exception e) {
