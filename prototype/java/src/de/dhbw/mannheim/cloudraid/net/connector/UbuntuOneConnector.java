@@ -35,10 +35,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 				params.put("customer_secret", args[1]);
 				params.put("token_key", args[2]);
 				params.put("token_secret", args[3]);
-			} else {
-				System.err
-						.println("usage: <customer_key> <customer_secret> <token_key> <token_secret>");
-				System.exit(1);
 			}
 			IStorageConnector uoc = StorageConnectorFactory
 					.create("de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector",
