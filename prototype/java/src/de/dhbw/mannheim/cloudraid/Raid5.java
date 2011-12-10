@@ -51,86 +51,6 @@ public class Raid5 {
 	}
 
 	/**
-	 * This function splits the content of the given `infile` to the files that
-	 * are specified by `dev0`, `dev1` and `dev2`. The parity moves after each
-	 * byte. Its position for the first byte is `dev2`, for the second byte is
-	 * `dev0`, for the third byte is `dev1` and for the forth byte `dev2` again.
-	 * 
-	 * @param infile
-	 *            The filepath to the input file that should be split for the
-	 *            RAID
-	 * @param dev0
-	 *            The filepath to the first device file
-	 * @param dev1
-	 *            The filepath to the second device file
-	 * @param dev2
-	 *            The filepath to the third device file
-	 * @throws IOException
-	 */
-	public static void split(String infile, String dev0, String dev1,
-			String dev2) throws IOException {
-		InputStream in = new FileInputStream(new File(infile));
-		OutputStream[] out = { new FileOutputStream(dev0),
-				new FileOutputStream(dev1), new FileOutputStream(dev2) };
-
-		// we read 2 characters for easier working
-		byte[] chars = new byte[2];
-		int charNum = in.read(chars);
-		// the initial device for the parity is 2. We will increment it, so the
-		// next device will be 0
-		int parityPos = 2;
-
-		while (charNum > 0) {
-			int a = 0, b = 0;
-
-			// we check whether we have read 1 or 2 bytes. And since we always
-			// read two bytes, we can decide here, if the input file has an odd
-			// file size
-			if (charNum == 2) {
-				int index = 7;
-				// we take the ordinal value of both read bytes an put them into
-				// a single integer, where the first byte uses the bits 8 to 15
-				// and the second byte uses 0 to 7
-				int doubleChar = ((chars[0]) << 8) | chars[1];
-
-				// iterating over the EXPONENTS to split the two characters into
-				// two separat bytes
-				for (int i = 15; i >= 0; i -= 2) {
-					// if the according bit is set, we set the bit in our output
-					// byte. This is the same as `a = a | Math.pow(2,index)`
-					if ((doubleChar & EXPONENTS[i]) > 0)
-						a |= (1 << index);
-					if ((doubleChar & EXPONENTS[i - 1]) > 0)
-						b |= (1 << index);
-					index--;
-				}
-				// we now write the byte for each device. Because we use an
-				// array for storing the devices, we can simply increment the
-				// parity position and detect the new device for the parity
-				out[(parityPos + 1) % 3].write(a);
-				out[(parityPos + 2) % 3].write(b);
-				// This writes the parity as `a xor b`
-				out[parityPos].write(a ^ b);
-			} else {
-				// this is called if the file size is odd
-				// this calculates the 1st-complement
-				int p = (~chars[0]) + 256;
-				// and here we write the byte and the parity
-				out[(parityPos + 1) % 3].write(chars[0]);
-				out[parityPos].write(p);
-			}
-			parityPos = (++parityPos) % 3;
-			// try to read the next 2 bytes
-			charNum = in.read(chars);
-		}
-		in.close();
-		out[0].close();
-		out[1].close();
-		out[2].close();
-
-	}
-
-	/**
 	 * This function merges the content of the given device files `dev0`, `dev1`
 	 * and `dev2` to the `outfile`. The device for the first byte partiy must be
 	 * `dev2`, for the second byte must be `dev0` and for the third byte must be
@@ -219,6 +139,86 @@ public class Raid5 {
 		in[0].close();
 		in[1].close();
 		in[2].close();
+
+	}
+
+	/**
+	 * This function splits the content of the given `infile` to the files that
+	 * are specified by `dev0`, `dev1` and `dev2`. The parity moves after each
+	 * byte. Its position for the first byte is `dev2`, for the second byte is
+	 * `dev0`, for the third byte is `dev1` and for the forth byte `dev2` again.
+	 * 
+	 * @param infile
+	 *            The filepath to the input file that should be split for the
+	 *            RAID
+	 * @param dev0
+	 *            The filepath to the first device file
+	 * @param dev1
+	 *            The filepath to the second device file
+	 * @param dev2
+	 *            The filepath to the third device file
+	 * @throws IOException
+	 */
+	public static void split(String infile, String dev0, String dev1,
+			String dev2) throws IOException {
+		InputStream in = new FileInputStream(new File(infile));
+		OutputStream[] out = { new FileOutputStream(dev0),
+				new FileOutputStream(dev1), new FileOutputStream(dev2) };
+
+		// we read 2 characters for easier working
+		byte[] chars = new byte[2];
+		int charNum = in.read(chars);
+		// the initial device for the parity is 2. We will increment it, so the
+		// next device will be 0
+		int parityPos = 2;
+
+		while (charNum > 0) {
+			int a = 0, b = 0;
+
+			// we check whether we have read 1 or 2 bytes. And since we always
+			// read two bytes, we can decide here, if the input file has an odd
+			// file size
+			if (charNum == 2) {
+				int index = 7;
+				// we take the ordinal value of both read bytes an put them into
+				// a single integer, where the first byte uses the bits 8 to 15
+				// and the second byte uses 0 to 7
+				int doubleChar = ((chars[0]) << 8) | chars[1];
+
+				// iterating over the EXPONENTS to split the two characters into
+				// two separat bytes
+				for (int i = 15; i >= 0; i -= 2) {
+					// if the according bit is set, we set the bit in our output
+					// byte. This is the same as `a = a | Math.pow(2,index)`
+					if ((doubleChar & EXPONENTS[i]) > 0)
+						a |= (1 << index);
+					if ((doubleChar & EXPONENTS[i - 1]) > 0)
+						b |= (1 << index);
+					index--;
+				}
+				// we now write the byte for each device. Because we use an
+				// array for storing the devices, we can simply increment the
+				// parity position and detect the new device for the parity
+				out[(parityPos + 1) % 3].write(a);
+				out[(parityPos + 2) % 3].write(b);
+				// This writes the parity as `a xor b`
+				out[parityPos].write(a ^ b);
+			} else {
+				// this is called if the file size is odd
+				// this calculates the 1st-complement
+				int p = (~chars[0]) + 256;
+				// and here we write the byte and the parity
+				out[(parityPos + 1) % 3].write(chars[0]);
+				out[parityPos].write(p);
+			}
+			parityPos = (++parityPos) % 3;
+			// try to read the next 2 bytes
+			charNum = in.read(chars);
+		}
+		in.close();
+		out[0].close();
+		out[1].close();
+		out[2].close();
 
 	}
 
