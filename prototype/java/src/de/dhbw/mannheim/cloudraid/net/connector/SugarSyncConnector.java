@@ -50,22 +50,22 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	public static void main(String[] args) {
 		try {
-			if (args.length != 5) {
-				System.err
-						.println("usage: username password accessKey privateAccessKey resource");
-				System.out
-						.println("example for 'resource': 'Sample Documents/SugarSync QuickStart Guide.pdf'");
-				return;
-			}
 			HashMap<String, String> params = new HashMap<String, String>(4);
-			params.put("username", args[0]);
-			params.put("password", args[1]);
-			params.put("accessKey", args[2]);
-			params.put("privateAccessKey", args[3]);
+			if (args.length >= 4) {
+				params.put("username", args[0]);
+				params.put("password", args[1]);
+				params.put("accessKey", args[2]);
+				params.put("privateAccessKey", args[3]);
+			}
 			IStorageConnector ssc = StorageConnectorFactory
 					.create("de.dhbw.mannheim.cloudraid.net.connector.SugarSyncConnector",
 							params);
 			ssc.connect();
+			if (args.length != 5) {
+				System.err
+						.println("You have to pass a resource as 5th parameter");
+				return;
+			}
 
 			ssc.put(args[4]);
 			ssc.put(args[4]);
@@ -140,9 +140,11 @@ public class SugarSyncConnector implements IStorageConnector {
 	 *            <li><code>accessKeyId</code></li>
 	 *            <li><code>privateAccessKey</code></li>
 	 *            </ul>
+	 * @throws InstantiationException
 	 */
 	@Override
-	public IStorageConnector create(HashMap<String, String> parameter) {
+	public IStorageConnector create(HashMap<String, String> parameter)
+			throws InstantiationException {
 		if (parameter.containsKey("username")
 				&& parameter.containsKey("password")
 				&& parameter.containsKey("accessKey")
@@ -152,8 +154,8 @@ public class SugarSyncConnector implements IStorageConnector {
 			this.accessKeyId = parameter.get("accessKey");
 			this.privateAccessKey = parameter.get("privateAccessKey");
 		} else {
-			System.err
-					.println("username, password, accessKeyId and privateAccessKey have to be set during creation!");
+			throw new InstantiationException(
+					"username, password, accessKeyId and privateAccessKey have to be set during creation!");
 		}
 		docBuilder = null;
 		try {

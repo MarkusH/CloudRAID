@@ -25,16 +25,21 @@ public class UbuntuOneConnector implements IStorageConnector {
 
 	public static void main(String[] args) {
 		try {
-			if (args.length != 5) {
+			HashMap<String, String> params = new HashMap<String, String>();
+			if (args.length == 2) {
+				params.put("username", args[0]);
+				params.put("password", args[1]);
+
+			} else if (args.length == 4) {
+				params.put("customer_key", args[0]);
+				params.put("customer_secret", args[1]);
+				params.put("token_key", args[2]);
+				params.put("token_secret", args[3]);
+			} else {
 				System.err
-						.println("usage: <customer_key> <customer_secret> <token_key> <token_secret> <resource>");
+						.println("usage: <customer_key> <customer_secret> <token_key> <token_secret>");
 				System.exit(1);
 			}
-			HashMap<String, String> params = new HashMap<String, String>(4);
-			params.put("customer_key", args[0]);
-			params.put("customer_secret", args[1]);
-			params.put("token_key", args[2]);
-			params.put("token_secret", args[3]);
 			IStorageConnector uoc = StorageConnectorFactory
 					.create("de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector",
 							params);
@@ -109,10 +114,12 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 *            <li><code>username</code></li>
 	 *            <li><code>password</code></li>
 	 *            </ul>
+	 * @throws InstantiationException
 	 * 
 	 */
 	@Override
-	public IStorageConnector create(HashMap<String, String> parameter) {
+	public IStorageConnector create(HashMap<String, String> parameter)
+			throws InstantiationException {
 		if (parameter.containsKey("customer_key")
 				&& parameter.containsKey("customer_secret")
 				&& parameter.containsKey("token_key")
@@ -126,8 +133,8 @@ public class UbuntuOneConnector implements IStorageConnector {
 			this.username = parameter.get("username");
 			this.password = parameter.get("password");
 		} else {
-			System.err
-					.println("Either customer_key, customer_secret, token_key and token_secret or username and password have to be set during creation!");
+			throw new InstantiationException(
+					"Either customer_key, customer_secret, token_key and token_secret or username and password have to be set during creation!");
 		}
 		return this;
 	}

@@ -28,8 +28,10 @@ public interface IStorageConnector {
 	 *            initialization.
 	 * 
 	 * @return Returns a new initialized instance of the <code>connector</code>.
+	 * @throws InstantiationException
 	 */
-	public IStorageConnector create(HashMap<String, String> parameter);
+	public IStorageConnector create(HashMap<String, String> parameter)
+			throws InstantiationException;
 
 	/**
 	 * Deletes a file on a cloud service.
