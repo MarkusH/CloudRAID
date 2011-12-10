@@ -148,8 +148,8 @@ public class SugarSyncConnector implements IStorageConnector {
 				&& parameter.containsKey("privateAccessKey")) {
 			this.username = parameter.get("username");
 			this.password = parameter.get("password");
-			this.accessKeyId = parameter.get("username");
-			this.privateAccessKey = parameter.get("password");
+			this.accessKeyId = parameter.get("accessKeyId");
+			this.privateAccessKey = parameter.get("privateAccessKey");
 		} else {
 			System.err
 					.println("username, password, accessKeyId and privateAccessKey have to be set during creation!");
