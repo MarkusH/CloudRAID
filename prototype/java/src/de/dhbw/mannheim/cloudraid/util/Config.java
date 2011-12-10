@@ -76,10 +76,10 @@ public class Config extends HashMap<String, String> {
 
 		c.put("boolean.1", true, true);
 		c.put("boolean.2", true);
-		c.put("double.1", 1.0d/7.0d, true);
-		c.put("double.2", 1.0d/7.0d);
-		c.put("float.1", 1.0f/13.0f, true);
-		c.put("float.2", 1.0f/13.0f);
+		c.put("double.1", 1.0d / 7.0d, true);
+		c.put("double.2", 1.0d / 7.0d);
+		c.put("float.1", 1.0f / 13.0f, true);
+		c.put("float.2", 1.0f / 13.0f);
 		c.put("int.1", 42, true);
 		c.put("int.2", 42);
 		c.put("long.1", 9876543210l, true);
@@ -442,10 +442,24 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 */
+	public synchronized void put(String key, boolean value, boolean encrypted) {
+		this.put(key, String.valueOf(value), encrypted);
+	}
+
+	/**
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
 	 */
 	public synchronized void put(String key, double value) {
 		this.put(key, String.valueOf(value), false);
+	}
+
+	/**
+	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 */
+	public synchronized void put(String key, double value, boolean encrypted) {
+		this.put(key, String.valueOf(value), encrypted);
 	}
 
 	/**
@@ -456,6 +470,13 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 */
+	public synchronized void put(String key, float value, boolean encrypted) {
+		this.put(key, String.valueOf(value), encrypted);
+	}
+
+	/**
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
 	 */
 	public synchronized void put(String key, int value) {
@@ -463,10 +484,24 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 */
+	public synchronized void put(String key, int value, boolean encrypted) {
+		this.put(key, String.valueOf(value), encrypted);
+	}
+
+	/**
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
 	 */
 	public synchronized void put(String key, long value) {
 		this.put(key, String.valueOf(value), false);
+	}
+
+	/**
+	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 */
+	public synchronized void put(String key, long value, boolean encrypted) {
+		this.put(key, String.valueOf(value), encrypted);
 	}
 
 	/**
@@ -482,41 +517,6 @@ public class Config extends HashMap<String, String> {
 	@Override
 	public synchronized String put(String key, String value) {
 		return this.put(key, value, false);
-	}
-
-	/**
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
-	 */
-	public synchronized void put(String key, boolean value, boolean encrypted) {
-		this.put(key, String.valueOf(value), encrypted);
-	}
-
-	/**
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
-	 */
-	public synchronized void put(String key, double value, boolean encrypted) {
-		this.put(key, String.valueOf(value), encrypted);
-	}
-
-	/**
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
-	 */
-	public synchronized void put(String key, float value, boolean encrypted) {
-		this.put(key, String.valueOf(value), encrypted);
-	}
-
-	/**
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
-	 */
-	public synchronized void put(String key, int value, boolean encrypted) {
-		this.put(key, String.valueOf(value), encrypted);
-	}
-
-	/**
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
-	 */
-	public synchronized void put(String key, long value, boolean encrypted) {
-		this.put(key, String.valueOf(value), encrypted);
 	}
 
 	/**
