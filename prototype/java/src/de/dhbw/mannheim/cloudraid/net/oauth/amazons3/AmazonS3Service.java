@@ -36,49 +36,66 @@ public class AmazonS3Service implements OAuthService {
 	}
 
 	/**
-	 * Returns the customer token!
-	 * 
-	 * @see de.dhbw.mannheim.cloudraid.net.oauth.AmazonS3.AmazonS3Service#getAccessToken(Token,
-	 *      Verifier)
-	 * @param requestToken
-	 * @return
+	 * Not needed for Amazon S3!
 	 */
 	public Token getAccessToken(Token requestToken) {
 		return null;
 	}
 
 	/**
-	 * Returns the customer token!
+	 * Not needed for Amazon S3!
 	 */
 	@Override
 	public Token getAccessToken(Token requestToken, Verifier verifier) {
 		return null;
 	}
 
+	/**
+	 * Not needed for Amazon S3!
+	 */
 	@Override
 	public String getAuthorizationUrl(Token requestToken) {
 		return "";
 	}
 
+	/**
+	 * This function builds the bucket endpoint. If the bucket contains upper
+	 * case characters an URL styled endpoint (
+	 * <code>https://s3.amazonaws.com/ThiIsABucket/</code>) is returned.
+	 * Otherwise the return value is in domain style and similar to
+	 * <code>https://thisisabucket.s3.amazonaws.com/</code>.
+	 * 
+	 * @param bucket
+	 * @return The bucket endpoint with taking care of capital letters
+	 */
 	public String getBucketEndpoint(String bucket) {
-		return String.format(this.api.getBucketEndpoint(), bucket);
+		if (bucket.toLowerCase().equals(bucket)) {
+			return String.format(this.api.getBucketEndpoint(), bucket);
+		} else {
+			return this.api.getS3Endpoint() + bucket + "/";
+		}
 	}
 
 	/**
-	 * Here we get our consumer token and api token that will be used by this
-	 * application
-	 * 
-	 * @see org.scribe.oauth.OAuthService#getRequestToken()
+	 * Not needed for Amazon S3!
 	 */
 	@Override
 	public Token getRequestToken() {
 		return null;
 	}
 
+	/**
+	 * 
+	 * @return Returns the Amazon S3 base URL:
+	 *         <code>https://s3.amazonaws.com</code>
+	 */
 	public String getS3Endpoint() {
 		return api.getS3Endpoint();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getVersion() {
 		return VERSION;
@@ -102,6 +119,9 @@ public class AmazonS3Service implements OAuthService {
 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void signRequest(Token accessToken, OAuthRequest request) {
 		signRequest(request);

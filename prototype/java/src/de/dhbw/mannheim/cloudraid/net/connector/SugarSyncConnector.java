@@ -20,6 +20,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
 public class SugarSyncConnector implements IStorageConnector {
@@ -251,6 +252,12 @@ public class SugarSyncConnector implements IStorageConnector {
 		con.disconnect();
 	}
 
+	@Override
+	public VolumeModel createVolume(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -315,6 +322,11 @@ public class SugarSyncConnector implements IStorageConnector {
 			e.printStackTrace();
 			return true;
 		}
+	}
+
+	@Override
+	public void deleteVolume(String name) {
+		// TODO Auto-generated method stub
 	}
 
 	/**
@@ -514,6 +526,12 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	@Override
+	public VolumeModel getVolume(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
 	public String head(String resource) {
 		// TODO Auto-generated method stub
 		return null;
@@ -551,6 +569,11 @@ public class SugarSyncConnector implements IStorageConnector {
 
 		return !doc.getDocumentElement().getElementsByTagName("displayName")
 				.item(0).getTextContent().equals("Magic Briefcase");
+	}
+
+	@Override
+	public void loadVolumes() {
+		// TODO Auto-generated method stub
 	}
 
 	@Override

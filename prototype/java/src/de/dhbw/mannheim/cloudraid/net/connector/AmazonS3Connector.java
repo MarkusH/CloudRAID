@@ -1,14 +1,25 @@
 package de.dhbw.mannheim.cloudraid.net.connector;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.HashMap;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Verb;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
+import de.dhbw.mannheim.cloudraid.net.model.amazons3.AmazonS3VolumeModel;
 import de.dhbw.mannheim.cloudraid.net.oauth.amazons3.AmazonS3Api;
 import de.dhbw.mannheim.cloudraid.net.oauth.amazons3.AmazonS3Service;
 
@@ -30,7 +41,6 @@ public class AmazonS3Connector implements IStorageConnector {
 				System.err.println("Connection Error!");
 				System.exit(2);
 			}
-			// ((AmazonS3Connector) as3c).test();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -39,8 +49,12 @@ public class AmazonS3Connector implements IStorageConnector {
 
 	private String accessKeyId = null;
 	private String secretAccessKey = null;
+	private DocumentBuilder docBuilder;
+	private InputSource is;
 
 	private AmazonS3Service service;
+
+	private HashMap<String, AmazonS3VolumeModel> volumes = null;
 
 	/**
 	 * {@inheritDoc}
@@ -51,6 +65,14 @@ public class AmazonS3Connector implements IStorageConnector {
 				.provider(AmazonS3Api.class).apiKey(this.accessKeyId)
 				.apiSecret(this.secretAccessKey).build();
 		loadVolumes();
+		// This works, since `this.volumes` is null by default and only becomes
+		// a HashMap iff `loadVolumes()` succeeded.
+		if (this.volumes == null) {
+			// but we create the volumes map here just to ensure that we do not
+			// run in NullPointerExceptions
+			this.volumes = new HashMap<String, AmazonS3VolumeModel>();
+			return false;
+		}
 		return true;
 	}
 
@@ -81,9 +103,18 @@ public class AmazonS3Connector implements IStorageConnector {
 			throw new InstantiationException(
 					"accessKeyId and secretAccessKey have to be set during creation!");
 		}
+		try {
+			docBuilder = DocumentBuilderFactory.newInstance()
+					.newDocumentBuilder();
+			docBuilder.setErrorHandler(null);
+			is = new InputSource();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		}
 		return this;
 	}
 
+	@Override
 	public VolumeModel createVolume(String name) {
 		return null;
 	}
@@ -96,6 +127,7 @@ public class AmazonS3Connector implements IStorageConnector {
 		return false;
 	}
 
+	@Override
 	public void deleteVolume(String name) {
 	}
 
@@ -107,6 +139,7 @@ public class AmazonS3Connector implements IStorageConnector {
 		return null;
 	}
 
+	@Override
 	public VolumeModel getVolume(String name) {
 		return null;
 	}
@@ -119,10 +152,34 @@ public class AmazonS3Connector implements IStorageConnector {
 		return null;
 	}
 
+	@Override
 	public void loadVolumes() {
 		Response response = sendRequest(Verb.GET, this.service.getS3Endpoint());
-		System.out.println(response.getCode());
-		System.out.println(response.getBody());
+		if (response.getCode() == 200) {
+			if (this.volumes == null) {
+				this.volumes = new HashMap<String, AmazonS3VolumeModel>();
+			}
+			try {
+				is.setCharacterStream(new StringReader(response.getBody()));
+				Document doc = docBuilder.parse(is);
+				NodeList nl = doc.getDocumentElement().getElementsByTagName(
+						"Bucket");
+				for (int i = 0; i < nl.getLength(); i++) {
+					AmazonS3VolumeModel volume = new AmazonS3VolumeModel(
+							nl.item(i));
+					if (this.volumes.containsKey(volume.getName())) {
+						this.volumes.get(volume.getName()).addMetadata(
+								volume.getMetadata());
+					} else {
+						this.volumes.put(volume.getName(), volume);
+					}
+				}
+			} catch (SAXException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
@@ -197,6 +254,4 @@ public class AmazonS3Connector implements IStorageConnector {
 		return response;
 	}
 
-	public void test() {
-	}
 }

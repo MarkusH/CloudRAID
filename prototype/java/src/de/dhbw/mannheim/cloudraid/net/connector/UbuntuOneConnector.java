@@ -45,7 +45,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 				System.err.println("Connection Error!");
 				System.exit(2);
 			}
-			((UbuntuOneConnector) uoc).test();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -135,6 +134,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return this;
 	}
 
+	@Override
 	public VolumeModel createVolume(String name) {
 		if (this.volumes.containsKey(name)) {
 			return this.volumes.get(name);
@@ -166,6 +166,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return (response.getCode() == 200 || response.getCode() == 404);
 	}
 
+	@Override
 	public void deleteVolume(String name) {
 		if (this.volumes.containsKey(name)) {
 			Response response = sendRequest(Verb.DELETE,
@@ -192,6 +193,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		}
 	}
 
+	@Override
 	public VolumeModel getVolume(String name) {
 		if (this.volumes.containsKey(name)) {
 			return this.volumes.get(name);
@@ -220,6 +222,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return null;
 	}
 
+	@Override
 	public void loadVolumes() {
 		Response response = sendRequest(Verb.GET,
 				this.service.getFileStorageEndpoint() + "volumes");
@@ -334,16 +337,4 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return response;
 	}
 
-	public void test() {
-		this.loadVolumes();
-		System.out.println(this.volumes);
-
-		this.createVolume("CloudRAID");
-		System.out.println(this.volumes);
-
-		this.deleteVolume("CloudRAID");
-		System.out.println(this.volumes);
-
-		this.delete("test.txt");
-	}
 }

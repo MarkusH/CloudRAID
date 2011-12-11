@@ -3,6 +3,8 @@ package de.dhbw.mannheim.cloudraid.net.connector;
 import java.io.InputStream;
 import java.util.HashMap;
 
+import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
+
 /**
  * Defines the methods to be implemented by classes that are used to connect to
  * cloud services.
@@ -33,6 +35,8 @@ public interface IStorageConnector {
 	public IStorageConnector create(HashMap<String, String> parameter)
 			throws InstantiationException;
 
+	public VolumeModel createVolume(String name);
+
 	/**
 	 * Deletes a file on a cloud service.
 	 * 
@@ -44,6 +48,8 @@ public interface IStorageConnector {
 	 */
 	public boolean delete(String resource);
 
+	public void deleteVolume(String name);
+
 	/**
 	 * Gets a file from a cloud service.
 	 * 
@@ -51,12 +57,16 @@ public interface IStorageConnector {
 	 */
 	public InputStream get(String resource);
 
+	public VolumeModel getVolume(String name);
+
 	/**
 	 * Returns meta data for a resource.
 	 * 
 	 * @return The meta data.
 	 */
 	public String head(String resource);
+
+	public void loadVolumes();
 
 	/**
 	 * Returns the options available for a resource.
