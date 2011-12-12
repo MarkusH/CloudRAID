@@ -7,10 +7,6 @@ import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 
 public class UbuntuOneVolumeModel extends VolumeModel {
 
-	public UbuntuOneVolumeModel(String content) throws JSONException {
-		this(new JSONObject(content));
-	}
-
 	public UbuntuOneVolumeModel(JSONObject object) {
 		String[] names = JSONObject.getNames(object);
 		for (int i = 0; i < names.length; i++) {
@@ -20,7 +16,11 @@ public class UbuntuOneVolumeModel extends VolumeModel {
 				e.printStackTrace();
 			}
 		}
-		this.setName(((String)this.getMetadata("path")).substring(2));
+		this.setName(((String) this.getMetadata("path")).substring(2));
+	}
+
+	public UbuntuOneVolumeModel(String content) throws JSONException {
+		this(new JSONObject(content));
 	}
 
 	@Override

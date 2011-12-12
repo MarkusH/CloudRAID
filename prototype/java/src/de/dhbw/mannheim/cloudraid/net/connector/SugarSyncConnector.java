@@ -20,6 +20,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
 public class SugarSyncConnector implements IStorageConnector {
@@ -50,22 +51,22 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	public static void main(String[] args) {
 		try {
-			if (args.length != 5) {
-				System.err
-						.println("usage: username password accessKey privateAccessKey resource");
-				System.out
-						.println("example for 'resource': 'Sample Documents/SugarSync QuickStart Guide.pdf'");
-				return;
-			}
 			HashMap<String, String> params = new HashMap<String, String>(4);
-			params.put("username", args[0]);
-			params.put("password", args[1]);
-			params.put("accessKey", args[2]);
-			params.put("privateAccessKey", args[3]);
+			if (args.length >= 4) {
+				params.put("username", args[0]);
+				params.put("password", args[1]);
+				params.put("accessKey", args[2]);
+				params.put("privateAccessKey", args[3]);
+			}
 			IStorageConnector ssc = StorageConnectorFactory
 					.create("de.dhbw.mannheim.cloudraid.net.connector.SugarSyncConnector",
 							params);
 			ssc.connect();
+			if (args.length != 5) {
+				System.err
+						.println("You have to pass a resource as 5th parameter");
+				return;
+			}
 
 			ssc.put(args[4]);
 			ssc.put(args[4]);
@@ -140,9 +141,11 @@ public class SugarSyncConnector implements IStorageConnector {
 	 *            <li><code>accessKeyId</code></li>
 	 *            <li><code>privateAccessKey</code></li>
 	 *            </ul>
+	 * @throws InstantiationException
 	 */
 	@Override
-	public IStorageConnector create(HashMap<String, String> parameter) {
+	public IStorageConnector create(HashMap<String, String> parameter)
+			throws InstantiationException {
 		if (parameter.containsKey("username")
 				&& parameter.containsKey("password")
 				&& parameter.containsKey("accessKey")
@@ -152,8 +155,8 @@ public class SugarSyncConnector implements IStorageConnector {
 			this.accessKeyId = parameter.get("accessKey");
 			this.privateAccessKey = parameter.get("privateAccessKey");
 		} else {
-			System.err
-					.println("username, password, accessKeyId and privateAccessKey have to be set during creation!");
+			throw new InstantiationException(
+					"username, password, accessKeyId and privateAccessKey have to be set during creation!");
 		}
 		docBuilder = null;
 		try {
@@ -249,6 +252,12 @@ public class SugarSyncConnector implements IStorageConnector {
 		con.disconnect();
 	}
 
+	@Override
+	public VolumeModel createVolume(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -313,6 +322,11 @@ public class SugarSyncConnector implements IStorageConnector {
 			e.printStackTrace();
 			return true;
 		}
+	}
+
+	@Override
+	public void deleteVolume(String name) {
+		// TODO Auto-generated method stub
 	}
 
 	/**
@@ -512,6 +526,12 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	@Override
+	public VolumeModel getVolume(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
 	public String head(String resource) {
 		// TODO Auto-generated method stub
 		return null;
@@ -549,6 +569,11 @@ public class SugarSyncConnector implements IStorageConnector {
 
 		return !doc.getDocumentElement().getElementsByTagName("displayName")
 				.item(0).getTextContent().equals("Magic Briefcase");
+	}
+
+	@Override
+	public void loadVolumes() {
+		// TODO Auto-generated method stub
 	}
 
 	@Override
