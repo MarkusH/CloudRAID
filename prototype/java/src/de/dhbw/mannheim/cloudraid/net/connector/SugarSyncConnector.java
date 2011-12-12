@@ -600,6 +600,8 @@ public class SugarSyncConnector implements IStorageConnector {
 										"DELETE");
 						con.setDoInput(true);
 						con.connect();
+						// Do the following steps to _really_ delete the file.
+						// If the following steps are missing, the files do net get deleted.
 						InputStream is = con.getInputStream();
 						while (is.read() >= 0) {
 						}
