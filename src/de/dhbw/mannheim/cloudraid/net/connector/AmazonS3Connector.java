@@ -227,6 +227,7 @@ public class AmazonS3Connector implements IStorageConnector {
 		Response response = request.send();
 		System.err.println(String.format("@Response(%d, %s, %s)",
 				response.getCode(), verb, endpoint));
+		System.err.print(response.getBody());
 		System.err.flush();
 		return response;
 	}

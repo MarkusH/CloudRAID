@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "RaidAccessInterface.h"
+#include "de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface.h"
 #ifdef _DEBUG
     #define DEBUGPRINT(...)     printf(__VA_ARGS__);
 #else
@@ -237,7 +237,7 @@ int main(int argc, const char* argv[]) {
  * Implements the splitInterface method defined in the Java RaidAccessInterface
  * class.
  */
-JNIEXPORT void JNICALL Java_RaidAccessInterface_splitInterface
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
   (JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4) {
     /* Convert the Java Strings to char arrays for usage in this C program. */
     const char *in = (*env)->GetStringUTFChars(env, str1, 0);
@@ -274,7 +274,7 @@ JNIEXPORT void JNICALL Java_RaidAccessInterface_splitInterface
  * Implements the mergeInterface method defined in the Java RaidAccessInterface
  * class.
  */
-JNIEXPORT void JNICALL Java_RaidAccessInterface_mergeInterface
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
   (JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4) {
     /* Convert the Java Strings to char arrays for usage in the C program.  */
     const char *out = (*env)->GetStringUTFChars(env, str1, 0);
