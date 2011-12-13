@@ -23,6 +23,16 @@ package de.dhbw.mannheim.cloudraid.net.model;
 
 import java.util.HashMap;
 
+/**
+ * An {@link DirectoryModel} is a special {@link EntryModel} that can hold
+ * multiple {@link DirectoryModel}s and {@link EntryModel}s. So the directory
+ * structure <code>Volume:/foo/bar/buz/test.txt</code> will result in a
+ * {@link VolumeModel} <code>Volume</code>, three nested {@link DirectoryModel}s
+ * <code>foo</code>, <code>bar</code> and <code>buz</code> and a
+ * {@link FileModel} <code>test.txt</code>.
+ * 
+ * @author Markus Holtermann
+ */
 public class DirectoryModel extends EntryModel {
 
 	private HashMap<String, DirectoryModel> directories = new HashMap<String, DirectoryModel>();
