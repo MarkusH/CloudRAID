@@ -26,6 +26,12 @@ import org.scribe.oauth.OAuthService;
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
+/**
+ * The API wrapper for Dropbox (API version 1).
+ * 
+ * @author Florian Bausch
+ * 
+ */
 public class DropboxConnector implements IStorageConnector {
 	private final static String ROOT_NAME = "sandbox";
 	private final static String DELETE_URL = "https://api.dropbox.com/1/fileops/delete?root="
@@ -84,6 +90,9 @@ public class DropboxConnector implements IStorageConnector {
 
 	private Token accessToken = null;
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean connect() {
 		service = new ServiceBuilder().provider(DropBoxApi.class)
@@ -119,6 +128,9 @@ public class DropboxConnector implements IStorageConnector {
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public IStorageConnector create(HashMap<String, String> parameter)
 			throws InstantiationException {
@@ -141,12 +153,17 @@ public class DropboxConnector implements IStorageConnector {
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public VolumeModel createVolume(String name) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean delete(String resource) {
 		System.out.println("DELETE " + resource);
@@ -164,12 +181,16 @@ public class DropboxConnector implements IStorageConnector {
 		return true;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void deleteVolume(String name) {
-		// TODO Auto-generated method stub
-
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public InputStream get(String resource) {
 		System.out.println("GET " + resource);
@@ -183,36 +204,49 @@ public class DropboxConnector implements IStorageConnector {
 		return response.getStream();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public VolumeModel getVolume(String name) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String head(String resource) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void loadVolumes() {
-		// TODO Auto-generated method stub
 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String[] options(String resource) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String post(String resource, String parent) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean put(String resource) {
 		System.out.println("PUT " + resource);

@@ -28,6 +28,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
 	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 	private final static String USER_INFO_URL = "https://api.sugarsync.com/user";
+
 	/**
 	 * Creates an HTTPS connection with some predefined values
 	 * 
@@ -44,6 +45,7 @@ public class SugarSyncConnector implements IStorageConnector {
 
 		return con;
 	}
+
 	public static void main(String[] args) {
 		try {
 			HashMap<String, String> params = new HashMap<String, String>(4);
@@ -84,6 +86,7 @@ public class SugarSyncConnector implements IStorageConnector {
 			return;
 		}
 	}
+
 	private String baseURL = null;
 
 	private DocumentBuilder docBuilder;
@@ -256,7 +259,6 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public VolumeModel createVolume(String name) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -328,7 +330,6 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public void deleteVolume(String name) {
-		// TODO Auto-generated method stub
 	}
 
 	/**
@@ -529,13 +530,11 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public VolumeModel getVolume(String name) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String head(String resource) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -575,18 +574,15 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public void loadVolumes() {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public String[] options(String resource) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String post(String resource, String parent) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
