@@ -25,13 +25,9 @@ import de.dhbw.mannheim.cloudraid.util.Config;
 
 public class SugarSyncConnector implements IStorageConnector {
 
-	private String token = "";
-	private String username, password, accessKeyId, privateAccessKey;
-	private DocumentBuilder docBuilder;
-	private String baseURL = null;
 	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
+	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 	private final static String USER_INFO_URL = "https://api.sugarsync.com/user";
-
 	/**
 	 * Creates an HTTPS connection with some predefined values
 	 * 
@@ -48,7 +44,6 @@ public class SugarSyncConnector implements IStorageConnector {
 
 		return con;
 	}
-
 	public static void main(String[] args) {
 		try {
 			HashMap<String, String> params = new HashMap<String, String>(4);
@@ -89,6 +84,13 @@ public class SugarSyncConnector implements IStorageConnector {
 			return;
 		}
 	}
+	private String baseURL = null;
+
+	private DocumentBuilder docBuilder;
+
+	private String token = "";
+
+	private String username, password, accessKeyId, privateAccessKey;
 
 	/**
 	 * Connects to the SugarSync cloud service.
@@ -185,7 +187,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private void createFile(String name, File f, String parent)
 			throws IOException, SAXException, ParserConfigurationException {
-		String mime = new MimetypesFileTypeMap().getContentType(f);
+		String mime = MIME_MAP.getContentType(f);
 		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><file><displayName>"
 				+ name
 				+ "</displayName><mediaType>"
@@ -626,7 +628,8 @@ public class SugarSyncConnector implements IStorageConnector {
 						con.setDoInput(true);
 						con.connect();
 						// Do the following steps to _really_ delete the file.
-						// If the following steps are missing, the files do net get deleted.
+						// If the following steps are missing, the files do net
+						// get deleted.
 						InputStream is = con.getInputStream();
 						while (is.read() >= 0) {
 						}

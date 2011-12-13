@@ -27,42 +27,42 @@ import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
 public class DropboxConnector implements IStorageConnector {
-	private String appKey = null;
-	private String appSecret = null;
-	private String sAccessToken = null;
-	private String accessToken = null;
-
-	private OAuthService service = null;
-
 	private final static String ROOT_NAME = "sandbox";
+	private final static String DELETE_URL = "https://api.dropbox.com/1/fileops/delete?root="
+			+ ROOT_NAME + "&path=";
 	private final static String GET_URL = "https://api-content.dropbox.com/1/files/"
 			+ ROOT_NAME + "/";
 	private final static String PUT_URL = "https://api-content.dropbox.com/1/files_put/"
 			+ ROOT_NAME + "/";
-	private final static String DELETE_URL = "https://api.dropbox.com/1/fileops/delete?root="
-			+ ROOT_NAME + "&path=";
 
 	public static void main(String[] args) {
 		try {
 			HashMap<String, String> params = new HashMap<String, String>();
-			if (args.length == 2) {
+			if (args.length == 3) {
 				params.put("appKey", args[0]);
 				params.put("appSecret", args[1]);
 
-			} else if (args.length == 4) {
+			} else if (args.length == 5) {
 				params.put("appKey", args[0]);
 				params.put("appSecret", args[1]);
-				params.put("accessToken", args[2]);
-				params.put("sAccessToken", args[3]);
+				params.put("accessTokenValue", args[2]);
+				params.put("accessTokenSecret", args[3]);
+
+			} else {
+				System.err.println("Wrong parameters");
+				System.err.println("usage: appKey appSecret path-to-resource");
+				System.err
+						.println("usage: appKey appSecret accessToken accessTokenSecret path-to-resource");
+				return;
 			}
 			IStorageConnector dbc = StorageConnectorFactory
 					.create("de.dhbw.mannheim.cloudraid.net.connector.DropboxConnector",
 							params);
 			if (dbc.connect()) {
 				System.out.println("Connected");
-				dbc.put(args[5]);
-				dbc.get(args[5]);
-				dbc.delete(args[5]);
+				dbc.put(args[args.length - 1]);
+				dbc.get(args[args.length - 1]);
+				dbc.delete(args[args.length - 1]);
 			} else {
 				System.err.println("Connection Error!");
 				System.exit(2);
@@ -73,11 +73,22 @@ public class DropboxConnector implements IStorageConnector {
 		}
 	}
 
+	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
+
+	private String accessTokenValue = null;
+	private String appKey = null;
+	private String appSecret = null;
+	private String accessTokenSecret = null;
+
+	private OAuthService service = null;
+
+	private Token accessToken = null;
+
 	@Override
 	public boolean connect() {
 		service = new ServiceBuilder().provider(DropBoxApi.class)
 				.apiKey(this.appKey).apiSecret(this.appSecret).build();
-		if (this.accessToken == null || this.sAccessToken == null) {
+		if (this.accessTokenValue == null || this.accessTokenSecret == null) {
 			Scanner in = new Scanner(System.in);
 			Token requestToken = service.getRequestToken();
 			try {
@@ -94,13 +105,16 @@ public class DropboxConnector implements IStorageConnector {
 			in.nextLine();
 			Verifier verifier = new Verifier("");
 			System.out.println();
-			Token accessToken = service.getAccessToken(requestToken, verifier);
-			this.sAccessToken = accessToken.getSecret();
-			this.accessToken = accessToken.getToken();
+			this.accessToken = service.getAccessToken(requestToken, verifier);
+			this.accessTokenSecret = this.accessToken.getSecret();
+			this.accessTokenValue = this.accessToken.getToken();
 			System.out.println("Your secret access token: "
-					+ accessToken.getSecret());
+					+ this.accessTokenSecret);
 			System.out.println("Your public access token: "
-					+ accessToken.getToken());
+					+ this.accessTokenValue);
+		} else {
+			this.accessToken = new Token(this.accessTokenValue,
+					this.accessTokenSecret);
 		}
 		return true;
 	}
@@ -108,12 +122,12 @@ public class DropboxConnector implements IStorageConnector {
 	@Override
 	public IStorageConnector create(HashMap<String, String> parameter)
 			throws InstantiationException {
-		if (parameter.containsKey("sAccessToken")
-				&& parameter.containsKey("accessToken")
+		if (parameter.containsKey("accessTokenSecret")
+				&& parameter.containsKey("accessTokenValue")
 				&& parameter.containsKey("appKey")
 				&& parameter.containsKey("appSecret")) {
-			this.sAccessToken = parameter.get("sAccessToken");
-			this.accessToken = parameter.get("accessToken");
+			this.accessTokenSecret = parameter.get("accessTokenSecret");
+			this.accessTokenValue = parameter.get("accessTokenValue");
 			this.appKey = parameter.get("appKey");
 			this.appSecret = parameter.get("appSecret");
 		} else if (parameter.containsKey("appKey")
@@ -138,8 +152,7 @@ public class DropboxConnector implements IStorageConnector {
 		System.out.println("DELETE " + resource);
 		// This request has to be sent as "POST" not as "DELETE"
 		OAuthRequest request = new OAuthRequest(POST, DELETE_URL + resource);
-		Token accessToken = new Token(this.accessToken, this.sAccessToken);
-		this.service.signRequest(accessToken, request);
+		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode() + " " + response.getBody());
 		if (response.getCode() == 406) {
@@ -161,8 +174,7 @@ public class DropboxConnector implements IStorageConnector {
 	public InputStream get(String resource) {
 		System.out.println("GET " + resource);
 		OAuthRequest request = new OAuthRequest(GET, GET_URL + resource);
-		Token accessToken = new Token(this.accessToken, this.sAccessToken);
-		this.service.signRequest(accessToken, request);
+		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
 		if (response.getCode() == 404) {
@@ -222,12 +234,9 @@ public class DropboxConnector implements IStorageConnector {
 			e.printStackTrace();
 			return false;
 		}
-		String mime = new MimetypesFileTypeMap().getContentType(f);
 		OAuthRequest request = new OAuthRequest(PUT, PUT_URL + resource);
-		request.addHeader("Content-Length", String.valueOf(f.length()));
-		request.addHeader("Content-Type", mime);
-		Token accessToken = new Token(this.accessToken, this.sAccessToken);
-		this.service.signRequest(accessToken, request);
+		request.addHeader("Content-Type", MIME_MAP.getContentType(f));
+		this.service.signRequest(this.accessToken, request);
 		request.addPayload(fileBytes);
 		Response response = request.send();
 		System.out.println(response.getCode() + " " + response.getBody());
