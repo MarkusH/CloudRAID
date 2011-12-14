@@ -52,6 +52,7 @@ import org.xml.sax.SAXException;
  * @author Florian Bausch, Markus Holtermann
  */
 public class Config extends HashMap<String, String> {
+
 	/**
 	 * The holder class for the singleton object.
 	 * 
@@ -59,6 +60,9 @@ public class Config extends HashMap<String, String> {
 	 * 
 	 */
 	private static class Holder {
+		/**
+		 * The singleton instance
+		 */
 		public static final Config INSTANCE = new Config();
 	}
 
@@ -87,6 +91,7 @@ public class Config extends HashMap<String, String> {
 	private static HashMap<String, Integer> allowedCiphers = new HashMap<String, Integer>();
 
 	// TODO: remove after testing
+	@SuppressWarnings("javadoc")
 	public static void main(String[] args) {
 		if (args.length != 1) {
 			System.err.println("You need to specify a password");
@@ -122,9 +127,24 @@ public class Config extends HashMap<String, String> {
 		System.out.println(c.getString("string.2", "String"));
 	}
 
+	/**
+	 * The encryption standard to use
+	 */
 	private String encryption = "AES";
+
+	/**
+	 * The users master password to decrypt the config
+	 */
 	private byte[] password;
+
+	/**
+	 * The cipher instance used for de- and encryption
+	 */
 	private Cipher cipher;
+
+	/**
+	 * The maximum key length for the chosen {@link #encryption} standard
+	 */
 	private int keyLength;
 
 	/**
@@ -405,6 +425,12 @@ public class Config extends HashMap<String, String> {
 			return str;
 	}
 
+	/**
+	 * Initialize the config with a password
+	 * 
+	 * @param password
+	 *            The users masterpassword
+	 */
 	public void init(String password) {
 		this.password = password.getBytes();
 
@@ -422,7 +448,17 @@ public class Config extends HashMap<String, String> {
 
 	}
 
+	/**
+	 * Automatically detects whether the chosen algorithm is available
+	 * 
+	 * @param algorithm
+	 *            The encryption standard to check
+	 * @return <code>true</code> if the algorithm exists, otherwise
+	 *         <code>false</code>.
+	 */
 	private boolean isAlgorithmsAvailable(String algorithm) {
+		// TODO automatically detect if the chosen algorithm is available
+
 		// Provider[] providers = Security.getProviders();
 		// ArrayList<String> ciphers = new ArrayList<String>();
 		// String algo;
@@ -456,6 +492,10 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
 	 */
 	public synchronized void put(String key, boolean value) {
@@ -463,6 +503,12 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
+	 * @param encrypted
+	 *            <code>true</code> if the entry shall be stored encrypted
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, boolean value, boolean encrypted) {
@@ -470,6 +516,10 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
 	 */
 	public synchronized void put(String key, double value) {
@@ -477,6 +527,12 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
+	 * @param encrypted
+	 *            <code>true</code> if the entry shall be stored encrypted
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, double value, boolean encrypted) {
@@ -484,6 +540,10 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
 	 */
 	public synchronized void put(String key, float value) {
@@ -491,6 +551,12 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
+	 * @param encrypted
+	 *            <code>true</code> if the entry shall be stored encrypted
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, float value, boolean encrypted) {
@@ -498,6 +564,10 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
 	 */
 	public synchronized void put(String key, int value) {
@@ -505,6 +575,12 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
+	 * @param encrypted
+	 *            <code>true</code> if the entry shall be stored encrypted
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, int value, boolean encrypted) {
@@ -512,6 +588,10 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
 	 */
 	public synchronized void put(String key, long value) {
@@ -519,6 +599,12 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * @param key
+	 *            The configuration key
+	 * @param value
+	 *            The configuration value
+	 * @param encrypted
+	 *            <code>true</code> if the entry shall be stored encrypted
 	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, long value, boolean encrypted) {

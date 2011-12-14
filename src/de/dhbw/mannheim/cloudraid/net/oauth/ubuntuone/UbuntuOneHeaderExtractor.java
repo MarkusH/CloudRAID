@@ -40,7 +40,8 @@ import org.scribe.utils.URLUtils;
 public class UbuntuOneHeaderExtractor extends HeaderExtractorImpl {
 
 	/**
-	 * Headers are separated by this value: <code>{@value #PARAM_SEPARATOR}</code>
+	 * Headers are separated by this value:
+	 * <code>{@value #PARAM_SEPARATOR}</code>
 	 */
 	private static final String PARAM_SEPARATOR = ", ";
 	/**

@@ -77,17 +77,17 @@ public class AmazonS3Connector implements IStorageConnector {
 	 * The users public key
 	 */
 	private String accessKeyId = null;
-	
+
 	/**
 	 * The users secret key
 	 */
 	private String secretAccessKey = null;
-	
+
 	/**
 	 * A global XML parser
 	 */
 	private DocumentBuilder docBuilder;
-	
+
 	/**
 	 * The input source to parse a String as XML
 	 */

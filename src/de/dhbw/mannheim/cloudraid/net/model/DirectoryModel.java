@@ -36,7 +36,7 @@ import java.util.HashMap;
 public class DirectoryModel extends EntryModel {
 
 	/**
-	 * Contains all sub-directories of this directory 
+	 * Contains all sub-directories of this directory
 	 */
 	private HashMap<String, DirectoryModel> directories = new HashMap<String, DirectoryModel>();
 	/**

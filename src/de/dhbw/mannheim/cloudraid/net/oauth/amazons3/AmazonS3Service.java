@@ -87,7 +87,8 @@ public class AmazonS3Service implements OAuthService {
 	 * Otherwise the return value is in domain style and similar to
 	 * <code>https://thisisabucket.s3.amazonaws.com/</code>.
 	 * 
-	 * @param bucket The requested bucket
+	 * @param bucket
+	 *            The requested bucket
 	 * @return The bucket endpoint with taking care of capital letters
 	 */
 	public String getBucketEndpoint(String bucket) {
@@ -125,7 +126,9 @@ public class AmazonS3Service implements OAuthService {
 
 	/**
 	 * Signs the given {@link OAuthRequest}
-	 * @param request The request to sign
+	 * 
+	 * @param request
+	 *            The request to sign
 	 */
 	public void signRequest(OAuthRequest request) {
 		System.err.println("[DEBUG] AmazonS3Service.signRequest(): request = "
