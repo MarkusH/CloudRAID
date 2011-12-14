@@ -162,6 +162,15 @@ public class AmazonS3Connector implements IStorageConnector {
 
 	@Override
 	public VolumeModel getVolume(String name) {
+		if (this.volumes.containsKey(name)) {
+			return this.volumes.get(name);
+		}
+		// There is no way to detect the meta data for a single bucket. So
+		// reload it an return is if possible
+		loadVolumes();
+		if (this.volumes.containsKey(name)) {
+			return this.volumes.get(name);
+		}
 		return null;
 	}
 
@@ -189,8 +198,8 @@ public class AmazonS3Connector implements IStorageConnector {
 					AmazonS3VolumeModel volume = new AmazonS3VolumeModel(
 							nl.item(i));
 					if (this.volumes.containsKey(volume.getName())) {
-						this.volumes.get(volume.getName()).addMetadata(
-								volume.getMetadata());
+						this.volumes.get(volume.getName()).metadata
+								.putAll(volume.metadata);
 					} else {
 						this.volumes.put(volume.getName(), volume);
 					}

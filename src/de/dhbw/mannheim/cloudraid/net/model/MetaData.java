@@ -19,33 +19,18 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.net.model.amazons3;
+package de.dhbw.mannheim.cloudraid.net.model;
 
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import java.util.HashMap;
 
-import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
+/**
+ * @author Markus Holtermann
+ */
+public class MetaData extends HashMap<String, Object> {
 
-public class AmazonS3VolumeModel extends VolumeModel {
-
-	public AmazonS3VolumeModel(Node node) {
-		NodeList nl = node.getChildNodes();
-		String tag;
-		String text;
-		for (int i = 0; i < nl.getLength(); i++) {
-			tag = nl.item(i).getNodeName();
-			text = nl.item(i).getTextContent();
-			if (tag.equalsIgnoreCase("name")) {
-				this.setName(text);
-			} else if (tag.equalsIgnoreCase("creationdate")) {
-				this.metadata.put(tag, text);
-			}
-		}
-	}
-
-	@Override
-	public String toString() {
-		return String.format("@AmazonS3VolumeModel(name=%s)", this.getName());
-	}
+	/**
+	 * The serial uid
+	 */
+	private static final long serialVersionUID = 3277195763490114246L;
 
 }

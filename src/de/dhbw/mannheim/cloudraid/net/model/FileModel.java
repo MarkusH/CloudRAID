@@ -21,6 +21,9 @@
 
 package de.dhbw.mannheim.cloudraid.net.model;
 
+/**
+ * @author Markus Holtermann
+ */
 public class FileModel extends EntryModel {
 
 }

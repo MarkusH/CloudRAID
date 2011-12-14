@@ -24,22 +24,22 @@ package de.dhbw.mannheim.cloudraid.net.model.ubuntuone;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
+import de.dhbw.mannheim.cloudraid.net.model.EntryModel;
 
 /**
  * @author Markus Holtermann
  */
-public class UbuntuOneVolumeModel extends VolumeModel {
+public class UbuntuOneEntryModel extends EntryModel {
 
 	/**
 	 * @param object
 	 *            A {@link JSONObject} with meta data.
 	 */
-	public UbuntuOneVolumeModel(JSONObject object) {
+	public UbuntuOneEntryModel(JSONObject object) {
 		this.metadata = new UbuntuOneMetaData(object);
 		this.setName(((String) this.metadata.get("path")).substring(2));
 		((UbuntuOneMetaData) this.metadata).addUrlEncoded("resource_path",
-				"path", "content_path", "node_path");
+				"path", "content_path", "volume_path");
 	}
 
 	/**
@@ -48,7 +48,7 @@ public class UbuntuOneVolumeModel extends VolumeModel {
 	 * @throws JSONException
 	 *             Thrown if content is not a valid JSON Object String
 	 */
-	public UbuntuOneVolumeModel(String content) throws JSONException {
+	public UbuntuOneEntryModel(String content) throws JSONException {
 		this(new JSONObject(content));
 	}
 
@@ -59,6 +59,6 @@ public class UbuntuOneVolumeModel extends VolumeModel {
 	 */
 	@Override
 	public String toString() {
-		return String.format("@UbuntuOneVolume(name=%s)", this.getName());
+		return String.format("@UbuntuOneEntry(name=%s)", this.getName());
 	}
 }

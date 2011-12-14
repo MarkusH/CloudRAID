@@ -42,12 +42,12 @@ import de.dhbw.mannheim.cloudraid.net.connector.IStorageConnector;
 public abstract class VolumeModel {
 
 	/**
-	 * The metadata {@link HashMap} stores the available metadata to a volume.
-	 * Such as creation date, root path, name, etc. as long as they are
-	 * available. The metadata should only accessed by the regarding
+	 * The {@link MetaData} stores the available meta data to this volume. Such
+	 * as creation date, root path, name, etc. as long as they are available.
+	 * The meta data should only accessed by the regarding
 	 * {@link IStorageConnector}.
 	 */
-	private HashMap<Object, Object> metadata = new HashMap<Object, Object>();
+	public MetaData metadata = new MetaData();
 
 	/**
 	 * Every {@link VolumeModel} can contain a multiple {@link EntryModel}s. An
@@ -74,30 +74,6 @@ public abstract class VolumeModel {
 	}
 
 	/**
-	 * This function adds the given metadata {@link HashMap} to the internal
-	 * map. Existing keys are overwritten.
-	 * 
-	 * @param map
-	 *            The map of metadata to add.
-	 */
-	public final void addMetadata(HashMap<Object, Object> map) {
-		this.metadata.putAll(map);
-	}
-
-	/**
-	 * Add the defined key-value pair to the internal metadata map. An existing
-	 * key will be overwritten.
-	 * 
-	 * @param key
-	 *            The key of the metadata entry
-	 * @param value
-	 *            The value of the metadata entry
-	 */
-	public final void addMetadata(Object key, Object value) {
-		this.metadata.put(key, value);
-	}
-
-	/**
 	 * @return Returns all existing {@link EntryModel}s in this
 	 *         {@link VolumeModel} or <code>null</code> if none exists.
 	 */
@@ -115,26 +91,6 @@ public abstract class VolumeModel {
 	 */
 	public final EntryModel getEntry(String key) {
 		return this.entries.get(key);
-	}
-
-	/**
-	 * @return Returns existing metadata information for this
-	 *         {@link VolumeModel} or <code>null</code> if none exists.
-	 */
-	public final HashMap<Object, Object> getMetadata() {
-		return this.metadata;
-	}
-
-	/**
-	 * This function returns the metadata information for the given key.
-	 * 
-	 * @param key
-	 *            The key of the metadata value
-	 * @return Returns the requested metadata in this VolumeModel or
-	 *         <code>null</code> if it does not exist.
-	 */
-	public final Object getMetadata(Object key) {
-		return this.metadata.get(key);
 	}
 
 	/**
@@ -158,7 +114,9 @@ public abstract class VolumeModel {
 	 * A subclass should implement an own <code>toString()</code> method to be
 	 * used for printing. Something similar to:
 	 * 
+	 * <p>
 	 * <code>return String.format("@ClassName(name=%s)", this.getName());</code>
+	 * <p>
 	 */
 	@Override
 	public abstract String toString();

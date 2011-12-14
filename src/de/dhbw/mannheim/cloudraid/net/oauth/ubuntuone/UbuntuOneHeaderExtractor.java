@@ -39,10 +39,19 @@ import org.scribe.utils.URLUtils;
  */
 public class UbuntuOneHeaderExtractor extends HeaderExtractorImpl {
 
+	/**
+	 * Headers are separated by this value: <code>{@value #PARAM_SEPARATOR}</code>
+	 */
 	private static final String PARAM_SEPARATOR = ", ";
-	private static final String PREAMBLE = "OAuth ";
-	private static final String REALM = "realm=\"\"";
+	/**
+	 * Begin of the Authorization header: <code>{@value #AUTH_HEADER}</code>
+	 */
+	private static final String AUTH_HEADER = "OAuth realm=\"\"";
 
+	/**
+	 * @param request
+	 *            The current request
+	 */
 	private void checkPreconditions(OAuthRequest request) {
 		Preconditions.checkNotNull(request,
 				"Cannot extract a header from a null object");
@@ -53,16 +62,12 @@ public class UbuntuOneHeaderExtractor extends HeaderExtractorImpl {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String extract(OAuthRequest request) {
 		checkPreconditions(request);
 		Map<String, String> parameters = request.getOauthParameters();
 		StringBuffer header = new StringBuffer(parameters.size() * 20);
-		header.append(PREAMBLE);
-		header.append(REALM);
+		header.append(AUTH_HEADER);
 		Set<String> set = parameters.keySet();
 		String[] keys = new String[set.size()];
 		set.toArray(keys);

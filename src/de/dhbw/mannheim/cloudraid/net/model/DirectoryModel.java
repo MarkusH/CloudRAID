@@ -35,9 +35,20 @@ import java.util.HashMap;
  */
 public class DirectoryModel extends EntryModel {
 
+	/**
+	 * Contains all sub-directories of this directory 
+	 */
 	private HashMap<String, DirectoryModel> directories = new HashMap<String, DirectoryModel>();
+	/**
+	 * Contains all files within this directory
+	 */
 	private HashMap<String, FileModel> files = new HashMap<String, FileModel>();
 
+	/**
+	 * @param entry
+	 *            Add the given entry either to the {@link #directories} or to
+	 *            the {@link #files}, depending of its class
+	 */
 	public final void addEntry(EntryModel entry) {
 		if (entry.getClass() == DirectoryModel.class) {
 			this.directories.put(entry.getName(), (DirectoryModel) entry);
@@ -46,12 +57,28 @@ public class DirectoryModel extends EntryModel {
 		}
 	}
 
+	/**
+	 * @return Returns all {@link #directories}
+	 */
 	public final HashMap<String, DirectoryModel> getDirectories() {
 		return this.directories;
 	}
 
+	/**
+	 * @param key
+	 *            The file to look for
+	 * @return Returns the requested entry, either from the {@link #directories}
+	 *         or from the {@link #files}. The lookup is in the order
+	 *         {@link #directories}, {@link #files}.
+	 */
 	public final EntryModel getEntry(String key) {
-		return this.directories.get(key);
+		if (this.directories.containsKey(key)) {
+			return this.directories.get(key);
+		} else if (this.files.containsKey(key)) {
+			return this.files.get(key);
+		} else {
+			return null;
+		}
 	}
 
 }

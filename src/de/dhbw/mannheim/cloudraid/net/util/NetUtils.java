@@ -19,33 +19,39 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.net.model.amazons3;
+package de.dhbw.mannheim.cloudraid.net.util;
 
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.scribe.utils.URLUtils;
 
-import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
+/**
+ * @author Markus Holtermann
+ */
+public class NetUtils {
 
-public class AmazonS3VolumeModel extends VolumeModel {
+	/**
+	 * This function safely encodes the the given path spec of an URL, splits it
+	 * at the <code>/</code>, encodes each single part and finally joins them
+	 * with the <code>/</code> again.
+	 * 
+	 * From<br>
+	 * <code>/this is/a/t€§t</code><br>
+	 * to<br>
+	 * <code>/this%20is/a/t%E2%82%AC%C2%A7t</code>.
+	 * 
+	 * @param url
+	 *            The URL that should be encoded
+	 * @return Returns the safe URL
+	 */
+	public static String safeURLPercentEncode(String url) {
+		String[] splits = url.split("/");
+		StringBuffer out = new StringBuffer();
 
-	public AmazonS3VolumeModel(Node node) {
-		NodeList nl = node.getChildNodes();
-		String tag;
-		String text;
-		for (int i = 0; i < nl.getLength(); i++) {
-			tag = nl.item(i).getNodeName();
-			text = nl.item(i).getTextContent();
-			if (tag.equalsIgnoreCase("name")) {
-				this.setName(text);
-			} else if (tag.equalsIgnoreCase("creationdate")) {
-				this.metadata.put(tag, text);
-			}
+		out.append(URLUtils.percentEncode(splits[0]));
+		for (int i = 1; i < splits.length; i++) {
+			out.append("/");
+			out.append(URLUtils.percentEncode(splits[i]));
 		}
-	}
-
-	@Override
-	public String toString() {
-		return String.format("@AmazonS3VolumeModel(name=%s)", this.getName());
+		return out.toString();
 	}
 
 }

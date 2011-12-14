@@ -22,12 +22,6 @@
 package de.dhbw.mannheim.cloudraid.jni;
 
 public class RaidAccessInterface {
-	private native void splitInterface(String in, String out0, String out1,
-			String out2);
-
-	private native void mergeInterface(String out, String in0, String in1,
-			String in2);
-
 	public static void main(String[] args) {
 		if (args.length != 5 && args.length != 6) {
 			System.out
@@ -60,4 +54,10 @@ public class RaidAccessInterface {
 		long endTime = System.currentTimeMillis();
 		System.out.println((endTime - startTime) / 1000 + " s.");
 	}
+
+	private native void mergeInterface(String out, String in0, String in1,
+			String in2);
+
+	private native void splitInterface(String in, String out0, String out1,
+			String out2);
 }
