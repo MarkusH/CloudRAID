@@ -24,41 +24,44 @@ package de.dhbw.mannheim.cloudraid.net.model.ubuntuone;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
+import de.dhbw.mannheim.cloudraid.net.model.MetaData;
+import de.dhbw.mannheim.cloudraid.net.util.NetUtils;
 
 /**
  * @author Markus Holtermann
  */
-public class UbuntuOneVolumeModel extends VolumeModel {
+public class UbuntuOneMetaData extends MetaData {
+
+	/**
+	 * The serial uid
+	 */
+	private static final long serialVersionUID = -1967202873493249324L;
 
 	/**
 	 * @param object
-	 *            A {@link JSONObject} with meta data.
+	 *            The initial JSON meta data representation
 	 */
-	public UbuntuOneVolumeModel(JSONObject object) {
-		this.metadata = new UbuntuOneMetaData(object);
-		this.setName(((String) this.metadata.get("path")).substring(2));
-		((UbuntuOneMetaData) this.metadata).addUrlEncoded("resource_path",
-				"path", "content_path", "node_path");
+	public UbuntuOneMetaData(JSONObject object) {
+		String[] names = JSONObject.getNames(object);
+		for (int i = 0; i < names.length; i++) {
+			try {
+				this.put(names[i], object.get(names[i]));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
-	 * @param content
-	 *            JSON Object representation string with meta data
-	 * @throws JSONException
-	 *             Thrown if content is not a valid JSON Object String
+	 * @param keys
+	 *            safely URL encodes the values of the given keys by invoking
+	 *            {@link de.dhbw.mannheim.cloudraid.net.util.NetUtils#safeURLPercentEncode(String)}
 	 */
-	public UbuntuOneVolumeModel(String content) throws JSONException {
-		this(new JSONObject(content));
+	public void addUrlEncoded(String... keys) {
+		for (String key : keys) {
+			this.put(key + "_safe",
+					NetUtils.safeURLPercentEncode((String) this.get(key)));
+		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.dhbw.mannheim.cloudraid.net.model.VolumeModel#toString()
-	 */
-	@Override
-	public String toString() {
-		return String.format("@UbuntuOneVolume(name=%s)", this.getName());
-	}
 }

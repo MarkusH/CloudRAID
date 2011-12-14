@@ -36,22 +36,44 @@ import sun.misc.BASE64Encoder;
  * 
  */
 public class AmazonS3SignatureService implements SignatureService {
-	private static final String EMPTY_STRING = "";
-	private static final String CARRIAGE_RETURN = "\r\n";
+
+	/**
+	 * Just for easier writing
+	 */
 	private static final String UTF8 = "UTF-8";
+
+	/**
+	 * The Javax.crypto name of HMAC_SHA1
+	 */
 	private static final String HMAC_SHA1 = "HmacSHA1";
+
+	/**
+	 * The printable version of HMAC_SHA1
+	 */
 	private static final String METHOD = "HMAC-SHA1";
 
+	/**
+	 * @param toSign
+	 * @param keyString
+	 * @return
+	 * @throws Exception
+	 */
 	private String doSign(String toSign, String keyString) throws Exception {
 		SecretKeySpec key = new SecretKeySpec((keyString).getBytes(UTF8),
 				HMAC_SHA1);
 		Mac mac = Mac.getInstance(HMAC_SHA1);
 		mac.init(key);
 		byte[] bytes = mac.doFinal(toSign.getBytes(UTF8));
-		return new BASE64Encoder().encode(bytes).replace(CARRIAGE_RETURN,
-				EMPTY_STRING);
+		return new BASE64Encoder().encode(bytes).replace("\r\n", "");
 	}
 
+	/**
+	 * @param baseString
+	 *            The string to sign
+	 * @param secretKey
+	 *            The secret key to use for signing
+	 * @return Returns the signature
+	 */
 	public String getSignature(String baseString, String secretKey) {
 		try {
 			return doSign(baseString, secretKey);
@@ -61,7 +83,7 @@ public class AmazonS3SignatureService implements SignatureService {
 	}
 
 	/**
-	 * Just to fulfill the requirements of the interface
+	 * Just to fulfill the requirements of the interface! <b>Not used!</b>
 	 */
 	@Override
 	public String getSignature(String baseString, String apiSecret,

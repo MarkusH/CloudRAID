@@ -62,6 +62,8 @@ public class DropboxConnector implements IStorageConnector {
 	private final static String PUT_URL = "https://api-content.dropbox.com/1/files_put/"
 			+ ROOT_NAME + "/";
 
+	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
+
 	public static void main(String[] args) {
 		try {
 			HashMap<String, String> params = new HashMap<String, String>();
@@ -99,8 +101,6 @@ public class DropboxConnector implements IStorageConnector {
 			return;
 		}
 	}
-
-	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 
 	private String accessTokenValue = null;
 	private String appKey = null;

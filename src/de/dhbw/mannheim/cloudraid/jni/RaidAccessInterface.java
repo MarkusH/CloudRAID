@@ -21,13 +21,12 @@
 
 package de.dhbw.mannheim.cloudraid.jni;
 
+/**
+ * @author Markus Holtermann
+ */
 public class RaidAccessInterface {
-	private native void splitInterface(String in, String out0, String out1,
-			String out2);
 
-	private native void mergeInterface(String out, String in0, String in1,
-			String in2);
-
+	@SuppressWarnings("javadoc")
 	public static void main(String[] args) {
 		if (args.length != 5 && args.length != 6) {
 			System.out
@@ -60,4 +59,30 @@ public class RaidAccessInterface {
 		long endTime = System.currentTimeMillis();
 		System.out.println((endTime - startTime) / 1000 + " s.");
 	}
+
+	/**
+	 * @param out
+	 *            The output file
+	 * @param in0
+	 *            Input file that simulates device 0
+	 * @param in1
+	 *            Input file that simulates device 1
+	 * @param in2
+	 *            Input file that simulates device 2
+	 */
+	private native void mergeInterface(String out, String in0, String in1,
+			String in2);
+
+	/**
+	 * @param in
+	 *            The input file
+	 * @param out0
+	 *            Output file that simulates device 0
+	 * @param out1
+	 *            Output file that simulates device 1
+	 * @param out2
+	 *            Output file that simulates device 2
+	 */
+	private native void splitInterface(String in, String out0, String out1,
+			String out2);
 }

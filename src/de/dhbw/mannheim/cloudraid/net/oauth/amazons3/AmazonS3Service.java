@@ -21,6 +21,7 @@
 
 package de.dhbw.mannheim.cloudraid.net.oauth.amazons3;
 
+import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthConfig;
 import org.scribe.model.OAuthConstants;
 import org.scribe.model.OAuthRequest;
@@ -34,9 +35,19 @@ import org.scribe.oauth.OAuthService;
  */
 public class AmazonS3Service implements OAuthService {
 
+	/**
+	 * The OAuth version, even if it is not real OAuth
+	 */
 	private static final String VERSION = "1.0";
 
+	/**
+	 * The {@link Api} for this {@link OAuthService}
+	 */
 	private AmazonS3Api api;
+
+	/**
+	 * The config that is used for this {@link OAuthService}
+	 */
 	private OAuthConfig config;
 
 	/**
@@ -51,13 +62,6 @@ public class AmazonS3Service implements OAuthService {
 	public AmazonS3Service(AmazonS3Api api, OAuthConfig config) {
 		this.api = api;
 		this.config = config;
-	}
-
-	/**
-	 * Not needed for Amazon S3!
-	 */
-	public Token getAccessToken(Token requestToken) {
-		return null;
 	}
 
 	/**
@@ -84,6 +88,7 @@ public class AmazonS3Service implements OAuthService {
 	 * <code>https://thisisabucket.s3.amazonaws.com/</code>.
 	 * 
 	 * @param bucket
+	 *            The requested bucket
 	 * @return The bucket endpoint with taking care of capital letters
 	 */
 	public String getBucketEndpoint(String bucket) {
@@ -119,6 +124,12 @@ public class AmazonS3Service implements OAuthService {
 		return VERSION;
 	}
 
+	/**
+	 * Signs the given {@link OAuthRequest}
+	 * 
+	 * @param request
+	 *            The request to sign
+	 */
 	public void signRequest(OAuthRequest request) {
 		System.err.println("[DEBUG] AmazonS3Service.signRequest(): request = "
 				+ request);

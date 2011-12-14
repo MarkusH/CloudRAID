@@ -32,6 +32,12 @@ import org.scribe.model.Token;
  */
 public class UbuntuOneJsonExtractor implements RequestTokenExtractor {
 
+	/**
+	 * @param response
+	 *            the JSON encoded response string
+	 * @return Returns a {@link Token} that contains the token and the token
+	 *         secret
+	 */
 	@Override
 	public Token extract(String response) {
 		JSONObject body;
@@ -47,6 +53,12 @@ public class UbuntuOneJsonExtractor implements RequestTokenExtractor {
 		return new Token("", "");
 	}
 
+	/**
+	 * @param response
+	 *            the JSON encoded response string
+	 * @return Returns a {@link Token} that contains the consumer key and the
+	 *         consumer secret
+	 */
 	public Token extractConsumerToken(String response) {
 		JSONObject body;
 		try {

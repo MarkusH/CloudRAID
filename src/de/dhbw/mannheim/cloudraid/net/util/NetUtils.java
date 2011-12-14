@@ -19,11 +19,39 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.net.model;
+package de.dhbw.mannheim.cloudraid.net.util;
+
+import org.scribe.utils.URLUtils;
 
 /**
  * @author Markus Holtermann
  */
-public class FileModel extends EntryModel {
+public class NetUtils {
+
+	/**
+	 * This function safely encodes the the given path spec of an URL, splits it
+	 * at the <code>/</code>, encodes each single part and finally joins them
+	 * with the <code>/</code> again.
+	 * 
+	 * From<br>
+	 * <code>/this is/a/t€§t</code><br>
+	 * to<br>
+	 * <code>/this%20is/a/t%E2%82%AC%C2%A7t</code>.
+	 * 
+	 * @param url
+	 *            The URL that should be encoded
+	 * @return Returns the safe URL
+	 */
+	public static String safeURLPercentEncode(String url) {
+		String[] splits = url.split("/");
+		StringBuffer out = new StringBuffer();
+
+		out.append(URLUtils.percentEncode(splits[0]));
+		for (int i = 1; i < splits.length; i++) {
+			out.append("/");
+			out.append(URLUtils.percentEncode(splits[i]));
+		}
+		return out.toString();
+	}
 
 }

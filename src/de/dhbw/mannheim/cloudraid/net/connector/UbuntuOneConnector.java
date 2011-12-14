@@ -34,6 +34,7 @@ import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
+import org.scribe.oauth.OAuthService;
 import org.scribe.utils.URLUtils;
 
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
@@ -42,8 +43,12 @@ import de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneApi;
 import de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneService;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
+/**
+ * @author Markus Holtermann
+ */
 public class UbuntuOneConnector implements IStorageConnector {
 
+	@SuppressWarnings("javadoc")
 	public static void main(String[] args) {
 		try {
 			HashMap<String, String> params = new HashMap<String, String>();
@@ -60,25 +65,48 @@ public class UbuntuOneConnector implements IStorageConnector {
 			IStorageConnector uoc = StorageConnectorFactory
 					.create("de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector",
 							params);
-			if (uoc.connect()) {
+			if (uoc != null && uoc.connect()) {
 				System.out.println("Connected");
 			} else {
 				System.err.println("Connection Error!");
 				System.exit(2);
 			}
+			// uoc.loadVolumes();
+			VolumeModel v = uoc.getVolume("CloudRAID");
+			System.out.println(v.metadata);
+			((UbuntuOneConnector) uoc).loadDirectories(v);
+			System.out.println(v);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
 	}
 
+	/**
+	 * The user name at UbuntuOne. This has to be the users email address
+	 */
 	private String username = null;
+	/**
+	 * The users password
+	 */
 	private String password = null;
+	/**
+	 * Customer token
+	 */
 	private Token ctoken = null;
+	/**
+	 * Standard application token
+	 */
 	private Token stoken = null;
 
+	/**
+	 * The {@link OAuthService}
+	 */
 	private UbuntuOneService service;
 
+	/**
+	 * A internal storage for all volumes of the user
+	 */
 	private HashMap<String, UbuntuOneVolumeModel> volumes = new HashMap<String, UbuntuOneVolumeModel>();
 
 	/**
@@ -101,7 +129,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		}
 
 		Response response = sendRequest(Verb.GET,
-				this.service.getApiBaseEndpoint() + "account/");
+				this.service.getApiBaseEndpoint() + "/account/");
 		if (response.getCode() == 200) {
 			return true;
 		}
@@ -111,12 +139,12 @@ public class UbuntuOneConnector implements IStorageConnector {
 	/**
 	 * This function initializes the UbuntuOneConnector with the customer and
 	 * application tokens. During the
-	 * {@link de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#connect(String)}
+	 * {@link de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#connect()}
 	 * process the given tokens are used. If <code>connect()</code> returns
-	 * false, this class has to be reinstanciated and initialized with username
+	 * false, this class has to be reinstantiated and initialized with username
 	 * and password.
 	 * 
-	 * @param param
+	 * @param parameter
 	 *            There are two creation modes. In case the tokens already
 	 *            exist, the HashMap has to contain the following keys:
 	 *            <ul>
@@ -131,6 +159,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 *            <li><code>password</code></li>
 	 *            </ul>
 	 * @throws InstantiationException
+	 *             Thrown if not all required parameters are passed.
 	 * 
 	 */
 	@Override
@@ -155,13 +184,16 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public VolumeModel createVolume(String name) {
 		if (this.volumes.containsKey(name)) {
 			return this.volumes.get(name);
 		}
 		Response response = sendRequest(Verb.PUT,
-				this.service.getFileStorageEndpoint() + "volumes/~/" + name
+				this.service.getFileStorageEndpoint() + "/volumes/~/" + name
 						+ "/");
 		if (response.getCode() == 200) {
 			try {
@@ -182,17 +214,20 @@ public class UbuntuOneConnector implements IStorageConnector {
 	@Override
 	public boolean delete(String resource) {
 		Response response = sendRequest(Verb.DELETE,
-				this.service.getFileStorageEndpoint() + "~/Ubuntu%20One/"
+				this.service.getFileStorageEndpoint() + "/~/Ubuntu%20One/"
 						+ URLUtils.percentEncode(resource));
 		return (response.getCode() == 200 || response.getCode() == 404);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void deleteVolume(String name) {
 		if (this.volumes.containsKey(name)) {
 			Response response = sendRequest(Verb.DELETE,
-					this.service.getFileStorageEndpoint() + "volumes/~/" + name
-							+ "/");
+					this.service.getFileStorageEndpoint() + "/volumes/~/"
+							+ name + "/");
 			if (response.getCode() == 200 || response.getCode() == 404) {
 				this.volumes.remove(name);
 			}
@@ -205,7 +240,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 	@Override
 	public InputStream get(String resource) {
 		Response response = sendRequest(Verb.GET,
-				this.service.getContentRootEndpoint() + "~/Ubuntu%20One/"
+				this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
 						+ resource);
 		if (response.getCode() == 200) {
 			return response.getStream();
@@ -214,14 +249,18 @@ public class UbuntuOneConnector implements IStorageConnector {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public VolumeModel getVolume(String name) {
 		if (this.volumes.containsKey(name)) {
 			return this.volumes.get(name);
 		}
 		Response response = sendRequest(Verb.GET,
-				this.service.getFileStorageEndpoint() + "volumes/~/" + name
-						+ "/");
+				this.service.getFileStorageEndpoint() + "/volumes/~/"
+						+ URLUtils.percentEncode(name) + "/");
+		System.out.println(response.getBody());
 		if (response.getCode() == 200) {
 			try {
 				UbuntuOneVolumeModel volume = new UbuntuOneVolumeModel(
@@ -243,19 +282,36 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return null;
 	}
 
+	/**
+	 * @param volume
+	 *            The volume to get the directories from
+	 */
+	public void loadDirectories(VolumeModel volume) {
+		Response response = sendRequest(Verb.GET,
+				this.service.getFileStorageEndpoint()
+						+ (String) volume.metadata.get("node_path_safe")
+						+ "/?include_children=true");
+		System.out.println(response.getCode());
+		System.out.println(response.getBody());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void loadVolumes() {
 		Response response = sendRequest(Verb.GET,
-				this.service.getFileStorageEndpoint() + "volumes");
+				this.service.getFileStorageEndpoint() + "/volumes");
 		if (response.getCode() == 200) {
 			try {
 				JSONArray vs = new JSONArray(response.getBody());
+				System.out.println(response.getBody());
 				for (int i = 0; i < vs.length(); i++) {
 					UbuntuOneVolumeModel volume = new UbuntuOneVolumeModel(
 							vs.getJSONObject(i));
 					if (this.volumes.containsKey(volume.getName())) {
-						this.volumes.get(volume.getName()).addMetadata(
-								volume.getMetadata());
+						this.volumes.get(volume.getName()).metadata
+								.putAll(volume.metadata);
 					} else {
 						this.volumes.put(volume.getName(), volume);
 					}
@@ -301,7 +357,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 				return false;
 			}
 			Response response = sendRequest(Verb.PUT,
-					this.service.getContentRootEndpoint() + "~/Ubuntu%20One/"
+					this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
 							+ URLUtils.percentEncode(resource), fileBytes);
 			if (response.getCode() == 201) {
 				return true;

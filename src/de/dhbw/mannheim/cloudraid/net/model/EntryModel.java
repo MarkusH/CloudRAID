@@ -21,16 +21,78 @@
 
 package de.dhbw.mannheim.cloudraid.net.model;
 
+/**
+ * An {@link EntryModel} is any kind of object that exists within an
+ * {@link VolumeModel}. Normally this is a {@link DirectoryModel} or a
+ * {@link FileModel}.
+ * 
+ * @author Markus Holtermann
+ */
 public abstract class EntryModel {
 
+	/**
+	 * The {@link MetaData} stores the available meta data to this entry. Such
+	 * as creation date, root path, name, etc. as long as they are available.
+	 */
+	public MetaData metadata = new MetaData();
+	/**
+	 * The name of this {@link EntryModel}.
+	 */
 	private String name;
+	/**
+	 * The parent directory.
+	 */
+	private DirectoryModel parent = null;
+	/**
+	 * The {@link VolumeModel} this entry belongs to.
+	 */
+	private VolumeModel volume = null;
 
+	/**
+	 * @return Returns the name of the {@link EntryModel}.
+	 */
 	public final String getName() {
 		return name;
 	}
 
+	/**
+	 * @return Returns the parent {@link EntryModel}
+	 */
+	public final EntryModel getParent() {
+		return parent;
+	}
+
+	/**
+	 * @return Returns the {@link VolumeModel}
+	 */
+	public final VolumeModel getVolume() {
+		return volume;
+	}
+
+	/**
+	 * Sets the name of this {@link EntryModel}
+	 * 
+	 * @param name
+	 *            The new name of this {@link EntryModel}.
+	 */
 	public final void setName(String name) {
 		this.name = name;
+	}
+
+	/**
+	 * @param parent
+	 *            The parent {@link EntryModel}
+	 */
+	public final void setParent(DirectoryModel parent) {
+		this.parent = parent;
+	}
+
+	/**
+	 * @param volume
+	 *            The {@link VolumeModel}
+	 */
+	public final void setVolume(VolumeModel volume) {
+		this.volume = volume;
 	}
 
 }

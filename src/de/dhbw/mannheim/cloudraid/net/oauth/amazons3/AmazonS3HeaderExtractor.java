@@ -38,6 +38,9 @@ import org.scribe.model.OAuthRequest;
  */
 public class AmazonS3HeaderExtractor extends HeaderExtractorImpl {
 
+	/**
+	 * Header fields a separated by <code>{@value #PARAM_SEPARATOR}</code>
+	 */
 	private static final String PARAM_SEPARATOR = "\n";
 
 	/**

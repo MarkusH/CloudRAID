@@ -21,6 +21,7 @@
 
 package de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone;
 
+import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthConfig;
 import org.scribe.model.OAuthConstants;
 import org.scribe.model.OAuthRequest;
@@ -31,18 +32,39 @@ import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 import org.scribe.utils.URLUtils;
 
+import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
+
 /**
  * @author Markus Holtermann
  * 
  */
 public class UbuntuOneService implements OAuthService {
 
+	/**
+	 * The OAuth version
+	 */
 	private static final String VERSION = "1.0";
 
+	/**
+	 * The {@link Api} for this {@link OAuthService}
+	 */
 	private UbuntuOneApi api;
+
+	/**
+	 * The config that is used for this {@link OAuthService}
+	 */
 	private OAuthConfig config;
 
+	/**
+	 * The email address of the user. Used for the first request to get the
+	 * customer and api tokens.
+	 */
 	private String email;
+
+	/**
+	 * The password of the user. Used for the first request to get the customer
+	 * and api tokens.
+	 */
 	private String password;
 
 	/**
@@ -61,6 +83,10 @@ public class UbuntuOneService implements OAuthService {
 		this.password = config.getApiSecret();
 	}
 
+	/**
+	 * @param request
+	 * @param token
+	 */
 	private void addOAuthParams(OAuthRequest request, Token token) {
 		request.addOAuthParameter(OAuthConstants.TIMESTAMP, api
 				.getTimestampService().getTimestampInSeconds());
@@ -74,6 +100,10 @@ public class UbuntuOneService implements OAuthService {
 		request.addOAuthParameter(OAuthConstants.VERSION, getVersion());
 	}
 
+	/**
+	 * @param request
+	 * @param token
+	 */
 	private void addSignature(OAuthRequest request, Token token) {
 		String oauthHeader = api.getHeaderExtractor().extract(request);
 		String signature = getSignature(request, token);
@@ -90,8 +120,10 @@ public class UbuntuOneService implements OAuthService {
 	 * 
 	 * @see de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneService#getAccessToken(Token,
 	 *      Verifier)
+	 * 
 	 * @param requestToken
-	 * @return
+	 *            The initial request token
+	 * @return the customer token
 	 */
 	public Token getAccessToken(Token requestToken) {
 		return this.getAccessToken(requestToken, new Verifier(this.email));
@@ -121,6 +153,9 @@ public class UbuntuOneService implements OAuthService {
 		return new Token(this.config.getApiKey(), this.config.getApiSecret());
 	}
 
+	/**
+	 * @return {@link UbuntuOneApi#getApiBaseEndpoint()}
+	 */
 	public String getApiBaseEndpoint() {
 		return this.api.getApiBaseEndpoint();
 	}
@@ -130,10 +165,16 @@ public class UbuntuOneService implements OAuthService {
 		return "";
 	}
 
+	/**
+	 * @return {@link UbuntuOneApi#getContentRootEndpoint()}
+	 */
 	public String getContentRootEndpoint() {
 		return this.api.getContentRootEndpoint();
 	}
 
+	/**
+	 * @return {@link UbuntuOneApi#getFileStorageEndpoint()}
+	 */
 	public String getFileStorageEndpoint() {
 		return this.api.getFileStorageEndpoint();
 	}
@@ -190,6 +231,11 @@ public class UbuntuOneService implements OAuthService {
 		return stoken;
 	}
 
+	/**
+	 * @param request
+	 * @param token
+	 * @return
+	 */
 	private String getSignature(OAuthRequest request, Token token) {
 		String baseString = api.getBaseStringExtractor().extract(request);
 		return api.getSignatureService().getSignature(baseString,
@@ -201,6 +247,11 @@ public class UbuntuOneService implements OAuthService {
 		return VERSION;
 	}
 
+	/**
+	 * @param name
+	 *            The requested {@link VolumeModel} name
+	 * @return Returns the full URL to the volume
+	 */
 	public String getVolumeURLByName(String name) {
 		return this.api.getFileStorageEndpoint() + "volumes/~/" + name + "/";
 	}

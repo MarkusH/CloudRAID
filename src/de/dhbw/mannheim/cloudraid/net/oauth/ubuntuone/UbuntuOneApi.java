@@ -30,7 +30,6 @@ import org.scribe.extractors.RequestTokenExtractor;
 import org.scribe.model.OAuthConfig;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
-import org.scribe.oauth.OAuthService;
 
 /**
  * @author Markus Holtermann
@@ -38,29 +37,43 @@ import org.scribe.oauth.OAuthService;
  */
 public class UbuntuOneApi extends DefaultApi10a {
 
+	/**
+	 * First step of the 2-way authentication if the user doesn't have a token
+	 * jet
+	 */
 	private static final String REQUEST_URL = "https://login.ubuntu.com/api/1.0/authentications?ws.op=authenticate&token_name=Ubuntu%20One%20@%20";
+	/**
+	 * Second step of the 2-way authentication to get the customer tokens
+	 */
 	private static final String ACCESS_URL = "https://one.ubuntu.com/oauth/sso-finished-so-get-tokens/";
-	private static final String API_BASE_URL = "https://one.ubuntu.com/api/";
-	private static final String CONTENT_ROOT_URL = "https://files.one.ubuntu.com/content/";
-	private static final String FILE_STORAGE_URL = "https://one.ubuntu.com/api/file_storage/v1/";
+	/**
+	 * Used for requesting the token validity
+	 */
+	private static final String API_BASE_URL = "https://one.ubuntu.com/api";
+	/**
+	 * Endpoint for file contents
+	 */
+	private static final String CONTENT_ROOT_URL = "https://files.one.ubuntu.com/content";
+	/**
+	 * Endpoint for general requests
+	 */
+	private static final String FILE_STORAGE_URL = "https://one.ubuntu.com/api/file_storage/v1";
 
 	/**
-	 * Returns the {@link OAuthService} for this Api
+	 * Returns the {@link org.scribe.oauth.OAuthService} for this
+	 * {@link org.scribe.builder.api.DefaultApi10a API}
 	 * 
-	 * @param apiKey
-	 *            Key
-	 * @param apiSecret
-	 *            Api Secret
-	 * @param callback
-	 *            OAuth callback (either URL or 'oob')
-	 * @param scope
-	 *            OAuth scope (optional)
+	 * @param config
+	 *            The config for the new {@link UbuntuOneService}
 	 */
 	@Override
 	public UbuntuOneService createService(OAuthConfig config) {
 		return new UbuntuOneService(this, config);
 	}
 
+	/**
+	 * @return The {@link #ACCESS_URL}: {@value #ACCESS_URL}
+	 */
 	@Override
 	public String getAccessTokenEndpoint() {
 		return ACCESS_URL;
@@ -71,6 +84,9 @@ public class UbuntuOneApi extends DefaultApi10a {
 		return Verb.GET;
 	}
 
+	/**
+	 * @return The {@link #API_BASE_URL}: {@value #API_BASE_URL}
+	 */
 	public String getApiBaseEndpoint() {
 		return API_BASE_URL;
 	}
@@ -80,10 +96,16 @@ public class UbuntuOneApi extends DefaultApi10a {
 		return "";
 	}
 
+	/**
+	 * @return The {@link #CONTENT_ROOT_URL}: {@value #CONTENT_ROOT_URL}
+	 */
 	public String getContentRootEndpoint() {
 		return CONTENT_ROOT_URL;
 	}
 
+	/**
+	 * @return The {@link #FILE_STORAGE_URL}: {@value #FILE_STORAGE_URL}
+	 */
 	public String getFileStorageEndpoint() {
 		return FILE_STORAGE_URL;
 	}
