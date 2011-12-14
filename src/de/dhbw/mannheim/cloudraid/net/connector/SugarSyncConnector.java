@@ -44,6 +44,12 @@ import org.xml.sax.SAXException;
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
+/**
+ * The API wrapper for SugarSync.
+ * 
+ * @author Florian Bausch
+ * 
+ */
 public class SugarSyncConnector implements IStorageConnector {
 
 	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
