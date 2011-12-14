@@ -52,10 +52,18 @@ public interface IStorageConnector {
 	 * 
 	 * @return Returns a new initialized instance of the <code>connector</code>.
 	 * @throws InstantiationException
+	 *             Thrown if not all required parameters are passed.
 	 */
 	public IStorageConnector create(HashMap<String, String> parameter)
 			throws InstantiationException;
 
+	/**
+	 * Create the volume name
+	 * 
+	 * @param name
+	 *            The name of the new volume
+	 * @return The instance of the newly created volume
+	 */
 	public VolumeModel createVolume(String name);
 
 	/**
@@ -65,33 +73,57 @@ public interface IStorageConnector {
 	 * the removal <b>was successful</b> (HTTP 200), the implementation has to
 	 * return <code>true</code>!
 	 * 
+	 * @param resource
+	 *            Delete the given resource
 	 * @return true, if the file could be deleted; false, if not.
 	 */
 	public boolean delete(String resource);
 
+	/**
+	 * Delete a volume with all its content
+	 * 
+	 * @param name
+	 *            The volume to delete
+	 */
 	public void deleteVolume(String name);
 
 	/**
 	 * Gets a file from a cloud service.
 	 * 
+	 * @param resource
+	 *            Retrieve the given resource
 	 * @return An InputStream to the regarding file.
 	 */
 	public InputStream get(String resource);
 
+	/**
+	 * Get a specific volume
+	 * 
+	 * @param name
+	 *            The volume to get
+	 * @return The volume instance
+	 */
 	public VolumeModel getVolume(String name);
 
 	/**
 	 * Returns meta data for a resource.
 	 * 
+	 * @param resource
+	 *            The resource to use
 	 * @return The meta data.
 	 */
 	public String head(String resource);
 
+	/**
+	 * (Re)load all volumes
+	 */
 	public void loadVolumes();
 
 	/**
 	 * Returns the options available for a resource.
 	 * 
+	 * @param resource
+	 *            The resource to use
 	 * @return The options.
 	 */
 	public String[] options(String resource);
@@ -99,6 +131,10 @@ public interface IStorageConnector {
 	/**
 	 * Sends a file to a cloud service.
 	 * 
+	 * @param resource
+	 *            The resource to use
+	 * @param parent
+	 *            The parent resource
 	 * @return The link to the new file on the cloud service.
 	 */
 	public String post(String resource, String parent);
@@ -106,6 +142,8 @@ public interface IStorageConnector {
 	/**
 	 * Changes a file on a cloud service.
 	 * 
+	 * @param resource
+	 *            The resource to use
 	 * @return true, if the file could be changed; false, if not.
 	 */
 	public boolean put(String resource);

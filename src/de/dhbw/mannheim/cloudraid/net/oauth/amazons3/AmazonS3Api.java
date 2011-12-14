@@ -27,7 +27,6 @@ import org.scribe.extractors.RequestTokenExtractor;
 import org.scribe.model.OAuthConfig;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
-import org.scribe.oauth.OAuthService;
 
 /**
  * @author Markus Holtermann
@@ -35,21 +34,25 @@ import org.scribe.oauth.OAuthService;
  */
 public class AmazonS3Api extends DefaultApi10a {
 
+	/**
+	 * The base domain for the Amazon Simple Storage Service
+	 */
 	public static final String S3_BASE_URL = "s3.amazonaws.com";
+	/**
+	 * The S3 URL
+	 */
 	private static final String S3_URL = "https://" + S3_BASE_URL + "/";
+	/**
+	 * A templated S3 Bucket URL
+	 */
 	private static final String BUCKET_URL = "https://%s." + S3_BASE_URL + "/";
 
 	/**
-	 * Returns the {@link OAuthService} for this Api
+	 * Returns the {@link org.scribe.oauth.OAuthService} for this
+	 * {@link org.scribe.builder.api.DefaultApi10a API}
 	 * 
-	 * @param apiKey
-	 *            Key
-	 * @param apiSecret
-	 *            Api Secret
-	 * @param callback
-	 *            OAuth callback (either URL or 'oob')
-	 * @param scope
-	 *            OAuth scope (optional)
+	 * @param config
+	 *            The config for the new {@link AmazonS3Api}
 	 */
 	@Override
 	public AmazonS3Service createService(OAuthConfig config) {
@@ -71,6 +74,9 @@ public class AmazonS3Api extends DefaultApi10a {
 		return "";
 	}
 
+	/**
+	 * @return The {@link #BUCKET_URL}: {@value #BUCKET_URL}
+	 */
 	public String getBucketEndpoint() {
 		return BUCKET_URL;
 	}
@@ -95,6 +101,9 @@ public class AmazonS3Api extends DefaultApi10a {
 		return Verb.GET;
 	}
 
+	/**
+	 * @return The {@link #S3_URL}: {@value #S3_URL}
+	 */
 	public String getS3Endpoint() {
 		return S3_URL;
 	}

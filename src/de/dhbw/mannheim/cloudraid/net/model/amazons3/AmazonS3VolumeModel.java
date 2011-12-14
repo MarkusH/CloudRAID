@@ -26,8 +26,15 @@ import org.w3c.dom.NodeList;
 
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 
+/**
+ * @author Markus Holtermann
+ */
 public class AmazonS3VolumeModel extends VolumeModel {
 
+	/**
+	 * @param node
+	 *            A {@link Node} representation of all available meta data
+	 */
 	public AmazonS3VolumeModel(Node node) {
 		NodeList nl = node.getChildNodes();
 		String tag;

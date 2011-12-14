@@ -34,6 +34,7 @@ import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
 import org.scribe.model.Verb;
+import org.scribe.oauth.OAuthService;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -44,8 +45,12 @@ import de.dhbw.mannheim.cloudraid.net.model.amazons3.AmazonS3VolumeModel;
 import de.dhbw.mannheim.cloudraid.net.oauth.amazons3.AmazonS3Api;
 import de.dhbw.mannheim.cloudraid.net.oauth.amazons3.AmazonS3Service;
 
+/**
+ * @author Markus Holtermann
+ */
 public class AmazonS3Connector implements IStorageConnector {
 
+	@SuppressWarnings("javadoc")
 	public static void main(String[] args) {
 		try {
 			HashMap<String, String> params = new HashMap<String, String>();
@@ -68,13 +73,34 @@ public class AmazonS3Connector implements IStorageConnector {
 		}
 	}
 
+	/**
+	 * The users public key
+	 */
 	private String accessKeyId = null;
+	
+	/**
+	 * The users secret key
+	 */
 	private String secretAccessKey = null;
+	
+	/**
+	 * A global XML parser
+	 */
 	private DocumentBuilder docBuilder;
+	
+	/**
+	 * The input source to parse a String as XML
+	 */
 	private InputSource is;
 
+	/**
+	 * The regarding {@link OAuthService}
+	 */
 	private AmazonS3Service service;
 
+	/**
+	 * A internal storage for all volumes of the user
+	 */
 	private HashMap<String, AmazonS3VolumeModel> volumes = null;
 
 	/**
@@ -100,17 +126,18 @@ public class AmazonS3Connector implements IStorageConnector {
 	/**
 	 * This function initializes the UbuntuOneConnector with the customer and
 	 * application tokens. During the
-	 * {@link de.dhbw.mannheim.cloudraid.net.connector.AmazonS3Connector#connect(String)}
+	 * {@link de.dhbw.mannheim.cloudraid.net.connector.AmazonS3Connector#connect()}
 	 * process the given tokens are used. If <code>connect()</code> returns
-	 * false, this class has to be reinstanciated and initialized with username
+	 * false, this class has to be reinstantiated and initialized with username
 	 * and password.
 	 * 
-	 * @param param
+	 * @param parameter
 	 *            <ul>
 	 *            <li><code>accessKeyId</code></li>
 	 *            <li><code>secretAccessKey</code></li>
 	 *            </ul>
 	 * @throws InstantiationException
+	 *             Thrown if not all required parameters are passed.
 	 * 
 	 */
 	@Override
@@ -258,29 +285,6 @@ public class AmazonS3Connector implements IStorageConnector {
 		System.err.println(String.format("@Response(%d, %s, %s)",
 				response.getCode(), verb, endpoint));
 		System.err.print(response.getBody());
-		System.err.flush();
-		return response;
-	}
-
-	/**
-	 * Add a payload / body content to the request
-	 * 
-	 * @see de.dhbw.mannheim.cloudraid.net.connector.AmazonS3Connector#sendRequest(Verb,
-	 *      String)
-	 * @param verb
-	 * @param endpoint
-	 * @param body
-	 * @return
-	 */
-	private Response sendRequest(Verb verb, String endpoint, byte[] body) {
-		System.err.flush();
-		OAuthRequest request = new OAuthRequest(verb, endpoint);
-		System.err.println(request);
-		service.signRequest(request);
-		request.addPayload(body);
-		Response response = request.send();
-		System.err.println(String.format("@Response(%d, %s, %s)",
-				response.getCode(), verb, endpoint));
 		System.err.flush();
 		return response;
 	}

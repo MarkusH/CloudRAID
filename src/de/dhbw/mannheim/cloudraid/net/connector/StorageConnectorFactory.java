@@ -23,8 +23,23 @@ package de.dhbw.mannheim.cloudraid.net.connector;
 
 import java.util.HashMap;
 
+/**
+ * @author Markus Holtermann
+ */
 public class StorageConnectorFactory {
 
+	/**
+	 * This factory loads the class <i>name</i> and passes <i>parameter</i> to
+	 * the class creation
+	 * 
+	 * @param name
+	 *            The class to load
+	 * @param parameter
+	 *            Initial parameters, such as user name / password or API
+	 *            information
+	 * @return An instance of the {@link IStorageConnector} or null in case an
+	 *         error occured
+	 */
 	public static IStorageConnector create(String name,
 			HashMap<String, String> parameter) {
 		try {

@@ -141,7 +141,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * application tokens. During the
 	 * {@link de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#connect()}
 	 * process the given tokens are used. If <code>connect()</code> returns
-	 * false, this class has to be reinstanciated and initialized with username
+	 * false, this class has to be reinstantiated and initialized with username
 	 * and password.
 	 * 
 	 * @param parameter
