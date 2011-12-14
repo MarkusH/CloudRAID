@@ -47,8 +47,7 @@ public class UbuntuOneApi extends DefaultApi10a {
 	 */
 	private static final String ACCESS_URL = "https://one.ubuntu.com/oauth/sso-finished-so-get-tokens/";
 	/**
-	 * Used for requesting the token validity with
-	 * <code>{@value #API_BASE_URL}/account/</code>
+	 * Used for requesting the token validity
 	 */
 	private static final String API_BASE_URL = "https://one.ubuntu.com/api";
 	/**
