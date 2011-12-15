@@ -36,12 +36,18 @@
 #define MEMERR_DEV0 0x10
 #define MEMERR_DEV1 0x11
 #define MEMERR_DEV2 0x12
-#define MEMERR_BUF 0x19
+#define MEMERR_BUF  0x17
 
 #define READERR_DEV0 0x20
 #define READERR_DEV1 0x21
 #define READERR_DEV2 0x22
-#define READERR_IN 0x29
+#define READERR_IN   0x29
+
+#define OPENERR_DEV0 0x30
+#define OPENERR_DEV1 0x31
+#define OPENERR_DEV2 0x32
+#define OPENERR_OUT  0x38
+#define OPENERR_IN   0x39
 
 unsigned short EXPONENTS_LONG_FIRST[] =
 {
@@ -490,50 +496,13 @@ void merge_byte ( FILE *out, FILE *devices[] )
     free ( a );
 }
 
-/**
- * Implements the splitBitInterface method defined in the Java RaidAccessInterface
- * class.
- */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitBitInterface
-( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4 )
-{
-    /* Convert the Java Strings to char arrays for usage in this C program. */
-    const char *in = ( *env )->GetStringUTFChars ( env, str1, 0 );
-    const char *out1 = ( *env )->GetStringUTFChars ( env, str2, 0 );
-    const char *out2 = ( *env )->GetStringUTFChars ( env, str3, 0 );
-    const char *out3 = ( *env )->GetStringUTFChars ( env, str4, 0 );
-
-    /* Generate file pointers. */
-    FILE *fp;
-    FILE *devices[3];
-
-    fp = fopen ( in, "rb" );
-    devices[0] = fopen ( out1, "wb" );
-    devices[1] = fopen ( out2, "wb" );
-    devices[2] = fopen ( out3, "wb" );
-
-    /* Invoke the native split method. */
-    split_bit ( fp, devices );
-
-    /* Close the files.  */
-    fclose ( fp );
-    fclose ( devices[0] );
-    fclose ( devices[1] );
-    fclose ( devices[2] );
-
-    /* Clean the memory. / Release the char arrays.  */
-    ( *env )->ReleaseStringUTFChars ( env, str1, in );
-    ( *env )->ReleaseStringUTFChars ( env, str2, out1 );
-    ( *env )->ReleaseStringUTFChars ( env, str3, out2 );
-    ( *env )->ReleaseStringUTFChars ( env, str4, out3 );
-}
 
 /**
- * Implements the mergeBitInterface method defined in the Java RaidAccessInterface
+ * Implements the mergeInterface method defined in the Java RaidAccessInterface
  * class.
  */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeBitInterface
-( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4 )
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
+( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4, jboolean bits )
 {
     /* Convert the Java Strings to char arrays for usage in the C program.  */
     const char *out = ( *env )->GetStringUTFChars ( env, str1, 0 );
@@ -545,13 +514,40 @@ JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     FILE *fp;
     FILE *devices[3];
 
-    fp = fopen ( out, "wb" );
     devices[0] = fopen ( in1, "rb" );
     devices[1] = fopen ( in2, "rb" );
     devices[2] = fopen ( in3, "rb" );
+    if ( devices[0] == NULL )
+    {
+        printf ( "File not found!\n" );
+        exit ( OPENERR_DEV0 );
+    }
+    if ( devices[1] == NULL )
+    {
+        printf ( "File not found!\n" );
+        exit ( OPENERR_DEV1 );
+    }
+    if ( devices[2] == NULL )
+    {
+        printf ( "File not found!\n" );
+        exit ( OPENERR_DEV2 );
+    }
+
+    fp = fopen ( out, "wb" );
+    if ( fp == NULL )
+    {
+        printf ( "File could not be created!\n" );
+        exit ( OPENERR_OUT );
+    }
 
     /* Invoke the native merge method. */
-    merge_bit ( fp, devices );
+    if (bits)
+    {
+        merge_bit ( fp, devices );
+    }
+    else {
+        merge_byte( fp, devices );
+    }
 
     /* Close the files. */
     fclose ( fp );
@@ -567,11 +563,11 @@ JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
 }
 
 /**
- * Implements the splitByteInterface method defined in the Java RaidAccessInterface
+ * Implements the splitInterface method defined in the Java RaidAccessInterface
  * class.
  */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitByteInterface
-( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4 )
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
+( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4, jboolean bits )
 {
     /* Convert the Java Strings to char arrays for usage in this C program. */
     const char *in = ( *env )->GetStringUTFChars ( env, str1, 0 );
@@ -584,12 +580,39 @@ JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_s
     FILE *devices[3];
 
     fp = fopen ( in, "rb" );
+    if ( fp == NULL )
+    {
+        printf ( "File not found!\n" );
+        exit ( OPENERR_OUT );
+    }
+
     devices[0] = fopen ( out1, "wb" );
     devices[1] = fopen ( out2, "wb" );
     devices[2] = fopen ( out3, "wb" );
+    if ( devices[0] == NULL )
+    {
+        printf ( "File could not be created!\n" );
+        exit ( OPENERR_DEV0 );
+    }
+    if ( devices[1] == NULL )
+    {
+        printf ( "File could not be created!\n" );
+        exit ( OPENERR_DEV1 );
+    }
+    if ( devices[2] == NULL )
+    {
+        printf ( "File could not be created!\n" );
+        exit ( OPENERR_DEV2 );
+    }
 
     /* Invoke the native split method. */
-    split_byte ( fp, devices );
+    if (bits)
+    {
+        split_bit ( fp, devices );
+    }
+    else {
+        split_byte(fp, devices);
+    }
 
     /* Close the files.  */
     fclose ( fp );
@@ -602,42 +625,4 @@ JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_s
     ( *env )->ReleaseStringUTFChars ( env, str2, out1 );
     ( *env )->ReleaseStringUTFChars ( env, str3, out2 );
     ( *env )->ReleaseStringUTFChars ( env, str4, out3 );
-}
-
-/**
- * Implements the mergeByteInterface method defined in the Java RaidAccessInterface
- * class.
- */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeByteInterface
-( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4 )
-{
-    /* Convert the Java Strings to char arrays for usage in the C program.  */
-    const char *out = ( *env )->GetStringUTFChars ( env, str1, 0 );
-    const char *in1 = ( *env )->GetStringUTFChars ( env, str2, 0 );
-    const char *in2 = ( *env )->GetStringUTFChars ( env, str3, 0 );
-    const char *in3 = ( *env )->GetStringUTFChars ( env, str4, 0 );
-
-    /* Generate file pointers. */
-    FILE *fp;
-    FILE *devices[3];
-
-    fp = fopen ( out, "wb" );
-    devices[0] = fopen ( in1, "rb" );
-    devices[1] = fopen ( in2, "rb" );
-    devices[2] = fopen ( in3, "rb" );
-
-    /* Invoke the native merge method. */
-    merge_byte ( fp, devices );
-
-    /* Close the files. */
-    fclose ( fp );
-    fclose ( devices[0] );
-    fclose ( devices[1] );
-    fclose ( devices[2] );
-
-    /* Clean the memory. / Release the char arrays. */
-    ( *env )->ReleaseStringUTFChars ( env, str1, out );
-    ( *env )->ReleaseStringUTFChars ( env, str2, in1 );
-    ( *env )->ReleaseStringUTFChars ( env, str3, in2 );
-    ( *env )->ReleaseStringUTFChars ( env, str4, in3 );
 }

@@ -9,35 +9,19 @@ extern "C" {
 #endif
 /*
  * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
- * Method:    mergeBitInterface
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ * Method:    mergeInterface
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
  */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeBitInterface
-  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
+  (JNIEnv *, jobject, jstring, jstring, jstring, jstring, jboolean);
 
 /*
  * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
- * Method:    splitBitInterface
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ * Method:    splitInterface
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
  */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitBitInterface
-  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
-
-/*
- * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
- * Method:    mergeByteInterface
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeByteInterface
-  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
-
-/*
- * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
- * Method:    splitByteInterface
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitByteInterface
-  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
+  (JNIEnv *, jobject, jstring, jstring, jstring, jstring, jboolean);
 
 #ifdef __cplusplus
 }
