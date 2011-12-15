@@ -9,18 +9,34 @@ extern "C" {
 #endif
 /*
  * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
- * Method:    splitInterface
+ * Method:    mergeBitInterface
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeBitInterface
   (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
 
 /*
  * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
- * Method:    mergeInterface
+ * Method:    splitBitInterface
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitBitInterface
+  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
+
+/*
+ * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
+ * Method:    mergeByteInterface
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeByteInterface
+  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
+
+/*
+ * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
+ * Method:    splitByteInterface
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitByteInterface
   (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
 
 #ifdef __cplusplus

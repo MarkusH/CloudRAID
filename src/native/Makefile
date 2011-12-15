@@ -13,20 +13,17 @@ jcompile:
 compile:
 	mkdir -p ./build/usr/lib
 ifdef DEBUG
-	gcc -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${DFLAG} -shared -o ./build/usr/lib/libraid5bits.so -DUSE_BITS raid5.c
-	gcc -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${DFLAG} -shared -o ./build/usr/lib/libraid5bytes.so -DUSE_BYTES raid5.c
+	gcc -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${DFLAG} -shared -o ./build/usr/lib/libcloudraid.so raid5.c
 else
-	gcc -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${OFLAG} -shared -o ./build/usr/lib/libraid5bits.so -DUSE_BITS raid5.c
-	gcc -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${OFLAG} -shared -o ./build/usr/lib/libraid5bytes.so -DUSE_BYTES raid5.c
+	gcc -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${OFLAG} -shared -o ./build/usr/lib/libcloudraid.so raid5.c
 endif
 
 clangcompile:
 	mkdir -p ./build/usr/lib
-	clang -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC -O3 -shared -o ./build/usr/lib/libraid5bits.so -DUSE_BITS raid5.c
-	clang -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC -O3 -shared -o ./build/usr/lib/libraid5bytes.so -DUSE_BYTES raid5.c
+	clang -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC -O3 -shared -o ./build/usr/lib/libcloudraid.so raid5.c
 
 install:
-	cp -rv ./build/* /
+	cp -rvf ./build/* /
 
 clean:
 	rm -rf ./build

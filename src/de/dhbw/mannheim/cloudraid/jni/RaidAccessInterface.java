@@ -38,19 +38,29 @@ public class RaidAccessInterface {
 		 * Depending on what the user passed as the last argument, we will
 		 * either split and merge the input at bit or byte level.
 		 */
+		System.loadLibrary("cloudraid");
 		if (args.length == 6 && args[5].equals("--bytes")) {
-			System.loadLibrary("raid5bytes");
 		} else {
 			System.loadLibrary("raid5bits");
 		}
 
 		long startTime = System.currentTimeMillis();
 		if (args[0].toLowerCase().equals("split"))
-			new RaidAccessInterface().splitInterface(args[1], args[2], args[3],
-					args[4]);
+			if (args.length == 6 && args[5].equals("--bytes")) {
+				new RaidAccessInterface().splitByteInterface(args[1], args[2], args[3],
+						args[4]);
+			} else {
+				new RaidAccessInterface().splitBitInterface(args[1], args[2], args[3],
+						args[4]);
+			}
 		else if (args[0].toLowerCase().equals("merge"))
-			new RaidAccessInterface().mergeInterface(args[1], args[2], args[3],
-					args[4]);
+			if (args.length == 6 && args[5].equals("--bytes")) {
+				new RaidAccessInterface().mergeByteInterface(args[1], args[2], args[3],
+						args[4]);
+			} else {
+				new RaidAccessInterface().mergeBitInterface(args[1], args[2], args[3],
+						args[4]);
+			}
 		else {
 			System.out
 					.println("Unknown mode! Use either \"split\" or \"merge\"");
@@ -70,7 +80,7 @@ public class RaidAccessInterface {
 	 * @param in2
 	 *            Input file that simulates device 2
 	 */
-	private native void mergeInterface(String out, String in0, String in1,
+	private native void mergeBitInterface(String out, String in0, String in1,
 			String in2);
 
 	/**
@@ -83,6 +93,32 @@ public class RaidAccessInterface {
 	 * @param out2
 	 *            Output file that simulates device 2
 	 */
-	private native void splitInterface(String in, String out0, String out1,
+	private native void splitBitInterface(String in, String out0, String out1,
+			String out2);
+	
+	/**
+	 * @param out
+	 *            The output file
+	 * @param in0
+	 *            Input file that simulates device 0
+	 * @param in1
+	 *            Input file that simulates device 1
+	 * @param in2
+	 *            Input file that simulates device 2
+	 */
+	private native void mergeByteInterface(String out, String in0, String in1,
+			String in2);
+
+	/**
+	 * @param in
+	 *            The input file
+	 * @param out0
+	 *            Output file that simulates device 0
+	 * @param out1
+	 *            Output file that simulates device 1
+	 * @param out2
+	 *            Output file that simulates device 2
+	 */
+	private native void splitByteInterface(String in, String out0, String out1,
 			String out2);
 }
