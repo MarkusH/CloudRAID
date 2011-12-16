@@ -1,4 +1,4 @@
-DFLAG = -Wall -pedantic -g -D_DEBUG
+DFLAG = -Wall -pedantic -g
 OFLAG = -O3
 JAVASOURCE = ./../../src
 JAVABIN = ./../../bin

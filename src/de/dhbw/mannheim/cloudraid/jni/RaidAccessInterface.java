@@ -22,41 +22,12 @@
 package de.dhbw.mannheim.cloudraid.jni;
 
 /**
- * @author Markus Holtermann
+ * @author Florian Bausch, Markus Holtermann
  */
 public class RaidAccessInterface {
-
-	@SuppressWarnings("javadoc")
-	public static void main(String[] args) {
-		if (args.length != 5 && args.length != 6) {
-			System.out
-					.println("You have to specify <split|merge> <infile|outfile> <dev0> <dev1> <dev2> [--bits|--bytes]");
-			System.exit(1);
-		}
-		boolean useBits = (args.length == 6 && args[5].equals("--bits"));
-
-		/*
-		 * Depending on what the user passed as the last argument, we will
-		 * either split and merge the input at bit or byte level.
-		 */
+	
+	static {
 		System.loadLibrary("cloudraid");
-
-		long startTime = System.currentTimeMillis();
-		if (args[0].toLowerCase().equals("split")) {
-			new RaidAccessInterface().splitInterface(args[1], args[2], args[3],
-					args[4], useBits);
-		} else {
-			if (args[0].toLowerCase().equals("merge")) {
-				new RaidAccessInterface().mergeInterface(args[1], args[2],
-						args[3], args[4], useBits);
-			} else {
-				System.out
-						.println("Unknown mode! Use either \"split\" or \"merge\"");
-				System.exit(2);
-			}
-		}
-		long endTime = System.currentTimeMillis();
-		System.out.println((endTime - startTime) / 1000 + " s.");
 	}
 
 	/**
@@ -68,10 +39,11 @@ public class RaidAccessInterface {
 	 *            Input file that simulates device 1
 	 * @param in2
 	 *            Input file that simulates device 2
+	 * @return The success or error return value
 	 */
-	public static void mergeBitInterface(String out, String in0, String in1,
+	public static int mergeBitInterface(String out, String in0, String in1,
 			String in2) {
-		new RaidAccessInterface().splitInterface(out, in0, in1, in2, true);
+		return new RaidAccessInterface().splitInterface(out, in0, in1, in2, true);
 	}
 
 	/**
@@ -83,10 +55,11 @@ public class RaidAccessInterface {
 	 *            Input file that simulates device 1
 	 * @param in2
 	 *            Input file that simulates device 2
+	 * @return The success or error return value
 	 */
-	public static void mergeByteInterface(String out, String in0, String in1,
+	public static int mergeByteInterface(String out, String in0, String in1,
 			String in2) {
-		new RaidAccessInterface().splitInterface(out, in0, in1, in2, false);
+		return new RaidAccessInterface().splitInterface(out, in0, in1, in2, false);
 	}
 
 	/**
@@ -98,10 +71,11 @@ public class RaidAccessInterface {
 	 *            Output file that simulates device 1
 	 * @param out2
 	 *            Output file that simulates device 2
+	 * @return The success or error return value
 	 */
-	public static void splitBitInterface(String in, String out0, String out1,
+	public static int splitBitInterface(String in, String out0, String out1,
 			String out2) {
-		new RaidAccessInterface().splitInterface(in, out0, out1, out2, true);
+		return new RaidAccessInterface().splitInterface(in, out0, out1, out2, true);
 	}
 
 	/**
@@ -113,10 +87,11 @@ public class RaidAccessInterface {
 	 *            Output file that simulates device 1
 	 * @param out2
 	 *            Output file that simulates device 2
+	 * @return The success or error return value
 	 */
-	public static void splitByteInterface(String in, String out0, String out1,
+	public static int splitByteInterface(String in, String out0, String out1,
 			String out2) {
-		new RaidAccessInterface().splitInterface(in, out0, out1, out2, false);
+		return new RaidAccessInterface().splitInterface(in, out0, out1, out2, false);
 	}
 
 	/**
@@ -131,8 +106,9 @@ public class RaidAccessInterface {
 	 * @param bits
 	 *            Set to true if the split process should use bit level and not
 	 *            block level
+	 * @return The success or error return value
 	 */
-	private native void mergeInterface(String out, String in0, String in1,
+	private native int mergeInterface(String out, String in0, String in1,
 			String in2, boolean bits);
 
 	/**
@@ -147,7 +123,8 @@ public class RaidAccessInterface {
 	 * @param bits
 	 *            Set to true if the split process should use bit level and not
 	 *            block level
+	 * @return The success or error return value
 	 */
-	private native void splitInterface(String in, String out0, String out1,
+	private native int splitInterface(String in, String out0, String out1,
 			String out2, boolean bits);
 }
