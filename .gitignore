@@ -1,8 +1,9 @@
 bin/
-.settings/
-.classpath
+src/native/build/
+.*
 *.project
 *.cproject
 *.class
 *.so
 *.bak
+*.kdev4

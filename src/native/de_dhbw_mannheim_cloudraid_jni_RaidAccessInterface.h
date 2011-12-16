@@ -9,19 +9,19 @@ extern "C" {
 #endif
 /*
  * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
- * Method:    splitInterface
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ * Method:    mergeInterface
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
  */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
-  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
+  (JNIEnv *, jobject, jstring, jstring, jstring, jstring, jboolean);
 
 /*
  * Class:     de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface
- * Method:    mergeInterface
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+ * Method:    splitInterface
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
  */
-JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
-  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
+JNIEXPORT void JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
+  (JNIEnv *, jobject, jstring, jstring, jstring, jstring, jboolean);
 
 #ifdef __cplusplus
 }
