@@ -7,3 +7,4 @@ src/native/build/
 *.so
 *.bak
 *.kdev4
+*.o
