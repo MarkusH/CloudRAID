@@ -108,6 +108,11 @@ extern "C"
      */
     extern void *sha256_buffer ( const char *buffer, size_t len, void *resblock );
 
+    /**
+     * Convert the RESBLOCK to an 65 character String, including the terminating NUL!
+     */
+    extern void ascii_from_resbuf ( char* ascii, void* resblock );
+
 #ifdef __cplusplus
 }
 #endif
