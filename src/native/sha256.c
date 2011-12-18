@@ -472,3 +472,12 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
         h = ctx->state[7] += h;
     }
 }
+
+void ascii_from_resbuf ( char* ascii, void* resblock )
+{
+    int i;
+    for ( i = 0; i < 32; i++ )
+    {
+        sprintf ( ascii + i * 2, "%02x", ( ( unsigned char * ) resblock ) [i] );
+    }
+}
