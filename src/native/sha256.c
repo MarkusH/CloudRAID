@@ -11,11 +11,11 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /*
@@ -58,16 +58,18 @@
 #error "invalid SHA256_BLOCKSIZE"
 #endif
 
-/* This array contains the bytes used to pad the buffer to the next
-   64-byte boundary.  */
-static const unsigned char fillbuf[64] = { 0x80, 0 /* , 0, 0, ...  */ };
+/**
+ * This array contains the bytes used to pad the buffer to the next
+ * 64-byte boundary.
+ */
+static const unsigned char fillbuf[64] = { 0x80, 0 /* , 0, 0, ... */ };
 
 
-/*
-  Takes a pointer to a 256 bit block of data (eight 32 bit ints) and
-  intializes it to the start constants of the SHA256 algorithm. This
-  must be called before using hash in the call to sha256_hash
-*/
+/**
+ * Takes a pointer to a 256 bit block of data (eight 32 bit ints) and
+ * intializes it to the start constants of the SHA256 algorithm. This
+ * must be called before using hash in the call to sha256_hash
+ */
 void sha256_init_ctx ( struct sha256_ctx *ctx )
 {
     ctx->state[0] = 0x6a09e667UL;
@@ -83,16 +85,20 @@ void sha256_init_ctx ( struct sha256_ctx *ctx )
     ctx->buflen = 0;
 }
 
-/* Copy the value from v into the memory location pointed to by *cp,
-   If your architecture allows unaligned access this is equivalent to
-   * (uint32_t *) cp = v  */
+/**
+ * Copy the value from v into the memory location pointed to by *cp,
+ * If your architecture allows unaligned access this is equivalent to
+ * (uint32_t *) cp = v
+ */
 static inline void set_uint32 ( char *cp, uint32_t v )
 {
     memcpy ( cp, &v, sizeof v );
 }
 
-/* Put result from CTX in first 32 bytes following RESBUF.  The result
-   must be in little endian byte order.  */
+/**
+ * Put result from CTX in first 32 bytes following RESBUF. The result
+ * must be in little endian byte order.
+ */
 void * sha256_read_ctx ( const struct sha256_ctx *ctx, void *resbuf )
 {
     int i;
@@ -104,22 +110,24 @@ void * sha256_read_ctx ( const struct sha256_ctx *ctx, void *resbuf )
     return resbuf;
 }
 
-/* Process the remaining bytes in the internal buffer and the usual
-   prolog according to the standard and write the result to RESBUF.  */
+/**
+ * Process the remaining bytes in the internal buffer and the usual
+ * prolog according to the standard and write the result to RESBUF.
+ */
 static void sha256_conclude_ctx ( struct sha256_ctx *ctx )
 {
-    /* Take yet unprocessed bytes into account.  */
+    /* Take yet unprocessed bytes into account. */
     size_t bytes = ctx->buflen;
     size_t size = ( bytes < 56 ) ? 64 / 4 : 64 * 2 / 4;
 
-    /* Now count remaining bytes.  */
+    /* Now count remaining bytes. */
     ctx->total[0] += bytes;
     if ( ctx->total[0] < bytes )
         ++ctx->total[1];
 
     /* Put the 64-bit file length in *bits* at the end of the buffer.
        Use set_uint32 rather than a simple assignment, to avoid risk of
-       unaligned access.  */
+       unaligned access. */
     set_uint32 ( ( char * ) &ctx->buffer[size - 2],
                  SWAP ( ( ctx->total[1] << 3 ) | ( ctx->total[0] >> 29 ) ) );
     set_uint32 ( ( char * ) &ctx->buffer[size - 1],
@@ -127,7 +135,7 @@ static void sha256_conclude_ctx ( struct sha256_ctx *ctx )
 
     memcpy ( & ( ( char * ) ctx->buffer ) [bytes], fillbuf, ( size - 2 ) * 4 - bytes );
 
-    /* Process last bytes.  */
+    /* Process last bytes. */
     sha256_process_block ( ctx->buffer, size * 4, ctx );
 }
 
@@ -137,9 +145,11 @@ void * sha256_finish_ctx ( struct sha256_ctx *ctx, void *resbuf )
     return sha256_read_ctx ( ctx, resbuf );
 }
 
-/* Compute SHA256 message digest for bytes read from STREAM.  The
-   resulting message digest number will be written into the 32 bytes
-   beginning at RESBLOCK.  */
+/**
+ * Compute SHA256 message digest for bytes read from STREAM. The
+ * resulting message digest number will be written into the 32 bytes
+ * beginning at RESBLOCK.
+ */
 int sha256_stream ( FILE *stream, void *resblock )
 {
     struct sha256_ctx ctx;
@@ -149,19 +159,19 @@ int sha256_stream ( FILE *stream, void *resblock )
     if ( !buffer )
         return 1;
 
-    /* Initialize the computation context.  */
+    /* Initialize the computation context. */
     sha256_init_ctx ( &ctx );
 
-    /* Iterate over full file contents.  */
+    /* Iterate over full file contents. */
     while ( 1 )
     {
-        /* We read the file in blocks of SHA256_BLOCKSIZE bytes.  One call of the
+        /* We read the file in blocks of SHA256_BLOCKSIZE bytes. One call of the
            computation function processes the whole buffer so that with the
-           next round of the loop another block can be read.  */
+           next round of the loop another block can be read. */
         size_t n;
         sum = 0;
 
-        /* Read block.  Take care for partial reads.  */
+        /* Read block. Take care for partial reads. */
         while ( 1 )
         {
             n = fread ( buffer + sum, 1, SHA256_BLOCKSIZE - sum, stream );
@@ -175,7 +185,7 @@ int sha256_stream ( FILE *stream, void *resblock )
             {
                 /* Check for the error flag IFF N == 0, so that we don't
                    exit the loop after a partial read due to e.g., EAGAIN
-                   or EWOULDBLOCK.  */
+                   or EWOULDBLOCK. */
                 if ( ferror ( stream ) )
                 {
                     free ( buffer );
@@ -184,14 +194,14 @@ int sha256_stream ( FILE *stream, void *resblock )
                 goto process_partial_block;
             }
 
-            /* We've read at least one byte, so ignore errors.  But always
+            /* We've read at least one byte, so ignore errors. But always
                check for EOF, since feof may be true even though N > 0.
-               Otherwise, we could end up calling fread after EOF.  */
+               Otherwise, we could end up calling fread after EOF. */
             if ( feof ( stream ) )
                 goto process_partial_block;
         }
 
-        /* Process buffer with SHA256_BLOCKSIZE bytes.  Note that
+        /* Process buffer with SHA256_BLOCKSIZE bytes. Note that
                           SHA256_BLOCKSIZE % 64 == 0
          */
         sha256_process_block ( buffer, SHA256_BLOCKSIZE, &ctx );
@@ -200,38 +210,40 @@ int sha256_stream ( FILE *stream, void *resblock )
 process_partial_block:
     ;
 
-    /* Process any remaining bytes.  */
+    /* Process any remaining bytes. */
     if ( sum > 0 )
         sha256_process_bytes ( buffer, sum, &ctx );
 
-    /* Construct result in desired memory.  */
+    /* Construct result in desired memory. */
     sha256_finish_ctx ( &ctx, resblock );
     free ( buffer );
     return 0;
 }
 
-/* Compute SHA512 message digest for LEN bytes beginning at BUFFER.  The
-   result is always in little endian byte order, so that a byte-wise
-   output yields to the wanted ASCII representation of the message
-   digest.  */
+/**
+ * Compute SHA256 message digest for LEN bytes beginning at BUFFER. The
+ * result is always in little endian byte order, so that a byte-wise
+ * output yields to the wanted ASCII representation of the message
+ * digest.
+ */
 void * sha256_buffer ( const char *buffer, size_t len, void *resblock )
 {
     struct sha256_ctx ctx;
 
-    /* Initialize the computation context.  */
+    /* Initialize the computation context. */
     sha256_init_ctx ( &ctx );
 
-    /* Process whole buffer but last len % 64 bytes.  */
+    /* Process whole buffer but last len % 64 bytes. */
     sha256_process_bytes ( buffer, len, &ctx );
 
-    /* Put result in desired memory area.  */
+    /* Put result in desired memory area. */
     return sha256_finish_ctx ( &ctx, resblock );
 }
 
 void sha256_process_bytes ( const void *buffer, size_t len, struct sha256_ctx *ctx )
 {
     /* When we already have some bits in our internal buffer concatenate
-       both inputs first.  */
+       both inputs first. */
     if ( ctx->buflen != 0 )
     {
         size_t left_over = ctx->buflen;
@@ -245,7 +257,7 @@ void sha256_process_bytes ( const void *buffer, size_t len, struct sha256_ctx *c
             sha256_process_block ( ctx->buffer, ctx->buflen & ~63, ctx );
 
             ctx->buflen &= 63;
-            /* The regions in the following copy operation cannot overlap.  */
+            /* The regions in the following copy operation cannot overlap. */
             memcpy ( ctx->buffer,
                      & ( ( char * ) ctx->buffer ) [ ( left_over + add ) & ~63],
                      ctx->buflen );
@@ -255,7 +267,7 @@ void sha256_process_bytes ( const void *buffer, size_t len, struct sha256_ctx *c
         len -= add;
     }
 
-    /* Process available complete blocks.  */
+    /* Process available complete blocks. */
     if ( len >= 64 )
     {
 #if !_STRING_ARCH_unaligned
@@ -282,7 +294,7 @@ void sha256_process_bytes ( const void *buffer, size_t len, struct sha256_ctx *c
         }
     }
 
-    /* Move remaining bytes in internal buffer.  */
+    /* Move remaining bytes in internal buffer. */
     if ( len > 0 )
     {
         size_t left_over = ctx->buflen;
@@ -299,9 +311,9 @@ void sha256_process_bytes ( const void *buffer, size_t len, struct sha256_ctx *c
     }
 }
 
-/* --- Code below is the primary difference between sha1.c and sha256.c --- */
-
-/* SHA256 round constants */
+/**
+ * SHA256 round constants
+ */
 #define K(I) sha256_round_constants[I]
 static const uint32_t sha256_round_constants[64] =
 {
@@ -323,13 +335,15 @@ static const uint32_t sha256_round_constants[64] =
     0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL,
 };
 
-/* Round functions.  */
+/* Round functions. */
 #define F2(A,B,C) ( ( A & B ) | ( C & ( A | B ) ) )
 #define F1(E,F,G) ( G ^ ( E & ( F ^ G ) ) )
 
-/* Process LEN bytes of BUFFER, accumulating context into CTX.
-   It is assumed that LEN % 64 == 0.
-   Most of this code comes from GnuPG's cipher/sha1.c.  */
+/**
+ * Process LEN bytes of BUFFER, accumulating context into CTX.
+ * It is assumed that LEN % 64 == 0.
+ * Most of this code comes from GnuPG's cipher/sha1.c.
+ */
 
 void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *ctx )
 {
@@ -346,9 +360,9 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
     uint32_t g = ctx->state[6];
     uint32_t h = ctx->state[7];
 
-    /* First increment the byte count.  FIPS PUB 180-2 specifies the possible
-       length of the file up to 2^64 bits.  Here we only compute the
-       number of bytes.  Do a double word increment.  */
+    /* First increment the byte count. FIPS PUB 180-2 specifies the possible
+       length of the file up to 2^64 bits. Here we only compute the
+       number of bytes. Do a double word increment. */
     ctx->total[0] += len;
     if ( ctx->total[0] < len )
         ++ctx->total[1];
@@ -359,16 +373,16 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
 #define SS0(x) (rol(x,30)^rol(x,19)^rol(x,10))
 #define SS1(x) (rol(x,26)^rol(x,21)^rol(x,7))
 
-#define M(I) ( tm =   S1(x[(I-2)&0x0f]) + x[(I-7)&0x0f] \
-                    + S0(x[(I-15)&0x0f]) + x[I&0x0f]    \
+#define M(I) ( tm = S1(x[(I-2)&0x0f]) + x[(I-7)&0x0f] \
+                    + S0(x[(I-15)&0x0f]) + x[I&0x0f] \
                , x[I&0x0f] = tm )
 
-#define R(A,B,C,D,E,F,G,H,K,M)  do { t0 = SS0(A) + F2(A,B,C); \
-                                     t1 = H + SS1(E)  \
-                                      + F1(E,F,G)     \
-                                      + K             \
-                                      + M;            \
-                                     D += t1;  H = t0 + t1; \
+#define R(A,B,C,D,E,F,G,H,K,M) do { t0 = SS0(A) + F2(A,B,C); \
+                                     t1 = H + SS1(E) \
+                                      + F1(E,F,G) \
+                                      + K \
+                                      + M; \
+                                     D += t1; H = t0 + t1; \
                                } while(0)
 
     while ( words < endp )
@@ -376,7 +390,7 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
         uint32_t tm;
         uint32_t t0, t1;
         int t;
-        /* FIXME: see sha1.c for a better implementation.  */
+        /* FIXME: see sha1.c for a better implementation. */
         for ( t = 0; t < 16; t++ )
         {
             x[t] = SWAP ( *words );
