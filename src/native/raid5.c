@@ -2,19 +2,19 @@
  * Copyright 2011 by the CloudRAID Team, see AUTHORS for more details.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership. The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * with the License. You may obtain a copy of the License at
 
  * http://www.apache.org/licenses/LICENSE-2.0
 
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
+ * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
  */
@@ -95,18 +95,18 @@ int split_bit ( FILE *in, FILE *devices[] )
     /* read the characters */
     rlen = fread ( chars, sizeof ( char ), 2, in );
 
-    while ( rlen > 0 )   /* as long as we have read at least character */
+    while ( rlen > 0 ) /* as long as we have read at least character */
     {
         a = 0;
         b = 0;
-        if ( rlen == 2 )   /* we can do the bitwise split / file size is even */
+        if ( rlen == 2 ) /* we can do the bitwise split / file size is even */
         {
             index = 7;
             /* convert the 2 bytes to a short, the first byte is multiplied with 2^8 and hence uses the leftmost 8 bits */
             c = chars[0];
             c <<= 8;
             c |= chars[1];
-            for ( i = 0; i <= 7; i++ )   /* bitwise check if the bit is set */
+            for ( i = 0; i <= 7; i++ ) /* bitwise check if the bit is set */
             {
                 if ( c & EXPONENTS_LONG_FIRST[i] )
                 {
@@ -123,7 +123,7 @@ int split_bit ( FILE *in, FILE *devices[] )
             fwrite ( &b, sizeof ( char ), 1, devices[ ( parity_pos + 2 ) % 3] );
             fwrite ( &p, sizeof ( char ), 1, devices[parity_pos] );
         }
-        else   /* odd file size take care of last byte */
+        else /* odd file size take care of last byte */
         {
             a = chars[0];
             p = ( ~a ) + 256;
@@ -133,7 +133,7 @@ int split_bit ( FILE *in, FILE *devices[] )
         parity_pos = ( parity_pos + 1 ) % 3; /* rotate the devices */
         rlen = fread ( chars, sizeof ( char ), 2, in );
     }
-    if ( ferror ( in ) )   /* read error */
+    if ( ferror ( in ) ) /* read error */
     {
         printf ( "Read error\n" );
         return READERR_IN;
@@ -149,7 +149,7 @@ int split_bit ( FILE *in, FILE *devices[] )
  * 2: 11010011
  *
  * Then *out alternating becomes the bits 0 to 7 from 0 and 1 as bits 0, 2, 4, 6, 8, 10, 12, 14
- * and  1, 3, 5, 7, 9, 11, 13, 15 of *in
+ * and 1, 3, 5, 7, 9, 11, 13, 15 of *in
  * *out: 10010010 11001001
  *
  * see split_bit for more information
@@ -164,16 +164,16 @@ int merge_bit ( FILE *out, FILE *devices[] )
     alen = fread ( &a, sizeof ( char ), 1, devices[ ( parity_pos + 1 ) % 3] );
     blen = fread ( &b, sizeof ( char ), 1, devices[ ( parity_pos + 2 ) % 3] );
     plen = fread ( &p, sizeof ( char ), 1, devices[parity_pos] );
-    while ( alen > 0 && blen > 0 && plen > 0 )   /* as long as we read from all 3 devices */
+    while ( alen > 0 && blen > 0 && plen > 0 ) /* as long as we read from all 3 devices */
     {
-        if ( ( a ^ b ) != p )   /* check parity validity */
+        if ( ( a ^ b ) != p ) /* check parity validity */
         {
             printf ( "[WARNING] Parity does not match!" );
         }
         c = 0;
         for ( i = 0; i <= 7; i++ )
         {
-            if ( i == 4 )   /* we read the first 2 nibbles => 1 byte */
+            if ( i == 4 ) /* we read the first 2 nibbles => 1 byte */
             {
                 fwrite ( &c, sizeof ( char ), 1, out );
                 c = 0;
@@ -210,7 +210,7 @@ int merge_bit ( FILE *out, FILE *devices[] )
 
 int split_byte ( FILE *in, FILE *devices[] )
 {
-    unsigned char  *chars, *a, *b, *p, parity_pos = 2;
+    unsigned char *chars, *a, *b, *p, parity_pos = 2;
     size_t rlen, partial;
     unsigned int i;
 
@@ -242,7 +242,7 @@ int split_byte ( FILE *in, FILE *devices[] )
     rlen = fread ( chars, sizeof ( unsigned char ), 2 * BLOCKSIZE, in );
     while ( rlen > 0 )
     {
-        if ( rlen == 2 * BLOCKSIZE )   /* two complete input blocks */
+        if ( rlen == 2 * BLOCKSIZE ) /* two complete input blocks */
         {
             memcpy ( a, &chars[0], BLOCKSIZE ); /* Copy the first part of the read bytes*/
             memcpy ( b, &chars[BLOCKSIZE], BLOCKSIZE ); /* Copy the second part of the read bytes*/
@@ -318,7 +318,7 @@ int merge_byte ( FILE *out, FILE *devices[] )
     {
         for ( i = 0; i < BLOCKSIZE; i++ )
         {
-            if ( ( a[i] ^ b[i] ) != p[i] )   /* Parity does not match */
+            if ( ( a[i] ^ b[i] ) != p[i] ) /* Parity does not match */
             {
                 printf ( "[WARNING] Parity does not match!" );
             }
@@ -331,18 +331,18 @@ int merge_byte ( FILE *out, FILE *devices[] )
         plen = fread ( p, sizeof ( char ), BLOCKSIZE, devices[parity_pos] );
     }
 
-    if ( alen == BLOCKSIZE && plen == BLOCKSIZE && blen > 0 )   /* Last block of output is != 2 * BLOCKSIZE and > BLOCKSIZE */
+    if ( alen == BLOCKSIZE && plen == BLOCKSIZE && blen > 0 ) /* Last block of output is != 2 * BLOCKSIZE and > BLOCKSIZE */
     {
         for ( i = 0; i < blen; i++ )
         {
-            if ( ( a[i] ^ b[i] ) != p[i] )   /* Parity does not match */
+            if ( ( a[i] ^ b[i] ) != p[i] ) /* Parity does not match */
             {
                 printf ( "[WARNING] Parity does not match!" );
             }
         }
         for ( i = blen; i < BLOCKSIZE; i++ )
         {
-            if ( ( a[i] ^ p[i] ) != 0xFF )   /* Parity does not match */
+            if ( ( a[i] ^ p[i] ) != 0xFF ) /* Parity does not match */
             {
                 printf ( "[WARNING] Parity does not match!" );
             }
@@ -352,11 +352,11 @@ int merge_byte ( FILE *out, FILE *devices[] )
     }
     else
     {
-        if ( alen > 0 && plen  > 0 && alen == plen )
+        if ( alen > 0 && plen > 0 && alen == plen )
         {
             for ( i = 0; i < alen; i++ )
             {
-                if ( ( a[i] ^ p[i] ) != 0xFF )   /* Parity does not match */
+                if ( ( a[i] ^ p[i] ) != 0xFF ) /* Parity does not match */
                 {
                     printf ( "[WARNING] Parity does not match!" );
                 }
@@ -396,7 +396,7 @@ int merge_byte ( FILE *out, FILE *devices[] )
 JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
 ( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4, jboolean bits )
 {
-    /* Convert the Java Strings to char arrays for usage in the C program.  */
+    /* Convert the Java Strings to char arrays for usage in the C program. */
     const char *out = ( *env )->GetStringUTFChars ( env, str1, 0 );
     const char *in1 = ( *env )->GetStringUTFChars ( env, str2, 0 );
     const char *in2 = ( *env )->GetStringUTFChars ( env, str3, 0 );
@@ -511,13 +511,13 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_s
         status = split_byte ( fp, devices );
     }
 
-    /* Close the files.  */
+    /* Close the files. */
     fclose ( fp );
     fclose ( devices[0] );
     fclose ( devices[1] );
     fclose ( devices[2] );
 
-    /* Clean the memory. / Release the char arrays.  */
+    /* Clean the memory. / Release the char arrays. */
     ( *env )->ReleaseStringUTFChars ( env, str1, in );
     ( *env )->ReleaseStringUTFChars ( env, str2, out1 );
     ( *env )->ReleaseStringUTFChars ( env, str3, out2 );
