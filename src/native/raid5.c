@@ -19,10 +19,11 @@
  * under the License.
  */
 
-#include <stdio.h>
+#include "sha256.h"
+#include "de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface.h"
+
 #include <stdlib.h>
 #include <string.h>
-#include "de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface.h"
 
 #define BLOCKSIZE 1024
 
@@ -47,19 +48,19 @@
 #define OPENERR_OUT  0x38
 #define OPENERR_IN   0x39
 
-unsigned short EXPONENTS_LONG_FIRST[] =
+static const unsigned short EXPONENTS_LONG_FIRST[] =
 {
     0x8000, 0x2000, 0x0800, 0x0200,
     0x0080, 0x0020, 0x0008, 0x0002
 };
 
-unsigned short EXPONENTS_LONG_SECOND[] =
+static const unsigned short EXPONENTS_LONG_SECOND[] =
 {
     0x4000, 0x1000, 0x0400, 0x0100,
     0x0040, 0x0010, 0x0004, 0x0001
 };
 
-unsigned short EXPONENTS_SHORT[] =
+static const unsigned short EXPONENTS_SHORT[] =
 {
     0x80, 0x40, 0x20, 0x10,
     0x08, 0x04, 0x02, 0x01
@@ -126,7 +127,7 @@ int split_bit ( FILE *in, FILE *devices[] )
         else /* odd file size take care of last byte */
         {
             a = chars[0];
-            p = ( ~a ) + 256;
+            p = ~a;
             fwrite ( &a, sizeof ( char ), 1, devices[ ( parity_pos + 1 ) % 3] );
             fwrite ( &p, sizeof ( char ), 1, devices[parity_pos] );
         }
@@ -267,7 +268,7 @@ int split_byte ( FILE *in, FILE *devices[] )
                 }
                 for ( i = partial; i < BLOCKSIZE; i++ )
                 {
-                    p[i] = ( ~a[i] ) + 256; /* Parity of the overflowing bytes */
+                    p[i] = ~a[i]; /* Parity of the overflowing bytes */
                 }
                 fwrite ( a, sizeof ( unsigned char ), BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
                 fwrite ( b, sizeof ( unsigned char ), partial, devices[ ( parity_pos + 2 ) % 3] );
@@ -278,7 +279,7 @@ int split_byte ( FILE *in, FILE *devices[] )
                 memcpy ( a, &chars[0], rlen ); /* Copy the first part of the read bytes */
                 for ( i = 0; i < rlen; i++ )
                 {
-                    p[i] = ( ~a[i] ) + 256; /* Parity of the overflowing bytes */
+                    p[i] = ~a[i]; /* Parity of the overflowing bytes */
                 }
                 fwrite ( a, sizeof ( unsigned char ), rlen, devices[ ( parity_pos + 1 ) % 3] );
                 fwrite ( p, sizeof ( unsigned char ), rlen, devices[parity_pos] );
@@ -361,7 +362,7 @@ int merge_byte ( FILE *out, FILE *devices[] )
                     printf ( "[WARNING] Parity does not match!" );
                 }
             }
-            fwrite ( a, sizeof ( char ), BLOCKSIZE, out );
+            fwrite ( a, sizeof ( char ), alen, out );
         }
         else
         {
