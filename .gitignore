@@ -9,3 +9,4 @@ src/native/test/
 *.bak
 *.kdev4
 *.o
+*.dat
