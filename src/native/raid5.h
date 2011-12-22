@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-/*void merge_byte_block (const unsigned char *in[], const size_t in_len[], unsigned char *out, size_t *out_len);*/
+void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len);
 void split_byte_block (const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[]);
 
 int merge_bit ( FILE *out, FILE *devices[] );

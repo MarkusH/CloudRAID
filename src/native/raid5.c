@@ -207,9 +207,38 @@ int merge_bit ( FILE *out, FILE *devices[] )
     return SUCCESS_MERGE_BIT;
 }
 
-/*void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len)
+void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len)
 {
-}*/
+    int i, partial;
+    if ( in_len[0] > 0 && in_len[2] == in_len[0] )
+    {
+        for ( i = 0; i < in_len[1]; i++ )
+        {
+            if ( ( in[i] ^ in[RAID5_BLOCKSIZE + i] ) != in[2 * RAID5_BLOCKSIZE + i] ) /* Parity does not match */
+            {
+                printf ( "[WARNING] Parity does not match!\n" );
+            }
+        }
+        for ( i = in_len[1]; i < in_len[0]; i++ )
+        {
+            if ( ( in[i] ^ in[2 * RAID5_BLOCKSIZE + i] ) != 0xFF ) /* Parity does not match */
+            {
+                printf ( "[WARNING] Parity does not match!\n" );
+            }
+        }
+        memcpy ( &out[0], &in[0], in_len[0] ); /* Copy the first part of the read bytes */
+        *out_len = in_len[0];
+        if (in_len[1] > 0)
+        {
+            memcpy ( &out[RAID5_BLOCKSIZE], &in[RAID5_BLOCKSIZE], in_len[1] ); /* Copy the second part of the read bytes */
+            *out_len += in_len[1];
+        }
+    }
+    else
+    {
+        printf ( "Read error\n" );
+    }
+}
 
 void split_byte_block (const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[])
 {
@@ -249,18 +278,15 @@ int split_byte ( FILE *in, FILE *devices[] )
     unsigned char *chars, *out, parity_pos = 2;
     size_t rlen, *out_len;
 
-    /* allocate memory that contains the two characters we read at once */
     chars = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
     out = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
     out_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
     if ( chars == NULL )
     {
-        printf ( "Memory error\n" );
         return MEMERR_BUF;
     }
     if ( out == NULL )
     {
-        printf ( "Memory error\n" );
         free(chars); /* Already allocated */
         return MEMERR_DEV;
     }
@@ -279,10 +305,10 @@ int split_byte ( FILE *in, FILE *devices[] )
     }
     if ( ferror ( in ) )
     {
-        printf ( "Read error\n" );
         return READERR_IN;
     }
 
+    free ( out_len );
     free ( out );
     free ( chars );
     return SUCCESS_SPLIT_BYTE;
@@ -290,89 +316,42 @@ int split_byte ( FILE *in, FILE *devices[] )
 
 int merge_byte ( FILE *out, FILE *devices[] )
 {
-    unsigned char *a, *b, *p, parity_pos = 2;
-    size_t alen, blen, plen;
-    unsigned int i;
+    unsigned char *in, *buf, parity_pos = 2;
+    size_t *in_len, out_len;
 
-    a = ( unsigned char* ) malloc ( sizeof ( char ) * RAID5_BLOCKSIZE );
-    b = ( unsigned char* ) malloc ( sizeof ( char ) * RAID5_BLOCKSIZE );
-    p = ( unsigned char* ) malloc ( sizeof ( char ) * RAID5_BLOCKSIZE );
+    in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3);
+    in_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
+    buf = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE);
 
-    alen = fread ( a, sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
-    blen = fread ( b, sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
-    plen = fread ( p, sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
+    in_len[0] = fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
+    in_len[1] = fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
+    in_len[2] = fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
 
-    while ( alen == RAID5_BLOCKSIZE && blen == RAID5_BLOCKSIZE && plen == RAID5_BLOCKSIZE )
+    while ( in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0)
     {
-        for ( i = 0; i < RAID5_BLOCKSIZE; i++ )
-        {
-            if ( ( a[i] ^ b[i] ) != p[i] ) /* Parity does not match */
-            {
-                printf ( "[WARNING] Parity does not match!" );
-            }
-        }
-        fwrite ( a, sizeof ( char ), RAID5_BLOCKSIZE, out );
-        fwrite ( b, sizeof ( char ), RAID5_BLOCKSIZE, out );
+        merge_byte_block(in, in_len, buf, &out_len);
+        fwrite ( buf, sizeof ( unsigned char ), out_len, out );
+
         parity_pos = ( parity_pos + 1 ) % 3;
-        alen = fread ( a, sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
-        blen = fread ( b, sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
-        plen = fread ( p, sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
+        in_len[0] = fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
+        in_len[1] = fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
+        in_len[2] = fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
     }
-
-    if ( alen == RAID5_BLOCKSIZE && plen == RAID5_BLOCKSIZE && blen > 0 ) /* Last block of output is != 2 * RAID5_BLOCKSIZE and > RAID5_BLOCKSIZE */
+    if ( ferror ( devices[0] ) )
     {
-        for ( i = 0; i < blen; i++ )
-        {
-            if ( ( a[i] ^ b[i] ) != p[i] ) /* Parity does not match */
-            {
-                printf ( "[WARNING] Parity does not match!" );
-            }
-        }
-        for ( i = blen; i < RAID5_BLOCKSIZE; i++ )
-        {
-            if ( ( a[i] ^ p[i] ) != 0xFF ) /* Parity does not match */
-            {
-                printf ( "[WARNING] Parity does not match!" );
-            }
-        }
-        fwrite ( a, sizeof ( char ), RAID5_BLOCKSIZE, out );
-        fwrite ( b, sizeof ( char ), blen, out );
+        return READERR_DEV0;
     }
-    else
+    if ( ferror ( devices[1] ) )
     {
-        if ( alen > 0 && plen > 0 && alen == plen )
-        {
-            for ( i = 0; i < alen; i++ )
-            {
-                if ( ( a[i] ^ p[i] ) != 0xFF ) /* Parity does not match */
-                {
-                    printf ( "[WARNING] Parity does not match!" );
-                }
-            }
-            fwrite ( a, sizeof ( char ), alen, out );
-        }
-        else
-        {
-            if ( ferror ( devices[0] ) )
-            {
-                printf ( "Read error\n" );
-                return READERR_DEV0;
-            }
-            if ( ferror ( devices[1] ) )
-            {
-                printf ( "Read error\n" );
-                return READERR_DEV1;
-            }
-            if ( ferror ( devices[2] ) )
-            {
-                printf ( "Read error\n" );
-                return READERR_DEV2;
-            }
-        }
+        return READERR_DEV1;
     }
-    free ( p );
-    free ( b );
-    free ( a );
+    if ( ferror ( devices[2] ) )
+    {
+        return READERR_DEV2;
+    }
+    free ( buf );
+    free ( in_len );
+    free ( in );
     return SUCCESS_MERGE_BYTE;
 }
 
