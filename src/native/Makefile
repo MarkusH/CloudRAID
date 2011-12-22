@@ -39,3 +39,7 @@ test: clean compile
 	mkdir -p ./test/
 	${CC} test_sha256.c ${CFLAGS} ${LIB} -o ./test/test_sha256
 	${CC} test_raid5.c ${CFLAGS} ${LIB} -o ./test/test_raid5
+
+run-test:
+	./test/test_sha256
+	./test/test_raid5

@@ -25,17 +25,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define BLOCKSIZE 1024
-
 #define SUCCESS_MERGE_BIT  0x01
 #define SUCCESS_MERGE_BYTE 0x02
 #define SUCCESS_SPLIT_BIT  0x03
 #define SUCCESS_SPLIT_BYTE 0x04
 
-#define MEMERR_DEV0 0x10
-#define MEMERR_DEV1 0x11
-#define MEMERR_DEV2 0x12
-#define MEMERR_BUF  0x17
+#define MEMERR_DEV 0x10
+#define MEMERR_BUF 0x17
 
 #define READERR_DEV0 0x20
 #define READERR_DEV1 0x21
@@ -47,6 +43,8 @@
 #define OPENERR_DEV2 0x32
 #define OPENERR_OUT  0x38
 #define OPENERR_IN   0x39
+
+static const unsigned int RAID5_BLOCKSIZE = 1024;
 
 static const unsigned short EXPONENTS_LONG_FIRST[] =
 {
@@ -209,84 +207,75 @@ int merge_bit ( FILE *out, FILE *devices[] )
     return SUCCESS_MERGE_BIT;
 }
 
+/*void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len)
+{
+}*/
+
+void split_byte_block (const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[])
+{
+    int i, partial;
+    if ( in_len > RAID5_BLOCKSIZE )
+    {
+        partial = in_len - RAID5_BLOCKSIZE; /* in case of in in_len == 2 * RAID5_BLOCKSIZE, partial == RAID5_BLOCKSIZE */
+        memcpy ( &out[0], &in[0], RAID5_BLOCKSIZE ); /* Copy the first part of the read bytes */
+        memcpy ( &out[RAID5_BLOCKSIZE], &in[RAID5_BLOCKSIZE], partial ); /* Copy the second part of the read bytes */
+        for ( i = 0; i < partial; i++ )
+        {
+            out[2 * RAID5_BLOCKSIZE + i] = out[i] ^ out[RAID5_BLOCKSIZE + i]; /* Bytewise calculation of the parity */
+        }
+        for ( i = partial; i < RAID5_BLOCKSIZE; i++ ) /* no effect for in_len == 2 * RAID5_BLOCKSIZE */
+        {
+            out[2 * RAID5_BLOCKSIZE + i] = ~out[i]; /* Parity of the overflowing bytes */
+        }
+        out_len[0] = RAID5_BLOCKSIZE;
+        out_len[1] = partial;
+        out_len[2] = RAID5_BLOCKSIZE;
+    }
+    else
+    {
+        memcpy ( &out[0], &in[0], in_len ); /* Copy the first part of the read bytes */
+        for ( i = 0; i < in_len; i++ )
+        {
+            out[2 * RAID5_BLOCKSIZE + i] = ~out[i]; /* Parity of the overflowing bytes */
+        }
+        out_len[0] = in_len;
+        out_len[1] = 0;
+        out_len[2] = in_len;
+    }
+}
+
 int split_byte ( FILE *in, FILE *devices[] )
 {
-    unsigned char *chars, *a, *b, *p, parity_pos = 2;
-    size_t rlen, partial;
-    unsigned int i;
+    unsigned char *chars, *out, parity_pos = 2;
+    size_t rlen, *out_len;
 
     /* allocate memory that contains the two characters we read at once */
-    chars = ( unsigned char* ) malloc ( sizeof ( char ) * 2 * BLOCKSIZE );
-    a = ( unsigned char* ) malloc ( sizeof ( char ) * BLOCKSIZE );
-    b = ( unsigned char* ) malloc ( sizeof ( char ) * BLOCKSIZE );
-    p = ( unsigned char* ) malloc ( sizeof ( char ) * BLOCKSIZE );
+    chars = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
+    out = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
+    out_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
     if ( chars == NULL )
     {
         printf ( "Memory error\n" );
         return MEMERR_BUF;
     }
-    if ( a == NULL )
+    if ( out == NULL )
     {
         printf ( "Memory error\n" );
-        return MEMERR_DEV0;
+        free(chars); /* Already allocated */
+        return MEMERR_DEV;
     }
-    if ( b == NULL )
-    {
-        printf ( "Memory error\n" );
-        return MEMERR_DEV1;
-    }
-    if ( p == NULL )
-    {
-        printf ( "Memory error\n" );
-        return MEMERR_DEV2;
-    }
-    rlen = fread ( chars, sizeof ( unsigned char ), 2 * BLOCKSIZE, in );
+    rlen = fread ( chars, sizeof ( unsigned char ), 2 * RAID5_BLOCKSIZE, in );
     while ( rlen > 0 )
     {
-        if ( rlen == 2 * BLOCKSIZE ) /* two complete input blocks */
+        split_byte_block(chars, rlen, out, out_len);
+        fwrite ( &out[0], sizeof ( unsigned char ), out_len[0], devices[ ( parity_pos + 1 ) % 3] );
+        if (out_len[1] > 0)
         {
-            memcpy ( a, &chars[0], BLOCKSIZE ); /* Copy the first part of the read bytes*/
-            memcpy ( b, &chars[BLOCKSIZE], BLOCKSIZE ); /* Copy the second part of the read bytes*/
-            for ( i = 0; i < BLOCKSIZE; i++ )
-            {
-                p[i] = a[i] ^ b[i]; /* Bytewise calculation of the parity */
-            }
-            fwrite ( a, sizeof ( unsigned char ), BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
-            fwrite ( b, sizeof ( unsigned char ), BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
-            fwrite ( p, sizeof ( unsigned char ), BLOCKSIZE, devices[parity_pos] );
+            fwrite ( &out[RAID5_BLOCKSIZE], sizeof ( unsigned char ), out_len[1], devices[ ( parity_pos + 2 ) % 3] );
         }
-        else
-        {
-            if ( rlen > BLOCKSIZE )
-            {
-                partial = rlen - BLOCKSIZE;
-                memcpy ( a, &chars[0], BLOCKSIZE ); /* Copy the first part of the read bytes */
-                memcpy ( b, &chars[BLOCKSIZE], partial ); /* Copy the second part of the read bytes */
-                for ( i = 0; i < partial; i++ )
-                {
-                    p[i] = a[i] ^ b[i]; /* Bytewise calculation of the parity */
-                }
-                for ( i = partial; i < BLOCKSIZE; i++ )
-                {
-                    p[i] = ~a[i]; /* Parity of the overflowing bytes */
-                }
-                fwrite ( a, sizeof ( unsigned char ), BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
-                fwrite ( b, sizeof ( unsigned char ), partial, devices[ ( parity_pos + 2 ) % 3] );
-                fwrite ( p, sizeof ( unsigned char ), BLOCKSIZE, devices[parity_pos] );
-            }
-            else
-            {
-                memcpy ( a, &chars[0], rlen ); /* Copy the first part of the read bytes */
-                for ( i = 0; i < rlen; i++ )
-                {
-                    p[i] = ~a[i]; /* Parity of the overflowing bytes */
-                }
-                fwrite ( a, sizeof ( unsigned char ), rlen, devices[ ( parity_pos + 1 ) % 3] );
-                fwrite ( p, sizeof ( unsigned char ), rlen, devices[parity_pos] );
-            }
-        }
+        fwrite ( &out[2 * RAID5_BLOCKSIZE], sizeof ( unsigned char ), out_len[2], devices[parity_pos] );
         parity_pos = ( parity_pos + 1 ) % 3;
-        rlen = fread ( chars, sizeof ( char ), 2 * BLOCKSIZE, in );
+        rlen = fread ( chars, sizeof ( char ), 2 * RAID5_BLOCKSIZE, in );
     }
     if ( ferror ( in ) )
     {
@@ -294,9 +283,7 @@ int split_byte ( FILE *in, FILE *devices[] )
         return READERR_IN;
     }
 
-    free ( p );
-    free ( b );
-    free ( a );
+    free ( out );
     free ( chars );
     return SUCCESS_SPLIT_BYTE;
 }
@@ -307,32 +294,32 @@ int merge_byte ( FILE *out, FILE *devices[] )
     size_t alen, blen, plen;
     unsigned int i;
 
-    a = ( unsigned char* ) malloc ( sizeof ( char ) * BLOCKSIZE );
-    b = ( unsigned char* ) malloc ( sizeof ( char ) * BLOCKSIZE );
-    p = ( unsigned char* ) malloc ( sizeof ( char ) * BLOCKSIZE );
+    a = ( unsigned char* ) malloc ( sizeof ( char ) * RAID5_BLOCKSIZE );
+    b = ( unsigned char* ) malloc ( sizeof ( char ) * RAID5_BLOCKSIZE );
+    p = ( unsigned char* ) malloc ( sizeof ( char ) * RAID5_BLOCKSIZE );
 
-    alen = fread ( a, sizeof ( char ), BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
-    blen = fread ( b, sizeof ( char ), BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
-    plen = fread ( p, sizeof ( char ), BLOCKSIZE, devices[parity_pos] );
+    alen = fread ( a, sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
+    blen = fread ( b, sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
+    plen = fread ( p, sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
 
-    while ( alen == BLOCKSIZE && blen == BLOCKSIZE && plen == BLOCKSIZE )
+    while ( alen == RAID5_BLOCKSIZE && blen == RAID5_BLOCKSIZE && plen == RAID5_BLOCKSIZE )
     {
-        for ( i = 0; i < BLOCKSIZE; i++ )
+        for ( i = 0; i < RAID5_BLOCKSIZE; i++ )
         {
             if ( ( a[i] ^ b[i] ) != p[i] ) /* Parity does not match */
             {
                 printf ( "[WARNING] Parity does not match!" );
             }
         }
-        fwrite ( a, sizeof ( char ), BLOCKSIZE, out );
-        fwrite ( b, sizeof ( char ), BLOCKSIZE, out );
+        fwrite ( a, sizeof ( char ), RAID5_BLOCKSIZE, out );
+        fwrite ( b, sizeof ( char ), RAID5_BLOCKSIZE, out );
         parity_pos = ( parity_pos + 1 ) % 3;
-        alen = fread ( a, sizeof ( char ), BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
-        blen = fread ( b, sizeof ( char ), BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
-        plen = fread ( p, sizeof ( char ), BLOCKSIZE, devices[parity_pos] );
+        alen = fread ( a, sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
+        blen = fread ( b, sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
+        plen = fread ( p, sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
     }
 
-    if ( alen == BLOCKSIZE && plen == BLOCKSIZE && blen > 0 ) /* Last block of output is != 2 * BLOCKSIZE and > BLOCKSIZE */
+    if ( alen == RAID5_BLOCKSIZE && plen == RAID5_BLOCKSIZE && blen > 0 ) /* Last block of output is != 2 * RAID5_BLOCKSIZE and > RAID5_BLOCKSIZE */
     {
         for ( i = 0; i < blen; i++ )
         {
@@ -341,14 +328,14 @@ int merge_byte ( FILE *out, FILE *devices[] )
                 printf ( "[WARNING] Parity does not match!" );
             }
         }
-        for ( i = blen; i < BLOCKSIZE; i++ )
+        for ( i = blen; i < RAID5_BLOCKSIZE; i++ )
         {
             if ( ( a[i] ^ p[i] ) != 0xFF ) /* Parity does not match */
             {
                 printf ( "[WARNING] Parity does not match!" );
             }
         }
-        fwrite ( a, sizeof ( char ), BLOCKSIZE, out );
+        fwrite ( a, sizeof ( char ), RAID5_BLOCKSIZE, out );
         fwrite ( b, sizeof ( char ), blen, out );
     }
     else
