@@ -290,6 +290,12 @@ int split_byte ( FILE *in, FILE *devices[] )
         free(chars); /* Already allocated */
         return MEMERR_DEV;
     }
+    if ( out_len == NULL )
+    {
+        free(chars); /* Already allocated */
+        free(out); /* Already allocated */
+        return MEMERR_DEV;
+    }
     rlen = fread ( chars, sizeof ( unsigned char ), 2 * RAID5_BLOCKSIZE, in );
     while ( rlen > 0 )
     {
@@ -322,6 +328,21 @@ int merge_byte ( FILE *out, FILE *devices[] )
     in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3);
     in_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
     buf = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE);
+    if ( in == NULL )
+    {
+        return MEMERR_DEV;
+    }
+    if ( in_len == NULL )
+    {
+        free(in); /* Already allocated */
+        return MEMERR_DEV;
+    }
+    if ( buf == NULL )
+    {
+        free(in); /* Already allocated */
+        free(in_len); /* Already allocated */
+        return MEMERR_BUF;
+    }
 
     in_len[0] = fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
     in_len[1] = fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
