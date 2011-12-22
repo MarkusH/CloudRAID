@@ -31,11 +31,11 @@ extern "C"
 
     static const unsigned int RAID5_BLOCKSIZE = 1024;
 
-    void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len);
-    void split_byte_block (const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[]);
+    extern void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len);
+    extern void split_byte_block (const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[]);
 
-    int merge_byte ( FILE *out, FILE *devices[] );
-    int split_byte ( FILE *in, FILE *devices[] );
+    extern int merge_byte ( FILE *out, FILE *devices[] );
+    extern int split_byte ( FILE *in, FILE *devices[] );
 
 #ifdef __cplusplus
 }

@@ -53,11 +53,6 @@
     (((n) << 24) | (((n) & 0xff00) << 8) | (((n) >> 8) & 0xff00) | ((n) >> 24))
 #endif
 
-#define SHA256_BLOCKSIZE 32768
-#if SHA256_BLOCKSIZE % 64 != 0
-#error "invalid SHA256_BLOCKSIZE"
-#endif
-
 /**
  * This array contains the bytes used to pad the buffer to the next
  * 64-byte boundary.
@@ -473,11 +468,66 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
     }
 }
 
+/*
+ * The following functions and implementations have been added
+ * by the CloudRAID team and are NOT part of the original SHA256
+ * implementation!
+ */
+
+#define SHAERR_CALC    0x40
+#define SHAERR_CHECK   0x41
+#define SHAERR_INVALID 0x42
+#define SHAERR_VALID   0x43
+
 void ascii_from_resbuf ( char* ascii, void* resblock )
 {
     int i;
     for ( i = 0; i < 32; i++ )
     {
         sprintf ( ascii + i * 2, "%02x", ( ( unsigned char * ) resblock ) [i] );
+    }
+}
+
+int build_sha256_sum ( char *filename, char *hash )
+{
+    void *resblock;
+    FILE *fp;
+
+    resblock = malloc ( 32 );
+    if (resblock == NULL) {
+        printf("Cannot allocate memory");
+        return SHAERR_CALC;
+    }
+
+    fp = fopen ( filename, "rb" );
+    if ( !fp )
+    {
+        printf ( "Cannot read file!\n");
+        return SHAERR_CALC;
+    }
+    sha256_stream ( fp, resblock );
+    ascii_from_resbuf ( hash, resblock );
+
+    fclose ( fp );
+    free ( resblock );
+    return 0;
+}
+
+char* check_sha256_sum ( char *filename, char *hash )
+{
+    char *ascii;
+
+    ascii = ( char * ) malloc ( 65 );
+    if ( ascii == NULL ) {
+        return hash;
+    }
+
+    build_sha256_sum ( filename, ascii );
+    if ( memcmp ( ascii, hash, 64 ) == 0 ) {
+        free ( ascii );
+        return NULL;
+    }
+    else {
+        return ascii;
     }
 }

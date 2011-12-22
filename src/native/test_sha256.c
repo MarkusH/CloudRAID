@@ -28,11 +28,10 @@
 int main ( void )
 {
     short i;
-    void *resblock;
     char *ascii;
     FILE *fp;
     char *filename = "test_sha256.dat";
-    char *assumed = "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880\0";
+    char *assumed = "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880";
 
     printf ( "Running test for SHA256:\n\n");
 
@@ -47,37 +46,26 @@ int main ( void )
     }
     fclose(fp);
 
-    resblock = malloc ( 32 );
-    ascii = ( char * ) malloc ( 65 );
-    if (!resblock || !ascii) {
-        printf("Cannot allocate memory");
-        return 1;
-    }
+    printf ( "Checking file %s ... ", filename);
+    ascii = check_sha256_sum(filename, assumed);
 
-    fp = fopen ( filename, "rb" );
-    if ( !fp )
-    {
-        printf ( "Cannot read test file!\n");
-        return 1;
-    }
-
-    sha256_stream ( fp, resblock );
-    ascii_from_resbuf ( ascii, resblock );
-
-    printf ( "%-12s%s\n%-12s%s\n", "Calculated:" , ascii, "Assumed:", assumed);
-    if (memcmp(ascii, assumed, 64) == 0) {
+    if (ascii == NULL) {
         printf( "CORRECT!\n\n" );
     }
     else {
-        printf( "FALSE!\n\n" );
+        if ( memcmp ( ascii, assumed, 64 ) == 0 )
+        {
+            printf( "Memory Error!\n\n" );
+        } else
+        {
+            printf( "FALSE!\n" );
+            printf ( "%-12s%s\n%-12s%s\n\n", "Calculated:" , ascii, "Assumed:", assumed);
+	    free(ascii);
+        }
     }
-
-    fclose ( fp );
 
     remove( filename );
 
-    free ( resblock );
-    free ( ascii );
     return 0;
 }
 

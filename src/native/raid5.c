@@ -214,7 +214,6 @@ int merge_byte ( FILE *out, FILE *devices[] )
     return SUCCESS_MERGE_BYTE;
 }
 
-
 /**
  * Implements the mergeInterface method defined in the Java RaidAccessInterface
  * class.

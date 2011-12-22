@@ -30,7 +30,6 @@ int main ( void )
 {
     int i;
     int status;
-    void *resblock;
     char *ascii;
     FILE *fp[4];
     char *filename[] = {"test_raid5.dat",
@@ -116,41 +115,29 @@ int main ( void )
         fclose(fp[i]);
     }
 
-    /* calculate the check sums */
-    resblock = malloc ( 32 );
-    ascii = ( char * ) malloc ( 65 );
-    if (!resblock || !ascii) {
-        printf("Cannot allocate memory");
-        return 1;
-    }
-
     status = 0;
     for (i = 0; i <= 4; i++) {
-        printf ( "Checking file %s!\n", filename[i]);
-        fp[0] = fopen ( filename[i], "rb" );
-        if ( !fp[1] )
-        {
-            printf ( "Cannot read file!\n");
-            return 1;
-        }
+        printf ( "Checking file %s ... ", filename[i]);
+        ascii = check_sha256_sum(filename[i], assumed[i]);
 
-        sha256_stream ( fp[0], resblock );
-        ascii_from_resbuf ( ascii, resblock );
-
-        printf ( "%-12s%s\n%-12s%s\n", "Calculated:" , ascii, "Assumed:", assumed[i]);
-        if (memcmp(ascii, assumed[i], 64) == 0) {
+        if (ascii == NULL) {
             printf( "CORRECT!\n\n" );
         }
         else {
-            printf( "FALSE!\n\n" );
+            if ( memcmp ( ascii, assumed[i], 64 ) == 0 )
+            {
+                printf( "Memory Error!\n\n" );
+            } else
+            {
+                printf( "FALSE!\n" );
+                printf ( "%-12s%s\n%-12s%s\n\n", "Calculated:" , ascii, "Assumed:", assumed[i]);
+                free(ascii);
+            }
             status++;
         }
-        fclose ( fp[0] );
         remove( filename[i] );
     }
 
-    free ( resblock );
-    free ( ascii );
     return status;
 }
 

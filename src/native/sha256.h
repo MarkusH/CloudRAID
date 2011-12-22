@@ -36,10 +36,17 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#define _SHA256_BLOCKSIZE 32768
+#if _SHA256_BLOCKSIZE % 64 != 0
+#error "invalid SHA256_BLOCKSIZE"
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+    static const unsigned int SHA256_BLOCKSIZE = _SHA256_BLOCKSIZE;
 
     /**
      * Structure to save state of computation between the single steps.
@@ -112,6 +119,8 @@ extern "C"
      * Convert the RESBLOCK to an 65 character String, including the terminating NUL!
      */
     extern void ascii_from_resbuf ( char* ascii, void* resblock );
+    extern int build_sha256_sum ( char* filename, char* hash );
+    extern char* check_sha256_sum ( char* filename, char* hash );
 
 #ifdef __cplusplus
 }
