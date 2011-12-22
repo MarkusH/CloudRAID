@@ -46,170 +46,9 @@
 
 static const unsigned int RAID5_BLOCKSIZE = 1024;
 
-static const unsigned short EXPONENTS_LONG_FIRST[] =
-{
-    0x8000, 0x2000, 0x0800, 0x0200,
-    0x0080, 0x0020, 0x0008, 0x0002
-};
-
-static const unsigned short EXPONENTS_LONG_SECOND[] =
-{
-    0x4000, 0x1000, 0x0400, 0x0100,
-    0x0040, 0x0010, 0x0004, 0x0001
-};
-
-static const unsigned short EXPONENTS_SHORT[] =
-{
-    0x80, 0x40, 0x20, 0x10,
-    0x08, 0x04, 0x02, 0x01
-};
-
-/**
- * Bitwise split the characters from *in and write them to the *devices files. E.g.: *in has
- * 10010010 11001001
- * Then the devices 0 and 1 become, where the bits of 0 are the bits 0, 2, 4, 6, 8, 10, 12, 14
- * and the bits of 1 are 1, 3, 5, 7, 9, 11, 13, 15 of *in
- * 0: 10011010
- * 1: 01001001
- *
- * The device 2 becomes the bitwise XOR of the devices 0 and 1
- * 2: 11010011
- *
- * If the input file has an odd file size, the parity of the last byte is a bitwise NOT.
- */
-int split_bit ( FILE *in, FILE *devices[] )
-{
-    unsigned char *chars, a, b, p, parity_pos = 2;
-    unsigned char index, i;
-    unsigned short c;
-    size_t rlen;
-
-    /* allocate memory that contains the two characters we read at once */
-    chars = ( unsigned char* ) malloc ( sizeof ( char ) * 2 );
-    if ( chars == NULL )
-    {
-        printf ( "Memory error\n" );
-        return MEMERR_BUF;
-    }
-    /* read the characters */
-    rlen = fread ( chars, sizeof ( char ), 2, in );
-
-    while ( rlen > 0 ) /* as long as we have read at least character */
-    {
-        a = 0;
-        b = 0;
-        if ( rlen == 2 ) /* we can do the bitwise split / file size is even */
-        {
-            index = 7;
-            /* convert the 2 bytes to a short, the first byte is multiplied with 2^8 and hence uses the leftmost 8 bits */
-            c = chars[0];
-            c <<= 8;
-            c |= chars[1];
-            for ( i = 0; i <= 7; i++ ) /* bitwise check if the bit is set */
-            {
-                if ( c & EXPONENTS_LONG_FIRST[i] )
-                {
-                    a |= ( 1 << index );
-                }
-                if ( c & EXPONENTS_LONG_SECOND[i] )
-                {
-                    b |= ( 1 << index );
-                }
-                index--;
-            }
-            p = a ^ b; /* parity: xor of the two bytes */
-            fwrite ( &a, sizeof ( char ), 1, devices[ ( parity_pos + 1 ) % 3] );
-            fwrite ( &b, sizeof ( char ), 1, devices[ ( parity_pos + 2 ) % 3] );
-            fwrite ( &p, sizeof ( char ), 1, devices[parity_pos] );
-        }
-        else /* odd file size take care of last byte */
-        {
-            a = chars[0];
-            p = ~a;
-            fwrite ( &a, sizeof ( char ), 1, devices[ ( parity_pos + 1 ) % 3] );
-            fwrite ( &p, sizeof ( char ), 1, devices[parity_pos] );
-        }
-        parity_pos = ( parity_pos + 1 ) % 3; /* rotate the devices */
-        rlen = fread ( chars, sizeof ( char ), 2, in );
-    }
-    if ( ferror ( in ) ) /* read error */
-    {
-        printf ( "Read error\n" );
-        return READERR_IN;
-    }
-    free ( chars );
-    return SUCCESS_SPLIT_BIT;
-}
-
-/**
- * Bitwise merge the characters from *devices and write it to *out. E.g.: *devices has
- * 0: 10011010
- * 1: 01001001
- * 2: 11010011
- *
- * Then *out alternating becomes the bits 0 to 7 from 0 and 1 as bits 0, 2, 4, 6, 8, 10, 12, 14
- * and 1, 3, 5, 7, 9, 11, 13, 15 of *in
- * *out: 10010010 11001001
- *
- * see split_bit for more information
- */
-int merge_bit ( FILE *out, FILE *devices[] )
-{
-    unsigned char a, b, p, parity_pos = 2;
-    unsigned char c, i;
-    size_t alen, blen, plen;
-
-    /* read the devices */
-    alen = fread ( &a, sizeof ( char ), 1, devices[ ( parity_pos + 1 ) % 3] );
-    blen = fread ( &b, sizeof ( char ), 1, devices[ ( parity_pos + 2 ) % 3] );
-    plen = fread ( &p, sizeof ( char ), 1, devices[parity_pos] );
-    while ( alen > 0 && blen > 0 && plen > 0 ) /* as long as we read from all 3 devices */
-    {
-        if ( ( a ^ b ) != p ) /* check parity validity */
-        {
-            printf ( "[WARNING] Parity does not match!" );
-        }
-        c = 0;
-        for ( i = 0; i <= 7; i++ )
-        {
-            if ( i == 4 ) /* we read the first 2 nibbles => 1 byte */
-            {
-                fwrite ( &c, sizeof ( char ), 1, out );
-                c = 0;
-            }
-            c <<= 1;
-            if ( ( a & EXPONENTS_SHORT[i] ) > 0 )
-            {
-                c |= 1;
-            }
-            c <<= 1;
-            if ( ( b & EXPONENTS_SHORT[i] ) > 0 )
-            {
-                c |= 1;
-            }
-        }
-        fwrite ( &c, sizeof ( char ), 1, out );
-        parity_pos = ( parity_pos + 1 ) % 3; /* rotate the devices */
-
-        /* read the next bytes */
-        alen = fread ( &a, sizeof ( char ), 1, devices[ ( parity_pos + 1 ) % 3] );
-        blen = fread ( &b, sizeof ( char ), 1, devices[ ( parity_pos + 2 ) % 3] );
-        plen = fread ( &p, sizeof ( char ), 1, devices[parity_pos] );
-    }
-    if ( alen > 0 && plen > 0 )
-    {
-        if ( ( a ^ p ) != 0xFF )
-        {
-            printf ( "[WARNING] Parity does not match!" );
-        }
-        fwrite ( &a, sizeof ( char ), 1, out );
-    }
-    return SUCCESS_MERGE_BIT;
-}
-
 void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len)
 {
-    int i, partial;
+    int i;
     if ( in_len[0] > 0 && in_len[2] == in_len[0] )
     {
         for ( i = 0; i < in_len[1]; i++ )
@@ -382,7 +221,7 @@ int merge_byte ( FILE *out, FILE *devices[] )
  * class.
  */
 JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
-( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4, jboolean bits )
+( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4 )
 {
     /* Convert the Java Strings to char arrays for usage in the C program. */
     const char *out = ( *env )->GetStringUTFChars ( env, str1, 0 );
@@ -422,14 +261,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     }
 
     /* Invoke the native merge method. */
-    if ( bits )
-    {
-        status = merge_bit ( fp, devices );
-    }
-    else
-    {
-        status = merge_byte ( fp, devices );
-    }
+    status = merge_byte ( fp, devices );
 
     /* Close the files. */
     fclose ( fp );
@@ -450,7 +282,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
  * class.
  */
 JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
-( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4, jboolean bits )
+( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4 )
 {
     /* Convert the Java Strings to char arrays for usage in this C program. */
     const char *in = ( *env )->GetStringUTFChars ( env, str1, 0 );
@@ -490,14 +322,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_s
     }
 
     /* Invoke the native split method. */
-    if ( bits )
-    {
-        status = split_bit ( fp, devices );
-    }
-    else
-    {
-        status = split_byte ( fp, devices );
-    }
+    status = split_byte ( fp, devices );
 
     /* Close the files. */
     fclose ( fp );

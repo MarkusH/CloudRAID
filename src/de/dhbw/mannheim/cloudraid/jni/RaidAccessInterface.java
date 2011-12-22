@@ -41,26 +41,8 @@ public class RaidAccessInterface {
 	 *            Input file that simulates device 2
 	 * @return The success or error return value
 	 */
-	public static int mergeBitInterface(String out, String in0, String in1,
-			String in2) {
-		return new RaidAccessInterface().splitInterface(out, in0, in1, in2, true);
-	}
-
-	/**
-	 * @param out
-	 *            The output file
-	 * @param in0
-	 *            Input file that simulates device 0
-	 * @param in1
-	 *            Input file that simulates device 1
-	 * @param in2
-	 *            Input file that simulates device 2
-	 * @return The success or error return value
-	 */
-	public static int mergeByteInterface(String out, String in0, String in1,
-			String in2) {
-		return new RaidAccessInterface().splitInterface(out, in0, in1, in2, false);
-	}
+	public native int mergeInterface(String out, String in0, String in1,
+			String in2);
 
 	/**
 	 * @param in
@@ -73,58 +55,6 @@ public class RaidAccessInterface {
 	 *            Output file that simulates device 2
 	 * @return The success or error return value
 	 */
-	public static int splitBitInterface(String in, String out0, String out1,
-			String out2) {
-		return new RaidAccessInterface().splitInterface(in, out0, out1, out2, true);
-	}
-
-	/**
-	 * @param in
-	 *            The input file
-	 * @param out0
-	 *            Output file that simulates device 0
-	 * @param out1
-	 *            Output file that simulates device 1
-	 * @param out2
-	 *            Output file that simulates device 2
-	 * @return The success or error return value
-	 */
-	public static int splitByteInterface(String in, String out0, String out1,
-			String out2) {
-		return new RaidAccessInterface().splitInterface(in, out0, out1, out2, false);
-	}
-
-	/**
-	 * @param out
-	 *            The output file
-	 * @param in0
-	 *            Input file that simulates device 0
-	 * @param in1
-	 *            Input file that simulates device 1
-	 * @param in2
-	 *            Input file that simulates device 2
-	 * @param bits
-	 *            Set to true if the split process should use bit level and not
-	 *            block level
-	 * @return The success or error return value
-	 */
-	private native int mergeInterface(String out, String in0, String in1,
-			String in2, boolean bits);
-
-	/**
-	 * @param in
-	 *            The input file
-	 * @param out0
-	 *            Output file that simulates device 0
-	 * @param out1
-	 *            Output file that simulates device 1
-	 * @param out2
-	 *            Output file that simulates device 2
-	 * @param bits
-	 *            Set to true if the split process should use bit level and not
-	 *            block level
-	 * @return The success or error return value
-	 */
-	private native int splitInterface(String in, String out0, String out1,
-			String out2, boolean bits);
+	public native int splitInterface(String in, String out0, String out1,
+			String out2);
 }
