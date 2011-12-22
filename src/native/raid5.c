@@ -19,6 +19,7 @@
  * under the License.
  */
 
+#include "raid5.h"
 #include "sha256.h"
 #include "de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface.h"
 
@@ -43,8 +44,6 @@
 #define OPENERR_DEV2 0x32
 #define OPENERR_OUT  0x38
 #define OPENERR_IN   0x39
-
-static const unsigned int RAID5_BLOCKSIZE = 1024;
 
 void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len)
 {
