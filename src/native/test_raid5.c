@@ -144,7 +144,7 @@ int main ( void )
             }
             status++;
         }
-        //remove ( filename[i] );
+        remove ( filename[i] );
     }
 
     return status;

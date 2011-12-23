@@ -203,14 +203,29 @@ int split_byte ( FILE *in, FILE *devices[] )
             fwrite ( &out[RAID5_BLOCKSIZE], sizeof ( unsigned char ), out_len[1], devices[ ( parity_pos + 2 ) % 3] );
         }
         fwrite ( &out[2 * RAID5_BLOCKSIZE], sizeof ( unsigned char ), out_len[2], devices[parity_pos] );
+
+        for ( i = 0; i < 3; i++ )
+        {
+            if ( sha256_len[ ( parity_pos + 1 + i ) % 3] == SHA256_BLOCKSIZE )
+            {
+                sha256_process_block ( sha256_buf[ ( parity_pos + 1 + i ) % 3], SHA256_BLOCKSIZE, &sha256_ctx[ ( parity_pos + 1 + i ) % 3] );
+                sha256_len[ ( parity_pos + 1 + i ) % 3] = 0;
+            }
+            if ( sha256_len[ ( parity_pos + 1 + i ) % 3] < SHA256_BLOCKSIZE )
+            {
+                memcpy ( sha256_buf[ ( parity_pos + 1 + i ) % 3] + sha256_len[ ( parity_pos + 1 + i ) % 3], &out[i * RAID5_BLOCKSIZE], out_len[ ( parity_pos + 1 + i ) % 3] );
+                sha256_len[ ( parity_pos + 1 + i ) % 3] += out_len[ ( parity_pos + 1 + i ) % 3];
+            }
+        }
+
         parity_pos = ( parity_pos + 1 ) % 3;
         rlen = fread ( chars, sizeof ( char ), 2 * RAID5_BLOCKSIZE, in );
     }
     if ( ferror ( in ) )
     {
-        for ( j = 0; j < 4; j++ )
+        for ( i = 0; i < 4; i++ )
         {
-            free ( sha256_buf[j] );
+            free ( sha256_buf[i] );
         }
         free ( out_len ); /* Already allocated */
         free ( out ); /* Already allocated */
@@ -218,24 +233,32 @@ int split_byte ( FILE *in, FILE *devices[] )
         return READERR_IN;
     }
 
-    if ( sha256_len[3] == SHA256_BLOCKSIZE )
-    {
-        sha256_process_block ( sha256_buf[3], SHA256_BLOCKSIZE, &sha256_ctx[3] );
-    }
-    else
-    {
-        if ( sha256_len[3] > 0 )
-        {
-            sha256_process_bytes ( sha256_buf[3], sha256_len[3], &sha256_ctx[3] );
-        }
-    }
-
     hash = ( unsigned char* ) malloc ( 65 );
-    sha256_finish_ctx ( &sha256_ctx[3], sha256_resblock[3] );
-    ascii_from_resbuf ( hash, sha256_resblock[3] );
-    printf ( "\n\n\t\t%s\n\n", hash );
+    for ( i = 0; i < 4; i++ )
+    {
+        if ( sha256_len[i] == SHA256_BLOCKSIZE )
+        {
+            sha256_process_block ( sha256_buf[i], SHA256_BLOCKSIZE, &sha256_ctx[i] );
+        }
+        else
+        {
+            if ( sha256_len[i] > 0 )
+            {
+                sha256_process_bytes ( sha256_buf[i], sha256_len[i], &sha256_ctx[i] );
+            }
+        }
+        sha256_finish_ctx ( &sha256_ctx[i], sha256_resblock[i] );
+        ascii_from_resbuf ( hash, sha256_resblock[i] );
+        printf ( "\n\n\t\t%s\n\n", hash );
+    }
 
 
+    free ( hash );
+    for ( i = 0; i < 4; i++ )
+    {
+        free ( sha256_buf[i] );
+        free ( sha256_resblock[i] );
+    }
     free ( out_len );
     free ( out );
     free ( chars );
