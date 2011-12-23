@@ -118,9 +118,9 @@ extern "C"
     /**
      * Convert the RESBLOCK to an 65 character String, including the terminating NUL!
      */
-    extern void ascii_from_resbuf ( char* ascii, void* resblock );
-    extern int build_sha256_sum ( char* filename, char* hash );
-    extern char* check_sha256_sum ( char* filename, char* hash );
+    extern void ascii_from_resbuf ( unsigned char* ascii, void* resblock );
+    extern int build_sha256_sum ( char* filename, unsigned char* hash );
+    extern unsigned char* check_sha256_sum ( char* filename, unsigned char* hash );
 
 #ifdef __cplusplus
 }

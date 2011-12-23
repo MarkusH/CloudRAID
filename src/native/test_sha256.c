@@ -28,43 +28,47 @@
 int main ( void )
 {
     short i;
-    char *ascii;
+    unsigned char *ascii;
     FILE *fp;
     char *filename = "test_sha256.dat";
     char *assumed = "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880";
 
-    printf ( "Running test for SHA256:\n\n");
+    printf ( "Running test for SHA256:\n\n" );
 
-    fp = fopen(filename, "wb");
+    fp = fopen ( filename, "wb" );
     if ( !fp )
     {
-        printf ( "Cannot write test file!\n");
+        printf ( "Cannot write test file!\n" );
         return 1;
     }
-    for (i = 0x00; i <= 0xFF; i++) {
-        fprintf(fp, "%c", i);
+    for ( i = 0x00; i <= 0xFF; i++ )
+    {
+        fprintf ( fp, "%c", i );
     }
-    fclose(fp);
+    fclose ( fp );
 
-    printf ( "Checking file %s ... ", filename);
-    ascii = check_sha256_sum(filename, assumed);
+    printf ( "Checking file %s ... ", filename );
+    ascii = check_sha256_sum ( filename, ( unsigned char* ) assumed );
 
-    if (ascii == NULL) {
-        printf( "CORRECT!\n\n" );
+    if ( ascii == NULL )
+    {
+        printf ( "CORRECT!\n\n" );
     }
-    else {
+    else
+    {
         if ( memcmp ( ascii, assumed, 64 ) == 0 )
         {
-            printf( "Memory Error!\n\n" );
-        } else
+            printf ( "Memory Error!\n\n" );
+        }
+        else
         {
-            printf( "FALSE!\n" );
-            printf ( "%-12s%s\n%-12s%s\n\n", "Calculated:" , ascii, "Assumed:", assumed);
-	    free(ascii);
+            printf ( "FALSE!\n" );
+            printf ( "%-12s%s\n%-12s%s\n\n", "Calculated:" , ascii, "Assumed:", assumed );
+            free ( ascii );
         }
     }
 
-    remove( filename );
+    remove ( filename );
 
     return 0;
 }

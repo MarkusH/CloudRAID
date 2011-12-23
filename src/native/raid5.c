@@ -32,6 +32,7 @@
 #define SUCCESS_SPLIT_BYTE 0x04
 
 #define MEMERR_DEV 0x10
+#define MEMERR_SHA 0x16
 #define MEMERR_BUF 0x17
 
 #define READERR_DEV0 0x20
@@ -45,7 +46,7 @@
 #define OPENERR_OUT  0x38
 #define OPENERR_IN   0x39
 
-void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len)
+void merge_byte_block ( const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len )
 {
     int i;
     if ( in_len[0] > 0 && in_len[2] == in_len[0] )
@@ -66,7 +67,7 @@ void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned 
         }
         memcpy ( &out[0], &in[0], in_len[0] ); /* Copy the first part of the read bytes */
         *out_len = in_len[0];
-        if (in_len[1] > 0)
+        if ( in_len[1] > 0 )
         {
             memcpy ( &out[RAID5_BLOCKSIZE], &in[RAID5_BLOCKSIZE], in_len[1] ); /* Copy the second part of the read bytes */
             *out_len += in_len[1];
@@ -78,7 +79,7 @@ void merge_byte_block (const unsigned char *in, const size_t in_len[], unsigned 
     }
 }
 
-void split_byte_block (const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[])
+void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[] )
 {
     int i, partial;
     if ( in_len > RAID5_BLOCKSIZE )
@@ -113,8 +114,16 @@ void split_byte_block (const unsigned char *in, const size_t in_len, unsigned ch
 
 int split_byte ( FILE *in, FILE *devices[] )
 {
-    unsigned char *chars, *out, parity_pos = 2;
+    unsigned char *chars, *out, parity_pos = 2, *hash;
     size_t rlen, *out_len;
+
+    /* sha context
+       the last element [3] is for the input file */
+    struct sha256_ctx sha256_ctx[4];
+    size_t sha256_len[4];
+    char *sha256_buf[4];
+    void *sha256_resblock[4];
+    int i, j;
 
     chars = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
     out = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
@@ -125,21 +134,71 @@ int split_byte ( FILE *in, FILE *devices[] )
     }
     if ( out == NULL )
     {
-        free(chars); /* Already allocated */
+        free ( chars ); /* Already allocated */
         return MEMERR_DEV;
     }
     if ( out_len == NULL )
     {
-        free(chars); /* Already allocated */
-        free(out); /* Already allocated */
+        free ( out ); /* Already allocated */
+        free ( chars ); /* Already allocated */
         return MEMERR_DEV;
     }
+
+    /* create the sha256 context */
+    for ( i = 0; i < 4; i++ )
+    {
+        sha256_resblock[i] = malloc ( 32 );
+        if ( sha256_resblock[i] == NULL )
+        {
+            for ( j = 0; j < i - 1; j++ )
+            {
+                free ( sha256_buf[j] ); /* Already allocated */
+            }
+            for ( j = 0; j < i; j++ )
+            {
+                free ( sha256_resblock[j] ); /* Already allocated */
+            }
+            free ( out_len ); /* Already allocated */
+            free ( out ); /* Already allocated */
+            free ( chars ); /* Already allocated */
+            return MEMERR_SHA;
+        }
+
+        sha256_buf[i] = ( char* ) malloc ( SHA256_BLOCKSIZE + 72 );
+        if ( sha256_buf[i] == NULL )
+        {
+            free ( sha256_resblock[i] ); /* Already allocated */
+            for ( j = 0; j < i; j++ )
+            {
+                free ( sha256_buf[j] ); /* Already allocated */
+                free ( sha256_resblock[j] ); /* Already allocated */
+            }
+            free ( out_len ); /* Already allocated */
+            free ( out ); /* Already allocated */
+            free ( chars ); /* Already allocated */
+            return MEMERR_SHA;
+        }
+        sha256_init_ctx ( &sha256_ctx[i] );
+        sha256_len[i] = 0;
+    }
+
     rlen = fread ( chars, sizeof ( unsigned char ), 2 * RAID5_BLOCKSIZE, in );
     while ( rlen > 0 )
     {
-        split_byte_block(chars, rlen, out, out_len);
+        if ( sha256_len[3] == SHA256_BLOCKSIZE )
+        {
+            sha256_process_block ( sha256_buf[3], SHA256_BLOCKSIZE, &sha256_ctx[3] );
+            sha256_len[3] = 0;
+        }
+        if ( sha256_len[3] < SHA256_BLOCKSIZE )
+        {
+            memcpy ( sha256_buf[3] + sha256_len[3], chars, rlen );
+            sha256_len[3] += rlen;
+        }
+
+        split_byte_block ( chars, rlen, out, out_len );
         fwrite ( &out[0], sizeof ( unsigned char ), out_len[0], devices[ ( parity_pos + 1 ) % 3] );
-        if (out_len[1] > 0)
+        if ( out_len[1] > 0 )
         {
             fwrite ( &out[RAID5_BLOCKSIZE], sizeof ( unsigned char ), out_len[1], devices[ ( parity_pos + 2 ) % 3] );
         }
@@ -149,8 +208,33 @@ int split_byte ( FILE *in, FILE *devices[] )
     }
     if ( ferror ( in ) )
     {
+        for ( j = 0; j < 4; j++ )
+        {
+            free ( sha256_buf[j] );
+        }
+        free ( out_len ); /* Already allocated */
+        free ( out ); /* Already allocated */
+        free ( chars ); /* Already allocated */
         return READERR_IN;
     }
+
+    if ( sha256_len[3] == SHA256_BLOCKSIZE )
+    {
+        sha256_process_block ( sha256_buf[3], SHA256_BLOCKSIZE, &sha256_ctx[3] );
+    }
+    else
+    {
+        if ( sha256_len[3] > 0 )
+        {
+            sha256_process_bytes ( sha256_buf[3], sha256_len[3], &sha256_ctx[3] );
+        }
+    }
+
+    hash = ( unsigned char* ) malloc ( 65 );
+    sha256_finish_ctx ( &sha256_ctx[3], sha256_resblock[3] );
+    ascii_from_resbuf ( hash, sha256_resblock[3] );
+    printf ( "\n\n\t\t%s\n\n", hash );
+
 
     free ( out_len );
     free ( out );
@@ -163,22 +247,22 @@ int merge_byte ( FILE *out, FILE *devices[] )
     unsigned char *in, *buf, parity_pos = 2;
     size_t *in_len, out_len;
 
-    in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3);
+    in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
     in_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
-    buf = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE);
+    buf = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
     if ( in == NULL )
     {
         return MEMERR_DEV;
     }
     if ( in_len == NULL )
     {
-        free(in); /* Already allocated */
+        free ( in ); /* Already allocated */
         return MEMERR_DEV;
     }
     if ( buf == NULL )
     {
-        free(in); /* Already allocated */
-        free(in_len); /* Already allocated */
+        free ( in ); /* Already allocated */
+        free ( in_len ); /* Already allocated */
         return MEMERR_BUF;
     }
 
@@ -186,9 +270,9 @@ int merge_byte ( FILE *out, FILE *devices[] )
     in_len[1] = fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
     in_len[2] = fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
 
-    while ( in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0)
+    while ( in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0 )
     {
-        merge_byte_block(in, in_len, buf, &out_len);
+        merge_byte_block ( in, in_len, buf, &out_len );
         fwrite ( buf, sizeof ( unsigned char ), out_len, out );
 
         parity_pos = ( parity_pos + 1 ) % 3;
