@@ -21,10 +21,15 @@
 
 #include "raid5.h"
 #include "sha256.h"
+#include "rc4.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+#ifndef BENCHMARK
+#define BENCHSIZE 13056
+#endif
 
 int main ( void )
 {
@@ -40,11 +45,16 @@ int main ( void )
                        };
 
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
-                                "ae3956a5b5c993b66312a187aa89f935c984f516426ee5ec6fbf028518f04875",
-                                "a71d099882bc3f1d0a6e44589804a075d774998ec7ee03941da4ad9168a630f6",
-                                "52854ea24eb536f1bc17ca9dc36828dacdbc34f077540067cede2100ec43e058",
-                                "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4"
-                               };
+                       "5a672ad40199303d6bc2d550a9e099cefdb5a5958c76bd2e5ef31e910b623680",
+                       "51213026e91f4ca01a4522f55ae523f4c6a0d2247662db569846cf2226caceb3",
+                       "0c3c738a3ca13e0c68c06fb448d095a28cbb7b548d9f790759752212ee1ccf25",
+                       "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4"
+                      };
+#ifdef BENCHMARK
+    struct timeval start, end;
+    float elapsed;
+#endif
+    rc4_key rc4key;
 
     printf ( "Running test for RAID5:\n\n" );
 
@@ -55,7 +65,7 @@ int main ( void )
         printf ( "Cannot write test file!\n" );
         return 1;
     }
-    for ( i = 0; i < 13056; i++ )
+    for ( i = 0; i < BENCHSIZE; i++ )
     {
         /* Every device becomes the parity twice. dev2 three
            times but the third time only 512+256 Bytes
@@ -84,8 +94,24 @@ int main ( void )
         }
     }
 
+    prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
+
     /* perform the split */
-    split_byte ( fp[0], &fp[1] );
+    printf ( "Start split ... " );
+    fflush ( stdout );
+#ifdef BENCHMARK
+    gettimeofday ( &start, NULL );
+#endif
+    split_byte ( fp[0], &fp[1], &rc4key );
+#ifdef BENCHMARK
+    gettimeofday ( &end, NULL );
+#endif
+    printf ( "Done\n" );
+    fflush ( stdout );
+#ifdef BENCHMARK
+    elapsed = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
+    printf ( "split time: %.3f ms\n\n", elapsed );
+#endif
 
     /* Close the input file */
     fclose ( fp[0] );
@@ -110,8 +136,23 @@ int main ( void )
         return 1;
     }
 
+    prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
     /* perform the merge */
-    merge_byte ( fp[0], &fp[1] );
+    printf ( "Start merge ... " );
+    fflush ( stdout );
+#ifdef BENCHMARK
+    gettimeofday ( &start, NULL );
+#endif
+    merge_byte ( fp[0], &fp[1], &rc4key );
+#ifdef BENCHMARK
+    gettimeofday ( &end, NULL );
+#endif
+    printf ( "Done\n" );
+    fflush ( stdout );
+#ifdef BENCHMARK
+    elapsed = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
+    printf ( "merge time: %.3f ms\n\n", elapsed );
+#endif
 
     /* Close ALL files */
     for ( i = 0; i <= 3; i++ )
@@ -122,31 +163,31 @@ int main ( void )
     status = 0;
     for ( i = 0; i <= 4; i++ )
     {
+#ifdef CHECKING
         printf ( "Checking file %s ... ", filename[i] );
-        ascii = check_sha256_sum ( filename[i], (unsigned char*) assumed[i] );
+        ascii = check_sha256_sum ( filename[i], ( unsigned char* ) assumed[i] );
 
         if ( ascii == NULL )
         {
-            printf ( "CORRECT!\n\n" );
-            printf ( "%-12s%s\n%-12s%s\n\n", "Calculated:" , ascii, "Assumed:", assumed[i] );
+            printf ( "CORRECT!\n" );
         }
         else
         {
             if ( memcmp ( ascii, assumed[i], 64 ) == 0 )
             {
-                printf ( "Memory Error!\n\n" );
+                printf ( "Memory Error!\n" );
             }
             else
             {
                 printf ( "FALSE!\n" );
-                printf ( "%-12s%s\n%-12s%s\n\n", "Calculated:" , ascii, "Assumed:", assumed[i] );
+                printf ( "%-12s%s\n%-12s%s\n", "Calculated:" , ascii, "Assumed:", assumed[i] );
                 free ( ascii );
             }
             status++;
         }
+#endif
         remove ( filename[i] );
     }
-
     return status;
 }
 

@@ -21,15 +21,14 @@
 
 #include "raid5.h"
 #include "sha256.h"
+#include "rc4.h"
 #include "de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#define SUCCESS_MERGE_BIT  0x01
-#define SUCCESS_MERGE_BYTE 0x02
-#define SUCCESS_SPLIT_BIT  0x03
-#define SUCCESS_SPLIT_BYTE 0x04
+#define SUCCESS_MERGE 0x02
+#define SUCCESS_SPLIT 0x04
 
 #define MEMERR_DEV 0x10
 #define MEMERR_SHA 0x16
@@ -75,7 +74,7 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], unsigned
     }
     else
     {
-        printf ( "Read error\n" );
+        *out_len = -1;
     }
 }
 
@@ -112,11 +111,13 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
     }
 }
 
-int split_byte ( FILE *in, FILE *devices[] )
+int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
 {
     unsigned char *chars, *out, parity_pos = 2, *hash;
     size_t rlen, *out_len;
+    int status;
 
+#ifdef CALC_SHA256
     /* sha context
        the last element [3] is for the input file */
     struct sha256_ctx sha256_ctx[4];
@@ -124,67 +125,57 @@ int split_byte ( FILE *in, FILE *devices[] )
     char *sha256_buf[4];
     void *sha256_resblock[4];
     int i, j;
+#endif
 
     chars = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
     out = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
     out_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
     if ( chars == NULL )
     {
-        return MEMERR_BUF;
+        status = MEMERR_BUF;
+        goto end;
     }
     if ( out == NULL )
     {
-        free ( chars ); /* Already allocated */
-        return MEMERR_DEV;
+        status = MEMERR_DEV;
+        goto end;
     }
     if ( out_len == NULL )
     {
-        free ( out ); /* Already allocated */
-        free ( chars ); /* Already allocated */
-        return MEMERR_DEV;
+        status = MEMERR_DEV;
+        goto end;
     }
 
+#ifdef CALC_SHA256
     /* create the sha256 context */
     for ( i = 0; i < 4; i++ )
     {
         sha256_resblock[i] = malloc ( 32 );
         if ( sha256_resblock[i] == NULL )
         {
-            for ( j = 0; j < i - 1; j++ )
-            {
-                free ( sha256_buf[j] ); /* Already allocated */
-            }
-            for ( j = 0; j < i; j++ )
-            {
-                free ( sha256_resblock[j] ); /* Already allocated */
-            }
-            free ( out_len ); /* Already allocated */
-            free ( out ); /* Already allocated */
-            free ( chars ); /* Already allocated */
-            return MEMERR_SHA;
+            status = MEMERR_SHA;
+            goto end;
         }
 
         sha256_buf[i] = ( char* ) malloc ( SHA256_BLOCKSIZE + 72 );
         if ( sha256_buf[i] == NULL )
         {
-            free ( sha256_resblock[i] ); /* Already allocated */
-            for ( j = 0; j < i; j++ )
-            {
-                free ( sha256_buf[j] ); /* Already allocated */
-                free ( sha256_resblock[j] ); /* Already allocated */
-            }
-            free ( out_len ); /* Already allocated */
-            free ( out ); /* Already allocated */
-            free ( chars ); /* Already allocated */
-            return MEMERR_SHA;
+            status = MEMERR_SHA;
+            goto end;
         }
         sha256_init_ctx ( &sha256_ctx[i] );
         sha256_len[i] = 0;
     }
+#endif
 
     rlen = fread ( chars, sizeof ( unsigned char ), 2 * RAID5_BLOCKSIZE, in );
     while ( rlen > 0 )
     {
+#ifdef ENCRYPT_DATA
+        /* encrypt the input file */
+        rc4 ( chars, rlen, key );
+#endif
+#ifdef CALC_SHA256
         if ( sha256_len[3] == SHA256_BLOCKSIZE )
         {
             sha256_process_block ( sha256_buf[3], SHA256_BLOCKSIZE, &sha256_ctx[3] );
@@ -195,7 +186,7 @@ int split_byte ( FILE *in, FILE *devices[] )
             memcpy ( sha256_buf[3] + sha256_len[3], chars, rlen );
             sha256_len[3] += rlen;
         }
-
+#endif
         split_byte_block ( chars, rlen, out, out_len );
         fwrite ( &out[0], sizeof ( unsigned char ), out_len[0], devices[ ( parity_pos + 1 ) % 3] );
         if ( out_len[1] > 0 )
@@ -204,6 +195,7 @@ int split_byte ( FILE *in, FILE *devices[] )
         }
         fwrite ( &out[2 * RAID5_BLOCKSIZE], sizeof ( unsigned char ), out_len[2], devices[parity_pos] );
 
+#ifdef CALC_SHA256
         for ( i = 0; i < 3; i++ )
         {
             if ( sha256_len[ ( parity_pos + 1 + i ) % 3] == SHA256_BLOCKSIZE )
@@ -217,22 +209,18 @@ int split_byte ( FILE *in, FILE *devices[] )
                 sha256_len[ ( parity_pos + 1 + i ) % 3] += out_len[ ( parity_pos + 1 + i ) % 3];
             }
         }
+#endif
 
         parity_pos = ( parity_pos + 1 ) % 3;
         rlen = fread ( chars, sizeof ( char ), 2 * RAID5_BLOCKSIZE, in );
     }
     if ( ferror ( in ) )
     {
-        for ( i = 0; i < 4; i++ )
-        {
-            free ( sha256_buf[i] );
-        }
-        free ( out_len ); /* Already allocated */
-        free ( out ); /* Already allocated */
-        free ( chars ); /* Already allocated */
-        return READERR_IN;
+        status = READERR_IN;
+        goto end;
     }
 
+#ifdef CALC_SHA256
     hash = ( unsigned char* ) malloc ( 65 );
     for ( i = 0; i < 4; i++ )
     {
@@ -249,44 +237,63 @@ int split_byte ( FILE *in, FILE *devices[] )
         }
         sha256_finish_ctx ( &sha256_ctx[i], sha256_resblock[i] );
         ascii_from_resbuf ( hash, sha256_resblock[i] );
-        printf ( "\n\n\t\t%s\n\n", hash );
+        /*printf ( "\n\n\t\t%s\n\n", hash );*/
     }
+#endif
 
+    status = SUCCESS_SPLIT;
 
-    free ( hash );
+end:
+
+#ifdef CALC_SHA256
+    if (hash) {
+        free ( hash );
+    }
     for ( i = 0; i < 4; i++ )
     {
-        free ( sha256_buf[i] );
-        free ( sha256_resblock[i] );
+        if (sha256_buf[i]) {
+            free ( sha256_buf[i] );
+        }
+        if (sha256_resblock[i]) {
+            free ( sha256_resblock[i] );
+        }
     }
-    free ( out_len );
-    free ( out );
-    free ( chars );
-    return SUCCESS_SPLIT_BYTE;
+#endif
+    if (out_len) {
+        free ( out_len );
+    }
+    if (out) {
+        free ( out );
+    }
+    if (chars) {
+        free ( chars );
+    }
+    return status;
 }
 
-int merge_byte ( FILE *out, FILE *devices[] )
+int merge_byte ( FILE *out, FILE *devices[], rc4_key *key )
 {
     unsigned char *in, *buf, parity_pos = 2;
     size_t *in_len, out_len;
+    int status;
 
     in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
     in_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
     buf = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
     if ( in == NULL )
     {
-        return MEMERR_DEV;
+        status = MEMERR_DEV;
+        goto end;
     }
     if ( in_len == NULL )
     {
-        free ( in ); /* Already allocated */
-        return MEMERR_DEV;
+        status = MEMERR_DEV;
+        goto end;
     }
     if ( buf == NULL )
     {
-        free ( in ); /* Already allocated */
-        free ( in_len ); /* Already allocated */
-        return MEMERR_BUF;
+        status = MEMERR_BUF;
+        goto end;
     }
 
     in_len[0] = fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
@@ -296,6 +303,15 @@ int merge_byte ( FILE *out, FILE *devices[] )
     while ( in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0 )
     {
         merge_byte_block ( in, in_len, buf, &out_len );
+        if (out_len == -1) {
+            status = READERR_IN;
+            goto end;
+        }
+#ifdef ENCRYPT_DATA
+        /* encrypt the input file */
+        rc4 ( buf, out_len, key );
+#endif
+
         fwrite ( buf, sizeof ( unsigned char ), out_len, out );
 
         parity_pos = ( parity_pos + 1 ) % 3;
@@ -305,20 +321,32 @@ int merge_byte ( FILE *out, FILE *devices[] )
     }
     if ( ferror ( devices[0] ) )
     {
-        return READERR_DEV0;
+        status = READERR_DEV0;
+        goto end;
     }
     if ( ferror ( devices[1] ) )
     {
-        return READERR_DEV1;
+        status = READERR_DEV1;
+        goto end;
     }
     if ( ferror ( devices[2] ) )
     {
-        return READERR_DEV2;
+        status = READERR_DEV2;
+        goto end;
     }
-    free ( buf );
-    free ( in_len );
-    free ( in );
-    return SUCCESS_MERGE_BYTE;
+    status = SUCCESS_MERGE;
+
+end:
+    if (buf) {
+        free ( buf );
+    }
+    if (in_len) {
+        free ( in_len );
+    }
+    if (in) {
+        free ( in );
+    }
+    return status;
 }
 
 /**
@@ -326,59 +354,85 @@ int merge_byte ( FILE *out, FILE *devices[] )
  * class.
  */
 JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
-( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4 )
+( JNIEnv * env, jobject obj, jstring _tempInputDirPath, jstring _hash, jstring _outputFilePath, jstring _key, jint _keyLength )
 {
     /* Convert the Java Strings to char arrays for usage in the C program. */
-    const char *out = ( *env )->GetStringUTFChars ( env, str1, 0 );
-    const char *in1 = ( *env )->GetStringUTFChars ( env, str2, 0 );
-    const char *in2 = ( *env )->GetStringUTFChars ( env, str3, 0 );
-    const char *in3 = ( *env )->GetStringUTFChars ( env, str4, 0 );
-    int status;
+    const char *tempInputDirPath = ( *env )->GetStringUTFChars ( env, _tempInputDirPath, 0 );
+    const char *hash = ( *env )->GetStringUTFChars ( env, _hash, 0 );
+    const char *outputFilePath = ( *env )->GetStringUTFChars ( env, _outputFilePath, 0 );
+    const char *key = ( *env )->GetStringUTFChars ( env, _key, 0 );
+    const int keyLength = _keyLength;
+
+    const int tmpLength = strlen ( ( char * ) tempInputDirPath );
+    int status, i;
+    char *inputBaseName;
+    rc4_key rc4key;
 
     /* Generate file pointers. */
     FILE *fp;
     FILE *devices[3];
 
-    devices[0] = fopen ( in1, "rb" );
-    devices[1] = fopen ( in2, "rb" );
-    devices[2] = fopen ( in3, "rb" );
+    inputBaseName = ( char* ) malloc ( tmpLength + 40 + 2 + 1 );
+    if ( inputBaseName == NULL )
+    {
+        status = OPENERR_IN;
+        goto end;
+    }
+    memcpy ( inputBaseName, tempInputDirPath, tmpLength );
+    memcpy ( &inputBaseName[tmpLength], hash, 40 );
+    inputBaseName[tmpLength + 40] = '.';
+
+    /* open the files */
+    for ( i = 1; i < 3; i++ )
+    {
+        inputBaseName[tmpLength + 41] = i + 0x30; /* int to char conversion */
+        devices[i] = fopen ( inputBaseName, "rb" );
+    }
     if ( devices[0] == NULL )
     {
-        printf ( "File not found!\n" );
-        return OPENERR_DEV0;
+        status = OPENERR_DEV0;
+        goto end;
     }
     if ( devices[1] == NULL )
     {
-        printf ( "File not found!\n" );
-        return OPENERR_DEV1;
+        status = OPENERR_DEV1;
+        goto end;
     }
     if ( devices[2] == NULL )
     {
-        printf ( "File not found!\n" );
-        return OPENERR_DEV2;
+        status = OPENERR_DEV2;
+        goto end;
     }
 
-    fp = fopen ( out, "wb" );
+    fp = fopen ( outputFilePath, "wb" );
     if ( fp == NULL )
     {
-        printf ( "File could not be created!\n" );
-        return OPENERR_OUT;
+        status = OPENERR_OUT;
+        goto end;
     }
 
-    /* Invoke the native merge method. */
-    status = merge_byte ( fp, devices );
+    /* construct the RC4 key */
+    prepare_key ( ( unsigned char* ) key, keyLength, &rc4key );
 
+    /* Invoke the native merge method. */
+    status = merge_byte ( fp, devices, &rc4key );
+
+end:
     /* Close the files. */
     fclose ( fp );
     fclose ( devices[0] );
     fclose ( devices[1] );
     fclose ( devices[2] );
 
+    if (inputBaseName) {
+        free(inputBaseName);
+    }
+
     /* Clean the memory. / Release the char arrays. */
-    ( *env )->ReleaseStringUTFChars ( env, str1, out );
-    ( *env )->ReleaseStringUTFChars ( env, str2, in1 );
-    ( *env )->ReleaseStringUTFChars ( env, str3, in2 );
-    ( *env )->ReleaseStringUTFChars ( env, str4, in3 );
+    ( *env )->ReleaseStringUTFChars ( env, _tempInputDirPath, tempInputDirPath );
+    ( *env )->ReleaseStringUTFChars ( env, _hash, hash );
+    ( *env )->ReleaseStringUTFChars ( env, _outputFilePath, outputFilePath );
+    ( *env )->ReleaseStringUTFChars ( env, _key, key );
     return status;
 }
 
@@ -386,59 +440,114 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
  * Implements the splitInterface method defined in the Java RaidAccessInterface
  * class.
  */
-JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
-( JNIEnv *env, jobject obj, jstring str1, jstring str2, jstring str3, jstring str4 )
+JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
+( JNIEnv *env, jobject obj, jstring _inputFilePath, jstring _tempOutputDirPath, jstring _key, jint _keyLength )
 {
     /* Convert the Java Strings to char arrays for usage in this C program. */
-    const char *in = ( *env )->GetStringUTFChars ( env, str1, 0 );
-    const char *out1 = ( *env )->GetStringUTFChars ( env, str2, 0 );
-    const char *out2 = ( *env )->GetStringUTFChars ( env, str3, 0 );
-    const char *out3 = ( *env )->GetStringUTFChars ( env, str4, 0 );
-    int status;
+    const char *inputFilePath = ( *env )->GetStringUTFChars ( env, _inputFilePath, 0 );
+    const char *tempOutputDirPath = ( *env )->GetStringUTFChars ( env, _tempOutputDirPath, 0 );
+    const char *key = ( *env )->GetStringUTFChars ( env, _key, 0 );
+    const int keyLength = _keyLength;
+
+    void *resblock;
+    char *outputBaseName, retvalue[41];
+    int status, i;
+    const int tmpLength = strlen ( tempOutputDirPath );
+    rc4_key rc4key;
 
     /* Generate file pointers. */
     FILE *fp;
     FILE *devices[3];
 
-    fp = fopen ( in, "rb" );
+    /* open input file */
+    fp = fopen ( inputFilePath, "rb" );
     if ( fp == NULL )
     {
-        printf ( "File not found!\n" );
-        return OPENERR_OUT;
+        status = OPENERR_IN;
+        goto end;
     }
 
-    devices[0] = fopen ( out1, "wb" );
-    devices[1] = fopen ( out2, "wb" );
-    devices[2] = fopen ( out3, "wb" );
+    /* construct base output path:
+     *  - tmpfolder: tmpLength bytes
+     *  - hash:      40 bytes
+     *  - extension: 2 bytes for .i
+     *  - \0:        1 byte
+     */
+    outputBaseName = ( char* ) malloc ( tmpLength + 40 + 2 + 1 );
+    resblock = malloc ( 32 );
+    if ( outputBaseName == NULL || resblock == NULL )
+    {
+        status = OPENERR_IN;
+        goto end;
+    }
+    memcpy ( outputBaseName, tempOutputDirPath, tmpLength );
+    /* build the hash */
+    sha256_buffer ( inputFilePath, strlen ( inputFilePath ), resblock );
+    ascii_from_resbuf ( ( unsigned char* ) &outputBaseName[ tmpLength ] , resblock );
+    outputBaseName[tmpLength + 40] = '.';
+
+    /* open the files */
+    for ( i = 1; i < 3; i++ )
+    {
+        outputBaseName[tmpLength + 41] = i + 0x30; /* int to char conversion */
+        devices[i] = fopen ( outputBaseName, "wb" );
+    }
     if ( devices[0] == NULL )
     {
-        printf ( "File could not be created!\n" );
-        return OPENERR_DEV0;
+        status = OPENERR_DEV0;
+        goto end;
     }
     if ( devices[1] == NULL )
     {
-        printf ( "File could not be created!\n" );
-        return OPENERR_DEV1;
+        status = OPENERR_DEV1;
+        goto end;
     }
     if ( devices[2] == NULL )
     {
-        printf ( "File could not be created!\n" );
-        return OPENERR_DEV2;
+        status = OPENERR_DEV2;
+        goto end;
     }
 
-    /* Invoke the native split method. */
-    status = split_byte ( fp, devices );
+    /* construct the RC4 key */
+    prepare_key ( ( unsigned char* ) key, keyLength, &rc4key );
 
+    /* Invoke the native split method. */
+    status = split_byte ( fp, devices, &rc4key );
+
+end:
+    if ( status == SUCCESS_SPLIT )
+    {
+        memcpy ( retvalue, &outputBaseName[ tmpLength ], 40 );
+        retvalue[40] = '\0';
+    }
+    else
+    {
+        retvalue[0] = status;
+        retvalue[1] = '\0';
+    }
     /* Close the files. */
-    fclose ( fp );
-    fclose ( devices[0] );
-    fclose ( devices[1] );
-    fclose ( devices[2] );
+    if ( fp )
+    {
+        fclose ( fp );
+    }
+    for ( i=0; i < 3; i++ )
+    {
+        if ( devices[i] )
+        {
+            fclose ( devices[0] );
+        }
+    }
+
+    if (resblock) {
+        free(resblock);
+    }
+    if (outputBaseName) {
+        free(outputBaseName);
+    }
 
     /* Clean the memory. / Release the char arrays. */
-    ( *env )->ReleaseStringUTFChars ( env, str1, in );
-    ( *env )->ReleaseStringUTFChars ( env, str2, out1 );
-    ( *env )->ReleaseStringUTFChars ( env, str3, out2 );
-    ( *env )->ReleaseStringUTFChars ( env, str4, out3 );
-    return status;
+    ( *env )->ReleaseStringUTFChars ( env, _inputFilePath, inputFilePath );
+    ( *env )->ReleaseStringUTFChars ( env, _tempOutputDirPath, tempOutputDirPath );
+    ( *env )->ReleaseStringUTFChars ( env, _key, key );
+    return ( *env )->NewStringUTF ( env, retvalue );
 }

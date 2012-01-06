@@ -22,6 +22,8 @@
 #ifndef RAID5_H
 #define RAID5_H 1
 
+#include "rc4.h"
+
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -31,11 +33,11 @@ extern "C"
 
     static const unsigned int RAID5_BLOCKSIZE = 1024;
 
-    extern void merge_byte_block ( const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len );
+    void merge_byte_block ( const unsigned char* in, const size_t in_len[], unsigned char* out, size_t* out_len );
     extern void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[] );
 
-    extern int merge_byte ( FILE *out, FILE *devices[] );
-    extern int split_byte ( FILE *in, FILE *devices[] );
+    extern int merge_byte ( FILE *out, FILE *devices[], rc4_key *key);
+    extern int split_byte ( FILE *in, FILE *devices[], rc4_key *key);
 
 #ifdef __cplusplus
 }
