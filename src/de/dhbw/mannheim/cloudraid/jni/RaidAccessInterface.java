@@ -36,7 +36,7 @@ public class RaidAccessInterface {
 	 *            e.g. <code>/tmp/CloudRAID</code>. The path must end with the
 	 *            path separator!
 	 * @param hash
-	 *            The hash / base name of the RAID files with 40 characters, e.g.
+	 *            The hash / base name of the RAID files with 64 characters, e.g.
 	 *            <code>4cf17f73ea0316baffbe8f5eae2451b0f245a5f098378e283acf39143e1c69b3</code>
 	 * @param outputFilePath
 	 *            The complete, absolute path to the original file (
@@ -50,7 +50,7 @@ public class RaidAccessInterface {
 	 *            The number of bytes the key has, referring to the example: 16.
 	 * @return Return the success and error code of the merge.
 	 */
-	public native int mergeInterface(String tempInputDirPath,
+	public static native int mergeInterface(String tempInputDirPath,
 			String hash, String outputFilePath, String key,
 			int keyLength);
 
@@ -68,11 +68,11 @@ public class RaidAccessInterface {
 	 *            <code>eph3Oodotah0peiy</code>)
 	 * @param keyLength
 	 *            The number of bytes the key has, referring to the example: 16.
-	 * @return The base name of the RAID files with 40 characters, or an integer
+	 * @return The base name of the RAID files with 64 characters, or an integer
 	 *         that specifies the return value if something went wrong.
 	 *         Referring to the example:
 	 *         <code>4cf17f73ea0316baffbe8f5eae2451b0f245a5f098378e283acf39143e1c69b3</code>
 	 */
-	public native String splitInterface(String inputFilePath,
+	public static native String splitInterface(String inputFilePath,
 			String tempOutputDirPath, String key, int keyLength);
 }

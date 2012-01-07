@@ -124,7 +124,7 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
     size_t sha256_len[4];
     char *sha256_buf[4];
     void *sha256_resblock[4];
-    int i, j;
+    int i;
 #endif
 
     chars = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
@@ -246,26 +246,32 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
 end:
 
 #ifdef CALC_SHA256
-    if (hash) {
+    if ( hash )
+    {
         free ( hash );
     }
     for ( i = 0; i < 4; i++ )
     {
-        if (sha256_buf[i]) {
+        if ( sha256_buf[i] )
+        {
             free ( sha256_buf[i] );
         }
-        if (sha256_resblock[i]) {
+        if ( sha256_resblock[i] )
+        {
             free ( sha256_resblock[i] );
         }
     }
 #endif
-    if (out_len) {
+    if ( out_len )
+    {
         free ( out_len );
     }
-    if (out) {
+    if ( out )
+    {
         free ( out );
     }
-    if (chars) {
+    if ( chars )
+    {
         free ( chars );
     }
     return status;
@@ -303,7 +309,8 @@ int merge_byte ( FILE *out, FILE *devices[], rc4_key *key )
     while ( in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0 )
     {
         merge_byte_block ( in, in_len, buf, &out_len );
-        if (out_len == -1) {
+        if ( out_len == -1 )
+        {
             status = READERR_IN;
             goto end;
         }
@@ -337,13 +344,16 @@ int merge_byte ( FILE *out, FILE *devices[], rc4_key *key )
     status = SUCCESS_MERGE;
 
 end:
-    if (buf) {
+    if ( buf )
+    {
         free ( buf );
     }
-    if (in_len) {
+    if ( in_len )
+    {
         free ( in_len );
     }
-    if (in) {
+    if ( in )
+    {
         free ( in );
     }
     return status;
@@ -354,7 +364,7 @@ end:
  * class.
  */
 JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
-( JNIEnv * env, jobject obj, jstring _tempInputDirPath, jstring _hash, jstring _outputFilePath, jstring _key, jint _keyLength )
+( JNIEnv * env, jclass cls, jstring _tempInputDirPath, jstring _hash, jstring _outputFilePath, jstring _key, jint _keyLength )
 {
     /* Convert the Java Strings to char arrays for usage in the C program. */
     const char *tempInputDirPath = ( *env )->GetStringUTFChars ( env, _tempInputDirPath, 0 );
@@ -372,20 +382,25 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     FILE *fp;
     FILE *devices[3];
 
-    inputBaseName = ( char* ) malloc ( tmpLength + 40 + 2 + 1 );
+    /* construct base output path:
+     *  - tmpfolder: tmpLength bytes, including ending slash /
+     *  - hash:      64 bytes
+     *  - extension: 2 bytes for .i
+     *  - \0:        1 byte
+     */
+    inputBaseName = ( char* ) malloc ( tmpLength + 64 + 2 + 1 );
     if ( inputBaseName == NULL )
     {
         status = OPENERR_IN;
         goto end;
     }
     memcpy ( inputBaseName, tempInputDirPath, tmpLength );
-    memcpy ( &inputBaseName[tmpLength], hash, 40 );
-    inputBaseName[tmpLength + 40] = '.';
+    memcpy ( &inputBaseName[tmpLength], hash, 64 );
 
     /* open the files */
-    for ( i = 1; i < 3; i++ )
+    for ( i = 0; i < 3; i++ )
     {
-        inputBaseName[tmpLength + 41] = i + 0x30; /* int to char conversion */
+        sprintf ( &inputBaseName[ tmpLength + 64 ], ".%c", i+0x30 );
         devices[i] = fopen ( inputBaseName, "rb" );
     }
     if ( devices[0] == NULL )
@@ -424,8 +439,9 @@ end:
     fclose ( devices[1] );
     fclose ( devices[2] );
 
-    if (inputBaseName) {
-        free(inputBaseName);
+    if ( inputBaseName )
+    {
+        free ( inputBaseName );
     }
 
     /* Clean the memory. / Release the char arrays. */
@@ -441,7 +457,7 @@ end:
  * class.
  */
 JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
-( JNIEnv *env, jobject obj, jstring _inputFilePath, jstring _tempOutputDirPath, jstring _key, jint _keyLength )
+( JNIEnv *env, jclass cls, jstring _inputFilePath, jstring _tempOutputDirPath, jstring _key, jint _keyLength )
 {
     /* Convert the Java Strings to char arrays for usage in this C program. */
     const char *inputFilePath = ( *env )->GetStringUTFChars ( env, _inputFilePath, 0 );
@@ -450,8 +466,9 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     const int keyLength = _keyLength;
 
     void *resblock;
-    char *outputBaseName, retvalue[41];
-    int status, i;
+    char *outputBaseName, retvalue[65];
+    int status;
+    unsigned char i;
     const int tmpLength = strlen ( tempOutputDirPath );
     rc4_key rc4key;
 
@@ -468,12 +485,12 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     }
 
     /* construct base output path:
-     *  - tmpfolder: tmpLength bytes
-     *  - hash:      40 bytes
+     *  - tmpfolder: tmpLength bytes, including ending slash /
+     *  - hash:      64 bytes
      *  - extension: 2 bytes for .i
      *  - \0:        1 byte
      */
-    outputBaseName = ( char* ) malloc ( tmpLength + 40 + 2 + 1 );
+    outputBaseName = ( char* ) malloc ( tmpLength + 64 + 2 + 1 );
     resblock = malloc ( 32 );
     if ( outputBaseName == NULL || resblock == NULL )
     {
@@ -484,12 +501,11 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     /* build the hash */
     sha256_buffer ( inputFilePath, strlen ( inputFilePath ), resblock );
     ascii_from_resbuf ( ( unsigned char* ) &outputBaseName[ tmpLength ] , resblock );
-    outputBaseName[tmpLength + 40] = '.';
 
     /* open the files */
-    for ( i = 1; i < 3; i++ )
+    for ( i = 0; i < 3; i++ )
     {
-        outputBaseName[tmpLength + 41] = i + 0x30; /* int to char conversion */
+        sprintf ( &outputBaseName[ tmpLength + 64 ], ".%c", i+0x30 );
         devices[i] = fopen ( outputBaseName, "wb" );
     }
     if ( devices[0] == NULL )
@@ -517,8 +533,8 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
 end:
     if ( status == SUCCESS_SPLIT )
     {
-        memcpy ( retvalue, &outputBaseName[ tmpLength ], 40 );
-        retvalue[40] = '\0';
+        memcpy ( retvalue, &outputBaseName[ tmpLength ], 64 );
+        retvalue[64] = '\0';
     }
     else
     {
@@ -534,15 +550,17 @@ end:
     {
         if ( devices[i] )
         {
-            fclose ( devices[0] );
+            fclose ( devices[i] );
         }
     }
 
-    if (resblock) {
-        free(resblock);
+    if ( resblock )
+    {
+        free ( resblock );
     }
-    if (outputBaseName) {
-        free(outputBaseName);
+    if ( outputBaseName )
+    {
+        free ( outputBaseName );
     }
 
     /* Clean the memory. / Release the char arrays. */
@@ -551,3 +569,4 @@ end:
     ( *env )->ReleaseStringUTFChars ( env, _key, key );
     return ( *env )->NewStringUTF ( env, retvalue );
 }
+
