@@ -1,4 +1,4 @@
-package de.dhbw.mannheim.cloudraid;
+package de.dhbw.mannheim.cloudraid.fs;
 
 import java.io.File;
 import java.nio.file.FileSystems;
