@@ -81,7 +81,7 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 *            The directory to be handled.
 	 */
 	private void checkDir(File dir) {
-		if (dir.isFile()) {
+		if (dir.isDirectory()) {
 			for (File f : dir.listFiles()) {
 				if (Files.isSymbolicLink(f.toPath())) {
 					System.err.println("I do not handle the symbolic link at "
