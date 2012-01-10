@@ -13,22 +13,38 @@ public class RecursiveFileSystemWatcher extends Thread {
 			: "/tmp/cloudraid/";
 	private final static File TMP_FILE = new File(TMP);
 
+	/**
+	 * A map containing all known files.
+	 */
 	private static ConcurrentHashMap<String, Long> fileMap = new ConcurrentHashMap<String, Long>();
+
 	private Vector<String> keySet = new Vector<String>();
-	
+
 	private long sleepTime = 10000;
 
+	/**
+	 * Creates a RecursiveFileSystemWatcher that runs every 10s.
+	 */
 	public RecursiveFileSystemWatcher() {
 		dir = new File(System.getProperty("user.home") + "/tmp/");
 		System.out.println("Watching directory " + dir.getAbsolutePath());
 		this.setPriority(MIN_PRIORITY);
 	}
-	
+
+	/**
+	 * Creates a RecursiveFileSystemWatcher that runs in the given interval.
+	 * 
+	 * @param sleepTime
+	 *            The sleeping time in ms.
+	 */
 	public RecursiveFileSystemWatcher(long sleepTime) {
 		this();
 		this.sleepTime = sleepTime;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public void run() {
 		while (!isInterrupted()) {
 			keySet = new Vector<String>(fileMap.keySet());
@@ -57,29 +73,45 @@ public class RecursiveFileSystemWatcher extends Thread {
 		System.err.println("The file system watcher is stopped");
 	}
 
+	/**
+	 * Runs through the list of files in the given directory and handles the
+	 * files according to their type.
+	 * 
+	 * @param file
+	 *            The directory to be handled.
+	 */
 	private void checkDir(File dir) {
-		for (File f : dir.listFiles()) {
-			if (Files.isSymbolicLink(f.toPath())) {
-				System.err.println("I do not handle the symbolic link at "
-						+ f.getAbsolutePath());
-			} else if (f.isDirectory()) {
-				this.checkDir(f);
-			} else if (f.isFile()) {
-				this.checkFile(f);
-			} else {
-				System.err
-						.println("Whoops! I don't know how to handle the file "
-								+ f.getAbsolutePath());
+		if (dir.isFile()) {
+			for (File f : dir.listFiles()) {
+				if (Files.isSymbolicLink(f.toPath())) {
+					System.err.println("I do not handle the symbolic link at "
+							+ f.getAbsolutePath());
+				} else if (f.isDirectory()) {
+					this.checkDir(f);
+				} else if (f.isFile()) {
+					this.checkFile(f);
+				} else {
+					System.err
+							.println("Whoops! I don't know how to handle the file "
+									+ f.getAbsolutePath());
+				}
 			}
 		}
 	}
 
+	/**
+	 * Checks the given file and handles it according to the status.
+	 * 
+	 * @param file
+	 *            The file to be handled.
+	 */
 	private void checkFile(File file) {
 		String name = file.getAbsolutePath();
 		if (fileMap.containsKey(name)) {
 			if (file.lastModified() == fileMap.get(name)) {
 				// nothing to do, file already indexed
-				//System.out.println(file.getAbsolutePath() + " already exists.");
+				// System.out.println(file.getAbsolutePath() +
+				// " already exists.");
 			} else {
 				// the file changed
 				System.out.println(file.getAbsolutePath() + " was changed.");
