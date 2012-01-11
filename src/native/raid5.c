@@ -45,6 +45,8 @@
 #define OPENERR_OUT  0x38
 #define OPENERR_IN   0x39
 
+#define METADATAERR 0x40
+
 void merge_byte_block ( const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len )
 {
     int i;
@@ -111,13 +113,12 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
     }
 }
 
-int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
+int split_byte ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *chars, *out, parity_pos = 2, *hash;
     size_t rlen, *out_len;
     int status;
 
-#ifdef CALC_SHA256
     /* sha context
        the last element [3] is for the input file */
     struct sha256_ctx sha256_ctx[4];
@@ -125,7 +126,9 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
     char *sha256_buf[4];
     void *sha256_resblock[4];
     int i;
-#endif
+
+    raid5md metadata;
+    metadata.version = RAID5_METADATA_VERSION;
 
     chars = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
     out = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
@@ -146,7 +149,6 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
         goto end;
     }
 
-#ifdef CALC_SHA256
     /* create the sha256 context */
     for ( i = 0; i < 4; i++ )
     {
@@ -166,7 +168,6 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
         sha256_init_ctx ( &sha256_ctx[i] );
         sha256_len[i] = 0;
     }
-#endif
 
     rlen = fread ( chars, sizeof ( unsigned char ), 2 * RAID5_BLOCKSIZE, in );
     while ( rlen > 0 )
@@ -175,7 +176,6 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
         /* encrypt the input file */
         rc4 ( chars, rlen, key );
 #endif
-#ifdef CALC_SHA256
         if ( sha256_len[3] == SHA256_BLOCKSIZE )
         {
             sha256_process_block ( sha256_buf[3], SHA256_BLOCKSIZE, &sha256_ctx[3] );
@@ -186,7 +186,6 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
             memcpy ( sha256_buf[3] + sha256_len[3], chars, rlen );
             sha256_len[3] += rlen;
         }
-#endif
         split_byte_block ( chars, rlen, out, out_len );
         fwrite ( &out[0], sizeof ( unsigned char ), out_len[0], devices[ ( parity_pos + 1 ) % 3] );
         if ( out_len[1] > 0 )
@@ -195,7 +194,6 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
         }
         fwrite ( &out[2 * RAID5_BLOCKSIZE], sizeof ( unsigned char ), out_len[2], devices[parity_pos] );
 
-#ifdef CALC_SHA256
         for ( i = 0; i < 3; i++ )
         {
             if ( sha256_len[ ( parity_pos + 1 + i ) % 3] == SHA256_BLOCKSIZE )
@@ -209,7 +207,6 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
                 sha256_len[ ( parity_pos + 1 + i ) % 3] += out_len[ ( parity_pos + 1 + i ) % 3];
             }
         }
-#endif
 
         parity_pos = ( parity_pos + 1 ) % 3;
         rlen = fread ( chars, sizeof ( char ), 2 * RAID5_BLOCKSIZE, in );
@@ -220,7 +217,6 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
         goto end;
     }
 
-#ifdef CALC_SHA256
     hash = ( unsigned char* ) malloc ( 65 );
     for ( i = 0; i < 4; i++ )
     {
@@ -237,19 +233,24 @@ int split_byte ( FILE *in, FILE *devices[], rc4_key *key )
         }
         sha256_finish_ctx ( &sha256_ctx[i], sha256_resblock[i] );
         ascii_from_resbuf ( hash, sha256_resblock[i] );
-        /*printf ( "\n\n\t\t%s\n\n", hash );*/
+        set_metadata_hash ( &metadata, i, hash );
     }
-#endif
+    status = write_metadata ( meta, &metadata );
+    if ( status != 0 )
+    {
+        status = METADATAERR;
+        goto end;
+    }
 
     status = SUCCESS_SPLIT;
 
 end:
 
-#ifdef CALC_SHA256
     if ( hash )
     {
         free ( hash );
     }
+
     for ( i = 0; i < 4; i++ )
     {
         if ( sha256_buf[i] )
@@ -261,7 +262,6 @@ end:
             free ( sha256_resblock[i] );
         }
     }
-#endif
     if ( out_len )
     {
         free ( out_len );
@@ -277,11 +277,14 @@ end:
     return status;
 }
 
-int merge_byte ( FILE *out, FILE *devices[], rc4_key *key )
+int merge_byte ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *in, *buf, parity_pos = 2;
     size_t *in_len, out_len;
     int status;
+
+    raid5md metadata;
+    status = read_metadata ( meta, &metadata );
 
     in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
     in_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
@@ -359,6 +362,77 @@ end:
     return status;
 }
 
+void print_metadata ( raid5md *md )
+{
+    if ( md )
+    {
+        printf ( "\n\nVersion: %02x\n", md->version );
+        printf ( "I: %64s\n", md->hash_in );
+        printf ( "0: %64s\n", md->hash_dev0 );
+        printf ( "1: %64s\n", md->hash_dev1 );
+        printf ( "2: %64s\n\n", md->hash_dev2 );
+    }
+    else
+    {
+        printf ( "\nNo metadata given!\n" );
+    }
+}
+
+int read_metadata ( FILE *fp, raid5md *md )
+{
+    if ( fp )
+    {
+        if ( md )
+        {
+            fscanf ( fp, "%2hhu", & ( md->version ) );
+            fscanf ( fp, "%64s", md->hash_in );
+            fscanf ( fp, "%64s", md->hash_dev0 );
+            fscanf ( fp, "%64s", md->hash_dev1 );
+            fscanf ( fp, "%64s", md->hash_dev2 );
+            return 0;
+        }
+        return 2;
+    }
+    return 1;
+}
+
+void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] )
+{
+    switch ( idx )
+    {
+    case 0:
+        memcpy ( md->hash_in, hash, 65 );
+        break;
+    case 1:
+        memcpy ( md->hash_dev0, hash, 65 );
+        break;
+    case 2:
+        memcpy ( md->hash_dev1, hash, 65 );
+        break;
+    case 3:
+        memcpy ( md->hash_dev2, hash, 65 );
+        break;
+    }
+}
+
+int write_metadata ( FILE *fp, raid5md *md )
+{
+    if ( fp )
+    {
+        if ( md )
+        {
+            fprintf ( fp, "%02x", md->version );
+            fprintf ( fp, "%64s", md->hash_in );
+            fprintf ( fp, "%64s", md->hash_dev0 );
+            fprintf ( fp, "%64s", md->hash_dev1 );
+            fprintf ( fp, "%64s", md->hash_dev2 );
+            return 0;
+        }
+        return 2;
+    }
+    return 1;
+}
+
 /**
  * Implements the mergeInterface method defined in the Java RaidAccessInterface
  * class.
@@ -381,6 +455,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     /* Generate file pointers. */
     FILE *fp;
     FILE *devices[3];
+    FILE *meta;
 
     /* construct base output path:
      *  - tmpfolder: tmpLength bytes, including ending slash /
@@ -419,6 +494,14 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
         goto end;
     }
 
+    sprintf ( &inputBaseName[ tmpLength + 64 ], ".m" );
+    meta = fopen ( inputBaseName, "rb" );
+    if ( meta == NULL )
+    {
+        status = METADATAERR;
+        goto end;
+    }
+
     fp = fopen ( outputFilePath, "wb" );
     if ( fp == NULL )
     {
@@ -430,14 +513,25 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     prepare_key ( ( unsigned char* ) key, keyLength, &rc4key );
 
     /* Invoke the native merge method. */
-    status = merge_byte ( fp, devices, &rc4key );
+    status = merge_byte ( fp, devices, meta, &rc4key );
 
 end:
     /* Close the files. */
-    fclose ( fp );
-    fclose ( devices[0] );
-    fclose ( devices[1] );
-    fclose ( devices[2] );
+    if ( fp )
+    {
+        fclose ( fp );
+    }
+    for ( i=0; i < 3; i++ )
+    {
+        if ( devices[i] )
+        {
+            fclose ( devices[i] );
+        }
+    }
+    if ( meta )
+    {
+        fclose ( meta );
+    }
 
     if ( inputBaseName )
     {
@@ -475,6 +569,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     /* Generate file pointers. */
     FILE *fp;
     FILE *devices[3];
+    FILE *meta;
 
     /* open input file */
     fp = fopen ( inputFilePath, "rb" );
@@ -524,11 +619,19 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
         goto end;
     }
 
+    sprintf ( &outputBaseName[ tmpLength + 64 ], ".m" );
+    meta = fopen ( outputBaseName, "wb" );
+    if ( meta == NULL )
+    {
+        status = METADATAERR;
+        goto end;
+    }
+
     /* construct the RC4 key */
     prepare_key ( ( unsigned char* ) key, keyLength, &rc4key );
 
     /* Invoke the native split method. */
-    status = split_byte ( fp, devices, &rc4key );
+    status = split_byte ( fp, devices, meta, &rc4key );
 
 end:
     if ( status == SUCCESS_SPLIT )
@@ -552,6 +655,10 @@ end:
         {
             fclose ( devices[i] );
         }
+    }
+    if ( meta )
+    {
+        fclose ( meta );
     }
 
     if ( resblock )

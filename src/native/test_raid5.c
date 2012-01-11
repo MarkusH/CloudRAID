@@ -35,21 +35,27 @@ int main ( void )
 {
     int i;
     int status;
+#ifdef CHECKING
     unsigned char *ascii;
-    FILE *fp[4];
+#endif
+    FILE *fp[5];
     char *filename[] = {"test_raid5.dat",
                         "test_raid5.dev0.dat",
                         "test_raid5.dev1.dat",
                         "test_raid5.dev2.dat",
-                        "test_raid5.out.dat"
+                        "test_raid5.out.dat",
+                        "test_raid5.meta.dat"
                        };
 
+#ifdef CHECKING
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
                        "5a672ad40199303d6bc2d550a9e099cefdb5a5958c76bd2e5ef31e910b623680",
                        "51213026e91f4ca01a4522f55ae523f4c6a0d2247662db569846cf2226caceb3",
                        "0c3c738a3ca13e0c68c06fb448d095a28cbb7b548d9f790759752212ee1ccf25",
-                       "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4"
+                       "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
+                       "1544a46302662591dec6a58cce795d552e7f7a011dac0bc219659aab6fd32808"
                       };
+#endif
 #ifdef BENCHMARK
     struct timeval start, end;
     float elapsed;
@@ -94,6 +100,13 @@ int main ( void )
         }
     }
 
+    fp[4] = fopen ( filename[5], "wb" );
+    if ( !fp[4] )
+    {
+        printf ( "Cannot create metadata file!\n" );
+        return 1;
+    }
+
     prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
 
     /* perform the split */
@@ -102,7 +115,7 @@ int main ( void )
 #ifdef BENCHMARK
     gettimeofday ( &start, NULL );
 #endif
-    split_byte ( fp[0], &fp[1], &rc4key );
+    split_byte ( fp[0], &fp[1], fp[4], &rc4key );
 #ifdef BENCHMARK
     gettimeofday ( &end, NULL );
 #endif
@@ -128,6 +141,15 @@ int main ( void )
         }
     }
 
+    fclose ( fp[4] );
+    fp[4] = fopen ( filename[5], "rb" );
+    printf ( "\n%s\n", filename[5] );
+    if ( !fp[4] )
+    {
+        printf ( "Cannot open metadata file!\n" );
+        return 1;
+    }
+
     /* Open output file for merge */
     fp[0] = fopen ( filename[4], "wb" );
     if ( !fp[0] )
@@ -143,7 +165,7 @@ int main ( void )
 #ifdef BENCHMARK
     gettimeofday ( &start, NULL );
 #endif
-    merge_byte ( fp[0], &fp[1], &rc4key );
+    merge_byte ( fp[0], &fp[1], fp[4], &rc4key );
 #ifdef BENCHMARK
     gettimeofday ( &end, NULL );
 #endif
@@ -161,7 +183,7 @@ int main ( void )
     }
 
     status = 0;
-    for ( i = 0; i <= 4; i++ )
+    for ( i = 0; i <= 5; i++ )
     {
 #ifdef CHECKING
         printf ( "Checking file %s ... ", filename[i] );
