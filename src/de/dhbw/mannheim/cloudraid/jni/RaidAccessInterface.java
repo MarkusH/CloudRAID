@@ -36,7 +36,8 @@ public class RaidAccessInterface {
 	 *            e.g. <code>/tmp/CloudRAID</code>. The path must end with the
 	 *            path separator!
 	 * @param hash
-	 *            The hash / base name of the RAID files with 64 characters, e.g.
+	 *            The hash / base name of the RAID files with 64 characters,
+	 *            e.g.
 	 *            <code>4cf17f73ea0316baffbe8f5eae2451b0f245a5f098378e283acf39143e1c69b3</code>
 	 * @param outputFilePath
 	 *            The complete, absolute path to the original file (
@@ -51,8 +52,7 @@ public class RaidAccessInterface {
 	 * @return Return the success and error code of the merge.
 	 */
 	public static native int mergeInterface(String tempInputDirPath,
-			String hash, String outputFilePath, String key,
-			int keyLength);
+			String hash, String outputFilePath, String key, int keyLength);
 
 	/**
 	 * @param inputFilePath
@@ -60,8 +60,8 @@ public class RaidAccessInterface {
 	 *            <code>/home/user/CloudRAID/test/file.txt</code>)
 	 * @param tempOutputDirPath
 	 *            The complete, absolute path to the temporary output directory.
-	 *            The directory MUST exist and end with the path separator
-	 *            (<code>/tmp/CloudRAID/</code>)!
+	 *            The directory MUST exist and end with the path separator (
+	 *            <code>/tmp/CloudRAID/</code>)!
 	 * @param key
 	 *            The key for file encryption. The encryption is done before the
 	 *            file inputFilePath is splitted into the chunks. (E.g.

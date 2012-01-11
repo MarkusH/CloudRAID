@@ -143,26 +143,6 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
-	 * This function generates a salt that does not contain any characters that
-	 * might break the XML context
-	 * 
-	 * @param length
-	 *            The length that the salt should have
-	 * @return Returns a salt as byte array of length <code>length</code>
-	 */
-	private byte[] getXMLSaveSalt(int length) {
-		byte[] b = new byte[length];
-		byte[] allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#-_+"
-				.getBytes();
-		int l = allowedChars.length;
-		int i;
-		for (i = 0; i < length; i++) {
-			b[i] = allowedChars[r.nextInt(l)];
-		}
-		return b;
-	}
-
-	/**
 	 * Sets the config Path
 	 * 
 	 * @param path
@@ -275,8 +255,8 @@ public class Config extends HashMap<String, String> {
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
 	public synchronized boolean getBoolean(String key, boolean defaultVal)
-			throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+			throws InvalidKeyException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
 		try {
 			String str = this.get(key);
 			return Boolean.parseBoolean(str);
@@ -452,6 +432,26 @@ public class Config extends HashMap<String, String> {
 		} catch (NoSuchElementException e) {
 			return defaultVal;
 		}
+	}
+
+	/**
+	 * This function generates a salt that does not contain any characters that
+	 * might break the XML context
+	 * 
+	 * @param length
+	 *            The length that the salt should have
+	 * @return Returns a salt as byte array of length <code>length</code>
+	 */
+	private byte[] getXMLSaveSalt(int length) {
+		byte[] b = new byte[length];
+		byte[] allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#-_+"
+				.getBytes();
+		int l = allowedChars.length;
+		int i;
+		for (i = 0; i < length; i++) {
+			b[i] = allowedChars[r.nextInt(l)];
+		}
+		return b;
 	}
 
 	/**
