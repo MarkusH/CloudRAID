@@ -1,9 +1,11 @@
 package de.dhbw.mannheim.cloudraid.fs;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.io.IOException;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+
+import de.dhbw.mannheim.cloudraid.jni.RaidAccessInterface;
 
 public class RecursiveFileSystemWatcher extends Thread {
 
@@ -22,12 +24,15 @@ public class RecursiveFileSystemWatcher extends Thread {
 
 	private long sleepTime = 10000;
 
+	private int count = 0;
+
 	/**
 	 * Creates a RecursiveFileSystemWatcher that runs every 10s.
 	 */
 	public RecursiveFileSystemWatcher() {
-		dir = new File(System.getProperty("user.home") + "/tmp/");
+		dir = new File(System.getProperty("user.home") + "/Dropbox/");
 		System.out.println("Watching directory " + dir.getAbsolutePath());
+		TMP_FILE.mkdirs();
 		this.setPriority(MIN_PRIORITY);
 	}
 
@@ -47,6 +52,7 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 */
 	public void run() {
 		while (!isInterrupted()) {
+			long startTime = System.currentTimeMillis();
 			keySet = new Vector<String>(fileMap.keySet());
 
 			if (!this.dir.exists()) {
@@ -63,6 +69,9 @@ public class RecursiveFileSystemWatcher extends Thread {
 				fileMap.remove(k);
 			}
 
+			long endTime = System.currentTimeMillis();
+			System.out.println("Splitting took " + (endTime - startTime));
+			System.out.println("Files: " + count);
 			try {
 				Thread.sleep(sleepTime);
 			} catch (InterruptedException e) {
@@ -81,9 +90,10 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 *            The directory to be handled.
 	 */
 	private void checkDir(File dir) {
+		count++;
 		if (dir.isDirectory()) {
 			for (File f : dir.listFiles()) {
-				if (Files.isSymbolicLink(f.toPath())) {
+				if (this.isSymlink(f)) {
 					System.err.println("I do not handle the symbolic link at "
 							+ f.getAbsolutePath());
 				} else if (f.isDirectory()) {
@@ -114,18 +124,77 @@ public class RecursiveFileSystemWatcher extends Thread {
 				// " already exists.");
 			} else {
 				// the file changed
-				System.out.println(file.getAbsolutePath() + " was changed.");
+				// System.out.println(file.getAbsolutePath() + " was changed.");
+				fileMap.put(file.getAbsolutePath(), file.lastModified());
+
+				this.splitFile(file.getAbsolutePath());
 			}
 			keySet.remove(name);
 		} else {
 			// a new file is found
-			System.out.println(file.getAbsolutePath() + " is a new file.");
+			// System.out.println(file.getAbsolutePath() + " is a new file.");
 			fileMap.put(file.getAbsolutePath(), file.lastModified());
+
+			this.splitFile(file.getAbsolutePath());
+		}
+	}
+
+	private void splitFile(String filename) {
+
+		// System.out.println("Start splitting " + filename);
+		// Split the file into three RAID5 redundant files.
+		String hashedFilename = RaidAccessInterface.splitInterface(filename,
+				TMP, "key", 256);
+
+		/* Do something fancy. */
+
+		// Delete the split files.
+//		new File(TMP + hashedFilename + ".0").delete();
+//		new File(TMP + hashedFilename + ".1").delete();
+//		new File(TMP + hashedFilename + ".2").delete();
+//		new File(TMP + hashedFilename + ".m").delete();
+
+		// System.out.println("done.");
+
+	}
+
+	/**
+	 * Checks, if a file is a symbolic link.
+	 * 
+	 * From Apache Commons (modified)
+	 * https://svn.apache.org/viewvc/commons/proper
+	 * /io/trunk/src/main/java/org/apache/commons/io/FileUtils.java?view=markup <br>
+	 * This is for Java 1.6 compatibility
+	 * 
+	 * @param file
+	 *            The file to be checked.
+	 * @return true, if it is a symbolic link
+	 */
+	private boolean isSymlink(File file) {
+		try {
+			if (file == null) {
+				throw new NullPointerException("File must not be null");
+			}
+			File fileInCanonicalDir = null;
+			if (file.getParent() == null) {
+				fileInCanonicalDir = file;
+			} else {
+				File canonicalDir = file.getParentFile().getCanonicalFile();
+				fileInCanonicalDir = new File(canonicalDir, file.getName());
+			}
+
+			if (fileInCanonicalDir.getCanonicalFile().equals(
+					fileInCanonicalDir.getAbsoluteFile())) {
+				return false;
+			} else {
+				return true;
+			}
+		} catch (IOException e) {
+			return false;
 		}
 	}
 
 	public static void main(String[] args) {
 		new RecursiveFileSystemWatcher(60000).start();
-		new RecursiveFileSystemWatcher(50000).start();
 	}
 }
