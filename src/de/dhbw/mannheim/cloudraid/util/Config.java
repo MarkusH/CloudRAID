@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 
@@ -74,58 +75,21 @@ public class Config extends HashMap<String, String> {
 	/**
 	 * The path to the configuration file.
 	 */
-	private static final String CONFIG_PATH = System.getProperty("os.name")
-			.contains("windows") ? System.getenv("APPDATA")
-			+ "\\cloudraid\\config.xml" : System.getProperty("user.home")
-			+ "/.config/cloudraid.xml";
+	private static String CONFIG_PATH = System.getProperty("os.name").contains(
+			"windows")
+			? System.getenv("APPDATA") + "\\cloudraid\\config.xml"
+			: System.getProperty("user.home") + "/.config/cloudraid.xml";
 
 	/**
 	 * A File object of the configuration file.
 	 */
-	private static final File CONFIG_FILE = new File(CONFIG_PATH);
+	private static File CONFIG_FILE = new File(CONFIG_PATH);
 
 	/**
 	 * A HashMap of allowed allowed ciphers. The keys of the map contain the
 	 * available ciphers, while the value contains the maximum salt length.
 	 */
 	private static HashMap<String, Integer> allowedCiphers = new HashMap<String, Integer>();
-
-	// TODO: remove after testing
-	@SuppressWarnings("javadoc")
-	public static void main(String[] args) {
-		if (args.length != 1) {
-			System.err.println("You need to specify a password");
-			System.exit(1);
-		}
-		Config c = Config.getInstance();
-		c.init(args[0]);
-
-		c.put("boolean.1", true, true);
-		c.put("boolean.2", true);
-		c.put("double.1", 1.0d / 7.0d, true);
-		c.put("double.2", 1.0d / 7.0d);
-		c.put("float.1", 1.0f / 13.0f, true);
-		c.put("float.2", 1.0f / 13.0f);
-		c.put("int.1", 42, true);
-		c.put("int.2", 42);
-		c.put("long.1", 9876543210l, true);
-		c.put("long.2", 9876543210l);
-		c.put("string.1", "Test string", true);
-		c.put("string.2", "Test string");
-		c.save();
-		System.out.println(c.getBoolean("boolean.1", false));
-		System.out.println(c.getBoolean("boolean.2", false));
-		System.out.println(c.getDouble("double.1", 1.0d));
-		System.out.println(c.getDouble("double.2", 1.0d));
-		System.out.println(c.getFloat("float.1", 1.0f));
-		System.out.println(c.getFloat("float.2", 1.0f));
-		System.out.println(c.getInt("int.1", 1));
-		System.out.println(c.getInt("int.2", 1));
-		System.out.println(c.getLong("long.1", 1l));
-		System.out.println(c.getLong("long.2", 1l));
-		System.out.println(c.getString("string.1", "String"));
-		System.out.println(c.getString("string.2", "String"));
-	}
 
 	/**
 	 * The encryption standard to use
@@ -158,6 +122,18 @@ public class Config extends HashMap<String, String> {
 	private static final long serialVersionUID = -3740632761998756639L;
 
 	/**
+	 * Global Random object for salt generation
+	 */
+	private static Random r = new Random(System.currentTimeMillis());
+
+	/**
+	 * @return Returns the config path
+	 */
+	public static String getConfigPath() {
+		return CONFIG_PATH;
+	}
+
+	/**
 	 * Get the Singleton instance of Config.
 	 * 
 	 * @return The instance of Config
@@ -167,24 +143,14 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
-	 * This function generates a salt that does not contain any characters that
-	 * might break the XML context
+	 * Sets the config Path
 	 * 
-	 * @param length
-	 *            The length that the salt should have
-	 * @return Returns a salt as byte array of length <code>length</code>
+	 * @param path
+	 *            The new path
 	 */
-	private static byte[] getXMLSaveSalt(int length) {
-		byte[] b = new byte[length];
-		Random r = new Random(System.currentTimeMillis());
-		byte[] allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789~!@#$%^*()-_+[]{};:,./?"
-				.getBytes();
-		int l = allowedChars.length;
-		int i;
-		for (i = 0; i < length; i++) {
-			b[i] = allowedChars[r.nextInt(l)];
-		}
-		return b;
+	public static void setConfigPath(String path) {
+		CONFIG_PATH = path;
+		CONFIG_FILE = new File(CONFIG_PATH);
 	}
 
 	/**
@@ -192,56 +158,7 @@ public class Config extends HashMap<String, String> {
 	 * the config file.
 	 */
 	private Config() {
-
 		Config.allowedCiphers.put("AES", 256);
-
-		if (!CONFIG_FILE.exists())
-			return;
-
-		// Create DocumentBuilder for XML files.
-		DocumentBuilder docBuilder = null;
-		try {
-			docBuilder = DocumentBuilderFactory.newInstance()
-					.newDocumentBuilder();
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-			return;
-		}
-		docBuilder.setErrorHandler(null);
-
-		// Build the XML tree.
-		Document doc;
-		try {
-			System.out.println("Path to config file: " + CONFIG_PATH);
-			doc = docBuilder.parse(CONFIG_FILE);
-		} catch (SAXException e) {
-			e.printStackTrace();
-			return;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-
-		// we read the encryption algorithm from the config file. If and only if
-		// it is given and it is an allowed cipher, we use it. Otherwize we set
-		// it to a default value <i>AES</i>!
-		this.encryption = doc.getDocumentElement().getAttribute("encryption");
-		if (this.encryption.isEmpty()
-				|| !isAlgorithmsAvailable(this.encryption)) {
-			this.encryption = "AES";
-		}
-
-		// Iterate over all "entry" nodes and collect the information.
-		NodeList list = doc.getDocumentElement().getElementsByTagName("entry");
-		for (int i = 0; i < list.getLength(); i++) {
-			Element node = (Element) list.item(i);
-			this.put(node.getAttribute("name").trim(), node.getTextContent()
-					.trim());
-			// If there is a salt stored, store it in an extra HashMap.
-			if (node.hasAttribute("salt"))
-				this.salts.put(node.getAttribute("name").trim(), node
-						.getAttribute("salt").trim());
-		}
 	}
 
 	/**
@@ -252,8 +169,27 @@ public class Config extends HashMap<String, String> {
 	 *            The specific key of the configuration value
 	 * @return A string representation of the setting. If any exception occurs
 	 *         <code>null</code> is returned
+	 * @throws NoSuchElementException
+	 *             Thrown in case the key does not exists.
+	 * @throws InvalidKeyException
+	 *             Thrown if the key does not match the requirements. See
+	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
+	 * @throws IllegalBlockSizeException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws BadPaddingException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws IOException
+	 *             Thrown in case of an invalid key. See
+	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	private synchronized String get(String key) {
+	private synchronized String get(String key) throws NoSuchElementException,
+			InvalidKeyException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
+		if (!this.containsKey(key)) {
+			throw new NoSuchElementException();
+		}
 		try {
 			if (this.salts.containsKey(key)) {
 				// We have to decrypt the value with the salt and the password
@@ -281,14 +217,17 @@ public class Config extends HashMap<String, String> {
 			}
 		} catch (InvalidKeyException e) {
 			e.printStackTrace();
+			throw e; // TODO: remove in case of proper frontend handling
 		} catch (IllegalBlockSizeException e) {
 			e.printStackTrace();
+			throw e; // TODO: remove in case of proper frontend handling
 		} catch (BadPaddingException e) {
 			e.printStackTrace();
+			throw e; // TODO: remove in case of proper frontend handling
 		} catch (IOException e) {
 			e.printStackTrace();
+			throw e; // TODO: remove in case of proper frontend handling
 		}
-		return null;
 	}
 
 	/**
@@ -302,15 +241,26 @@ public class Config extends HashMap<String, String> {
 	 *            The fall back value.
 	 * @return The boolean representation of the value or
 	 *         <code>defaultVal</code>
+	 * @throws InvalidKeyException
+	 *             Thrown if the key does not match the requirements. See
+	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
+	 * @throws IllegalBlockSizeException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws BadPaddingException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws IOException
+	 *             Thrown in case of an invalid key. See
+	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized boolean getBoolean(String key, boolean defaultVal) {
-		String str = this.get(key);
-		if (str == null) {
-			return defaultVal;
-		}
+	public synchronized boolean getBoolean(String key, boolean defaultVal)
+			throws InvalidKeyException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
 		try {
+			String str = this.get(key);
 			return Boolean.parseBoolean(str);
-		} catch (Exception e) {
+		} catch (NoSuchElementException e) {
 			return defaultVal;
 		}
 	}
@@ -325,15 +275,26 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The float representation of the value or <code>defaultVal</code>
+	 * @throws InvalidKeyException
+	 *             Thrown if the key does not match the requirements. See
+	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
+	 * @throws IllegalBlockSizeException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws BadPaddingException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws IOException
+	 *             Thrown in case of an invalid key. See
+	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized double getDouble(String key, double defaultVal) {
-		String str = this.get(key);
-		if (str == null) {
-			return defaultVal;
-		}
+	public synchronized double getDouble(String key, double defaultVal)
+			throws InvalidKeyException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
 		try {
+			String str = this.get(key);
 			return Double.parseDouble(str);
-		} catch (Exception e) {
+		} catch (NoSuchElementException e) {
 			return defaultVal;
 		}
 	}
@@ -348,15 +309,26 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The float representation of the value or <code>defaultVal</code>
+	 * @throws InvalidKeyException
+	 *             Thrown if the key does not match the requirements. See
+	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
+	 * @throws IllegalBlockSizeException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws BadPaddingException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws IOException
+	 *             Thrown in case of an invalid key. See
+	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized float getFloat(String key, float defaultVal) {
-		String str = this.get(key);
-		if (str == null) {
-			return defaultVal;
-		}
+	public synchronized float getFloat(String key, float defaultVal)
+			throws InvalidKeyException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
 		try {
+			String str = this.get(key);
 			return Float.parseFloat(str);
-		} catch (Exception e) {
+		} catch (NoSuchElementException e) {
 			return defaultVal;
 		}
 	}
@@ -371,15 +343,26 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The int representation of the value or <code>defaultVal</code>
+	 * @throws InvalidKeyException
+	 *             Thrown if the key does not match the requirements. See
+	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
+	 * @throws IllegalBlockSizeException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws BadPaddingException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws IOException
+	 *             Thrown in case of an invalid key. See
+	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized int getInt(String key, int defaultVal) {
-		String str = this.get(key);
-		if (str == null) {
-			return defaultVal;
-		}
+	public synchronized int getInt(String key, int defaultVal)
+			throws InvalidKeyException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
 		try {
+			String str = this.get(key);
 			return Integer.parseInt(str);
-		} catch (Exception e) {
+		} catch (NoSuchElementException e) {
 			return defaultVal;
 		}
 	}
@@ -394,15 +377,26 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The int representation of the value or <code>defaultVal</code>
+	 * @throws InvalidKeyException
+	 *             Thrown if the key does not match the requirements. See
+	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
+	 * @throws IllegalBlockSizeException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws BadPaddingException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws IOException
+	 *             Thrown in case of an invalid key. See
+	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized long getLong(String key, long defaultVal) {
-		String str = this.get(key);
-		if (str == null) {
-			return defaultVal;
-		}
+	public synchronized long getLong(String key, long defaultVal)
+			throws InvalidKeyException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
 		try {
+			String str = this.get(key);
 			return Long.parseLong(str);
-		} catch (Exception e) {
+		} catch (NoSuchElementException e) {
 			return defaultVal;
 		}
 	}
@@ -416,13 +410,48 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The String representation of the value or <code>defaultVal</code>
+	 * @throws InvalidKeyException
+	 *             Thrown if the key does not match the requirements. See
+	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
+	 * @throws IllegalBlockSizeException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws BadPaddingException
+	 *             Thrown if the input is invalid. See
+	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
+	 * @throws IOException
+	 *             Thrown in case of an invalid key. See
+	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized String getString(String key, String defaultVal) {
-		String str = this.get(key);
-		if (str == null) {
-			return defaultVal;
-		} else
+	public synchronized String getString(String key, String defaultVal)
+			throws InvalidKeyException, IllegalBlockSizeException,
+			BadPaddingException, IOException {
+		try {
+			String str = this.get(key);
 			return str;
+		} catch (NoSuchElementException e) {
+			return defaultVal;
+		}
+	}
+
+	/**
+	 * This function generates a salt that does not contain any characters that
+	 * might break the XML context
+	 * 
+	 * @param length
+	 *            The length that the salt should have
+	 * @return Returns a salt as byte array of length <code>length</code>
+	 */
+	private byte[] getXMLSaveSalt(int length) {
+		byte[] b = new byte[length];
+		byte[] allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#-_+"
+				.getBytes();
+		int l = allowedChars.length;
+		int i;
+		for (i = 0; i < length; i++) {
+			b[i] = allowedChars[r.nextInt(l)];
+		}
+		return b;
 	}
 
 	/**
@@ -446,6 +475,7 @@ public class Config extends HashMap<String, String> {
 			e1.printStackTrace();
 		}
 
+		reload();
 	}
 
 	/**
@@ -647,7 +677,7 @@ public class Config extends HashMap<String, String> {
 
 		if (encrypted) {
 			// We have to decrypt the value with the salt and the password
-			byte[] salt = Config.getXMLSaveSalt(this.keyLength);
+			byte[] salt = getXMLSaveSalt(this.keyLength);
 			byte[] salt2 = new byte[salt.length];
 			System.arraycopy(salt, 0, salt2, 0, salt.length);
 
@@ -684,6 +714,61 @@ public class Config extends HashMap<String, String> {
 				.replace(">", "&gt;").replace("\"", "&quot;"));
 	}
 
+	public void reload() {
+		this.clear();
+		this.salts.clear();
+
+		setConfigPath(CONFIG_PATH);
+
+		if (!CONFIG_FILE.exists()) {
+			return;
+		}
+
+		// Create DocumentBuilder for XML files.
+		DocumentBuilder docBuilder = null;
+		try {
+			docBuilder = DocumentBuilderFactory.newInstance()
+					.newDocumentBuilder();
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+			return;
+		}
+		docBuilder.setErrorHandler(null);
+
+		// Build the XML tree.
+		Document doc;
+		try {
+			doc = docBuilder.parse(CONFIG_FILE);
+		} catch (SAXException e) {
+			e.printStackTrace();
+			return;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		}
+
+		// we read the encryption algorithm from the config file. If and only if
+		// it is given and it is an allowed cipher, we use it. Otherwize we set
+		// it to a default value <i>AES</i>!
+		this.encryption = doc.getDocumentElement().getAttribute("encryption");
+		if (this.encryption.isEmpty()
+				|| !isAlgorithmsAvailable(this.encryption)) {
+			this.encryption = "AES";
+		}
+
+		// Iterate over all "entry" nodes and collect the information.
+		NodeList list = doc.getDocumentElement().getElementsByTagName("entry");
+		for (int i = 0; i < list.getLength(); i++) {
+			Element node = (Element) list.item(i);
+			this.put(node.getAttribute("name").trim(), node.getTextContent()
+					.trim());
+			// If there is a salt stored, store it in an extra HashMap.
+			if (node.hasAttribute("salt"))
+				this.salts.put(node.getAttribute("name").trim(), node
+						.getAttribute("salt").trim());
+		}
+	}
+
 	/**
 	 * Writes the config to a file.
 	 */
@@ -704,7 +789,8 @@ public class Config extends HashMap<String, String> {
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("") ? ""
+				String salt = saltString == null || saltString.equals("")
+						? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");

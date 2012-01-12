@@ -106,7 +106,6 @@ public class TestRaidAccessInterface {
 	public void testContent() throws IOException {
 		FileReader fr;
 		char[] buff;
-
 		fr = new FileReader(in);
 		buff = new char[CONTENT_LENGTH];
 		fr.read(buff, 0, CONTENT_LENGTH);
