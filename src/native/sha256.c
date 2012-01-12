@@ -514,6 +514,30 @@ int build_sha256_sum ( char *filename, unsigned char *hash )
     return 0;
 }
 
+int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
+{
+    void *resblock;
+
+    if ( !fp )
+    {
+        printf ( "Cannot read file!\n" );
+        return SHAERR_CALC;
+    }
+
+    resblock = malloc ( 32 );
+    if ( resblock == NULL )
+    {
+        printf ( "Cannot allocate memory" );
+        return SHAERR_CALC;
+    }
+
+    sha256_stream ( fp, resblock );
+    ascii_from_resbuf ( hash, resblock );
+
+    free ( resblock );
+    return 0;
+}
+
 unsigned char* check_sha256_sum ( char *filename, unsigned char *hash )
 {
     unsigned char *ascii;

@@ -64,7 +64,7 @@ int main ( void )
 
     printf ( "Running test for RAID5:\n\n" );
 
-    /* Create test file */
+    /** Create test file **/
     fp[0] = fopen ( filename[0], "wb" );
     if ( !fp[0] )
     {
@@ -81,7 +81,7 @@ int main ( void )
     }
     fclose ( fp[0] );
 
-    /* Open test file for split */
+    /** Open test file for split **/
     fp[0] = fopen ( filename[0], "rb" );
     if ( !fp[0] )
     {
@@ -89,7 +89,7 @@ int main ( void )
         return 1;
     }
 
-    /* Create device files */
+    /** Create device and metadata files **/
     for ( i = 1; i <= 3; i++ )
     {
         fp[i] = fopen ( filename[i], "wb" );
@@ -109,13 +109,13 @@ int main ( void )
 
     prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
 
-    /* perform the split */
+    /** perform the split **/
     printf ( "Start split ... " );
     fflush ( stdout );
 #ifdef BENCHMARK
     gettimeofday ( &start, NULL );
 #endif
-    split_byte ( fp[0], &fp[1], fp[4], &rc4key );
+    split_file ( fp[0], &fp[1], fp[4], &rc4key );
 #ifdef BENCHMARK
     gettimeofday ( &end, NULL );
 #endif
@@ -126,10 +126,10 @@ int main ( void )
     printf ( "split time: %.3f ms\n\n", elapsed );
 #endif
 
-    /* Close the input file */
+    /** Close the input file **/
     fclose ( fp[0] );
 
-    /* Close and reopen device files for merge */
+    /** Close and reopen device and metadata files for merge **/
     for ( i = 1; i <= 3; i++ )
     {
         fclose ( fp[i] );
@@ -150,7 +150,7 @@ int main ( void )
         return 1;
     }
 
-    /* Open output file for merge */
+    /** Open output file for merge **/
     fp[0] = fopen ( filename[4], "wb" );
     if ( !fp[0] )
     {
@@ -159,13 +159,13 @@ int main ( void )
     }
 
     prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
-    /* perform the merge */
+    /** perform the merge **/
     printf ( "Start merge ... " );
     fflush ( stdout );
 #ifdef BENCHMARK
     gettimeofday ( &start, NULL );
 #endif
-    merge_byte ( fp[0], &fp[1], fp[4], &rc4key );
+    merge_file ( fp[0], &fp[1], fp[4], &rc4key );
 #ifdef BENCHMARK
     gettimeofday ( &end, NULL );
 #endif
@@ -176,7 +176,7 @@ int main ( void )
     printf ( "merge time: %.3f ms\n\n", elapsed );
 #endif
 
-    /* Close ALL files */
+    /** Close ALL files **/
     for ( i = 0; i <= 3; i++ )
     {
         fclose ( fp[i] );

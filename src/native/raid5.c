@@ -45,7 +45,12 @@
 #define OPENERR_OUT  0x38
 #define OPENERR_IN   0x39
 
-#define METADATAERR 0x40
+#define METADATA_ERROR        0x40
+#define METADATA_MISS_DEV0    0x01
+#define METADATA_MISS_DEV1    0x02
+#define METADATA_MISS_DEV2    0x04
+#define METADATA_MISS_IN      0x08
+#define METADATA_MISS_VERSION 0x10
 
 void merge_byte_block ( const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len )
 {
@@ -113,7 +118,7 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
     }
 }
 
-int split_byte ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
+int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *chars, *out, parity_pos = 2, *hash;
     size_t rlen, *out_len;
@@ -238,7 +243,7 @@ int split_byte ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
     status = write_metadata ( meta, &metadata );
     if ( status != 0 )
     {
-        status = METADATAERR;
+        status = METADATA_ERROR;
         goto end;
     }
 
@@ -277,14 +282,19 @@ end:
     return status;
 }
 
-int merge_byte ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
+int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *in, *buf, parity_pos = 2;
     size_t *in_len, out_len;
     int status;
 
-    raid5md metadata;
+    raid5md metadata, md_read;
     status = read_metadata ( meta, &metadata );
+
+    create_metadata ( devices, &md_read );
+    print_metadata ( &metadata );
+    print_metadata ( &md_read );
+    printf ( "\n\n\t%x\n\n", cmp_metadata ( &metadata, &md_read ) );
 
     in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
     in_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
@@ -362,15 +372,123 @@ end:
     return status;
 }
 
+/**
+ * result might be:
+ * 0x00 - metadata matches
+ *
+ * or either any combination of the following:
+ * 0x01 - hash_dev0 differs (METADATA_MISS_DEV0)
+ * 0x02 - hash_dev1 differs (METADATA_MISS_DEV1)
+ * 0x04 - hash_dev2 differs (METADATA_MISS_DEV2)
+ * 0x08 - hash_in differs   (METADATA_MISS_IN)
+ * 0x10 - version missmatch (METADATA_MISS_VERSION)
+ *
+ * 0xff - memory error in md1 or md2
+ */
+int cmp_metadata ( raid5md *md1, raid5md *md2 )
+{
+    int i, cmp = 0x00;
+
+    if ( md1 == NULL || md2 == NULL )
+    {
+        return 0xff;
+    }
+
+    cmp |= ( md1->version == md2->version ) ? 0x00 : 0x10;
+    for ( i = 0; i < 4; i++ )
+    {
+        cmp |= ( cmp_metadata_hash ( md1, md2, i ) );
+    }
+    return cmp;
+}
+
+/**
+ * Returns 0 iff the hash specified by idx matches md1 and md2
+ * OR if the index is out of range [0..3].
+ * Otherwize the error number (see cmp_metadata).
+ */
+int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
+{
+    if ( md1 == NULL || md2 == NULL )
+    {
+        return 0;
+    }
+    switch ( idx )
+    {
+    case 0:
+        return ( memcmp ( md1->hash_dev0, md2->hash_dev0, 64 ) != 0 ) ? METADATA_MISS_DEV0 : 0;
+    case 1:
+        return ( memcmp ( md1->hash_dev1, md2->hash_dev1, 64 ) != 0 ) ? METADATA_MISS_DEV1 : 0;
+    case 2:
+        return ( memcmp ( md1->hash_dev2, md2->hash_dev2, 64 ) != 0 ) ? METADATA_MISS_DEV2 : 0;
+    case 3:
+        return ( memcmp ( md1->hash_in, md2->hash_in, 64 ) != 0 ) ? METADATA_MISS_IN : 0;
+    }
+    return 0;
+
+}
+
+/**
+ * Takes 3 devices and calculates the sha256 sum of each
+ * file. The checksums are stored into the given metadata.
+ * Returns 0 on success.
+ */
+int create_metadata ( FILE *devices[], raid5md *md )
+{
+    int i;
+    unsigned char *ascii;
+    long fpos;
+
+    if ( md == NULL )
+    {
+        return 1;
+    }
+
+    ascii = ( unsigned char * ) malloc ( 65 );
+    if ( ascii == NULL )
+    {
+        return 1;
+    }
+
+    new_metadata ( md ); /* clean the metadata */
+
+    for ( i = 0; i < 3; i++ )
+    {
+        if ( devices[i] )
+        {
+            fpos = ftell ( devices[i] );
+            if ( build_sha256_sum_file ( devices[i], ascii ) == 0 )
+            {
+                set_metadata_hash ( md, i, ascii );
+            }
+            fseek ( devices[i], fpos, SEEK_SET );
+        }
+    }
+    free ( ascii );
+    return 0;
+}
+
+void new_metadata ( raid5md *md )
+{
+    if ( md )
+    {
+        memset ( md->hash_dev0, 0, 65 );
+        memset ( md->hash_dev1, 0, 65 );
+        memset ( md->hash_dev2, 0, 65 );
+        memset ( md->hash_in, 0, 65 );
+        md->version = 0;
+    }
+}
+
 void print_metadata ( raid5md *md )
 {
     if ( md )
     {
-        printf ( "\n\nVersion: %02x\n", md->version );
-        printf ( "I: %64s\n", md->hash_in );
+        printf ( "Version: %02x\n", md->version );
         printf ( "0: %64s\n", md->hash_dev0 );
         printf ( "1: %64s\n", md->hash_dev1 );
-        printf ( "2: %64s\n\n", md->hash_dev2 );
+        printf ( "2: %64s\n", md->hash_dev2 );
+        printf ( "I: %64s\n", md->hash_in );
     }
     else
     {
@@ -384,11 +502,12 @@ int read_metadata ( FILE *fp, raid5md *md )
     {
         if ( md )
         {
+            new_metadata ( md ); /* clean the metadata */
             fscanf ( fp, "%2hhu", & ( md->version ) );
-            fscanf ( fp, "%64s", md->hash_in );
             fscanf ( fp, "%64s", md->hash_dev0 );
             fscanf ( fp, "%64s", md->hash_dev1 );
             fscanf ( fp, "%64s", md->hash_dev2 );
+            fscanf ( fp, "%64s", md->hash_in );
             return 0;
         }
         return 2;
@@ -398,20 +517,23 @@ int read_metadata ( FILE *fp, raid5md *md )
 
 void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] )
 {
-    switch ( idx )
+    if ( md )
     {
-    case 0:
-        memcpy ( md->hash_in, hash, 65 );
-        break;
-    case 1:
-        memcpy ( md->hash_dev0, hash, 65 );
-        break;
-    case 2:
-        memcpy ( md->hash_dev1, hash, 65 );
-        break;
-    case 3:
-        memcpy ( md->hash_dev2, hash, 65 );
-        break;
+        switch ( idx )
+        {
+        case 0:
+            memcpy ( md->hash_dev0, hash, 65 );
+            break;
+        case 1:
+            memcpy ( md->hash_dev1, hash, 65 );
+            break;
+        case 2:
+            memcpy ( md->hash_dev2, hash, 65 );
+            break;
+        case 3:
+            memcpy ( md->hash_in, hash, 65 );
+            break;
+        }
     }
 }
 
@@ -422,10 +544,10 @@ int write_metadata ( FILE *fp, raid5md *md )
         if ( md )
         {
             fprintf ( fp, "%02x", md->version );
-            fprintf ( fp, "%64s", md->hash_in );
             fprintf ( fp, "%64s", md->hash_dev0 );
             fprintf ( fp, "%64s", md->hash_dev1 );
             fprintf ( fp, "%64s", md->hash_dev2 );
+            fprintf ( fp, "%64s", md->hash_in );
             return 0;
         }
         return 2;
@@ -513,7 +635,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     prepare_key ( ( unsigned char* ) key, keyLength, &rc4key );
 
     /* Invoke the native merge method. */
-    status = merge_byte ( fp, devices, meta, &rc4key );
+    status = merge_file ( fp, devices, meta, &rc4key );
 
 end:
     /* Close the files. */
@@ -631,7 +753,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     prepare_key ( ( unsigned char* ) key, keyLength, &rc4key );
 
     /* Invoke the native split method. */
-    status = split_byte ( fp, devices, meta, &rc4key );
+    status = split_file ( fp, devices, meta, &rc4key );
 
 end:
     if ( status == SUCCESS_SPLIT )
