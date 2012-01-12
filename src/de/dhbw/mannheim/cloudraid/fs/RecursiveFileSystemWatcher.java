@@ -14,6 +14,8 @@ public class RecursiveFileSystemWatcher extends Thread {
 			.toLowerCase().contains("windows") ? "C:\\temp\\cloudraid\\"
 			: "/tmp/cloudraid/";
 	private final static File TMP_FILE = new File(TMP);
+	private final static String KEY = "key";
+	private final static int KEYLENGTH = KEY.length();
 
 	/**
 	 * A map containing all known files.
@@ -90,7 +92,6 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 *            The directory to be handled.
 	 */
 	private void checkDir(File dir) {
-		count++;
 		if (dir.isDirectory()) {
 			for (File f : dir.listFiles()) {
 				if (this.isSymlink(f)) {
@@ -144,16 +145,25 @@ public class RecursiveFileSystemWatcher extends Thread {
 		// System.out.println("Start splitting " + filename);
 		// Split the file into three RAID5 redundant files.
 		String hashedFilename = RaidAccessInterface.splitInterface(filename,
-				TMP, "key", 256);
+				TMP, KEY, KEYLENGTH);
+		String name = new File(filename).getName();
+		System.out.println(RaidAccessInterface.mergeInterface(TMP,
+				hashedFilename, TMP + name, KEY, KEYLENGTH)
+				+ " "
+				+ filename
+				+ ": "
+				+ name);
 
 		/* Do something fancy. */
 
 		// Delete the split files.
-//		new File(TMP + hashedFilename + ".0").delete();
-//		new File(TMP + hashedFilename + ".1").delete();
-//		new File(TMP + hashedFilename + ".2").delete();
-//		new File(TMP + hashedFilename + ".m").delete();
+		new File(TMP + hashedFilename + ".0").delete();
+		new File(TMP + hashedFilename + ".1").delete();
+		new File(TMP + hashedFilename + ".2").delete();
+		new File(TMP + hashedFilename + ".m").delete();
+		new File(TMP + name).delete();
 
+		count++;
 		// System.out.println("done.");
 
 	}
