@@ -286,15 +286,44 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *in, *buf, parity_pos = 2;
     size_t *in_len, out_len;
-    int status;
-
+    int status, mds;
+    FILE *fp1, *fp2;
     raid5md metadata, md_read;
-    status = read_metadata ( meta, &metadata );
 
+    status = read_metadata ( meta, &metadata );
     create_metadata ( devices, &md_read );
-    print_metadata ( &metadata );
-    print_metadata ( &md_read );
-    printf ( "\n\n\t%x\n\n", cmp_metadata ( &metadata, &md_read ) );
+    md_read.version = RAID5_METADATA_VERSION;
+    mds = cmp_metadata ( &metadata, &md_read );
+
+    if ( ( mds & METADATA_MISS_DEV0 ) == 0 && ( mds & METADATA_MISS_DEV1 ) == 0 )
+    {
+        parity_pos = 2;
+        fp1 = devices[0];
+        fp2 = devices[1];
+    }
+    else
+    {
+        if ( ( mds & METADATA_MISS_DEV1 ) == 0 && ( mds & METADATA_MISS_DEV2 ) == 0 )
+        {
+            parity_pos = 0;
+            fp1 = devices[1];
+            fp2 = devices[2];
+        }
+        else
+        {
+            if ( ( mds & METADATA_MISS_DEV2 ) == 0 && ( mds & METADATA_MISS_DEV0 ) == 0 )
+            {
+                parity_pos = 1;
+                fp1 = devices[2];
+                fp2 = devices[0];
+            }
+            else
+            {
+                status = METADATA_ERROR;
+                goto end;
+            }
+        }
+    }
 
     in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
     in_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
@@ -620,7 +649,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     meta = fopen ( inputBaseName, "rb" );
     if ( meta == NULL )
     {
-        status = METADATAERR;
+        status = METADATA_ERROR;
         goto end;
     }
 
@@ -745,7 +774,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     meta = fopen ( outputBaseName, "wb" );
     if ( meta == NULL )
     {
-        status = METADATAERR;
+        status = METADATA_ERROR;
         goto end;
     }
 
