@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#ifndef BENCHMARK
+#ifndef BENCHSIZE
 #define BENCHSIZE 13056
 #endif
 
@@ -35,7 +35,7 @@ int main ( void )
 {
     int i;
     int status;
-#ifdef CHECKING
+#if CHECKING == 1
     unsigned char *ascii;
 #endif
     FILE *fp[5];
@@ -47,7 +47,7 @@ int main ( void )
                         "test_raid5.meta.dat"
                        };
 
-#ifdef CHECKING
+#if CHECKING == 1
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
                        "5a672ad40199303d6bc2d550a9e099cefdb5a5958c76bd2e5ef31e910b623680",
                        "51213026e91f4ca01a4522f55ae523f4c6a0d2247662db569846cf2226caceb3",
@@ -56,7 +56,7 @@ int main ( void )
                        "1544a46302662591dec6a58cce795d552e7f7a011dac0bc219659aab6fd32808"
                       };
 #endif
-#ifdef BENCHMARK
+#if BENCHMARK == 1
     struct timeval start, end;
     float elapsed;
 #endif
@@ -112,16 +112,16 @@ int main ( void )
     /** perform the split **/
     printf ( "Start split ... " );
     fflush ( stdout );
-#ifdef BENCHMARK
+#if BENCHMARK == 1
     gettimeofday ( &start, NULL );
 #endif
     split_file ( fp[0], &fp[1], fp[4], &rc4key );
-#ifdef BENCHMARK
+#if BENCHMARK == 1
     gettimeofday ( &end, NULL );
 #endif
     printf ( "Done\n" );
     fflush ( stdout );
-#ifdef BENCHMARK
+#if BENCHMARK == 1
     elapsed = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
     printf ( "split time: %.3f ms\n\n", elapsed );
 #endif
@@ -162,16 +162,16 @@ int main ( void )
     /** perform the merge **/
     printf ( "Start merge ... " );
     fflush ( stdout );
-#ifdef BENCHMARK
+#if BENCHMARK == 1
     gettimeofday ( &start, NULL );
 #endif
     merge_file ( fp[0], &fp[1], fp[4], &rc4key );
-#ifdef BENCHMARK
+#if BENCHMARK == 1
     gettimeofday ( &end, NULL );
 #endif
     printf ( "Done\n" );
     fflush ( stdout );
-#ifdef BENCHMARK
+#if BENCHMARK == 1
     elapsed = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
     printf ( "merge time: %.3f ms\n\n", elapsed );
 #endif
@@ -185,7 +185,7 @@ int main ( void )
     status = 0;
     for ( i = 0; i <= 5; i++ )
     {
-#ifdef CHECKING
+#if CHECKING == 1
         printf ( "Checking file %s ... ", filename[i] );
         ascii = check_sha256_sum ( filename[i], ( unsigned char* ) assumed[i] );
 

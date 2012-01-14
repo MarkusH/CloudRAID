@@ -25,6 +25,9 @@
 #include "rc4.h"
 
 #include <stdio.h>
+#ifndef RAID5BLOCKSIZE
+#define RAID5BLOCKSIZE 1024
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -40,7 +43,7 @@ extern "C"
         unsigned char hash_in[65];
     } raid5md;
 
-    static const unsigned int RAID5_BLOCKSIZE = 1024;
+    static const unsigned int RAID5_BLOCKSIZE = RAID5BLOCKSIZE;
     static const unsigned char RAID5_METADATA_VERSION = 1;
 
     void merge_byte_block ( const unsigned char* in, const size_t in_len[], unsigned char* out, size_t* out_len );

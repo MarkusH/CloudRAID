@@ -177,7 +177,7 @@ int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
     rlen = fread ( chars, sizeof ( unsigned char ), 2 * RAID5_BLOCKSIZE, in );
     while ( rlen > 0 )
     {
-#ifdef ENCRYPT_DATA
+#if ENCRYPT_DATA == 1
         /* encrypt the input file */
         rc4 ( chars, rlen, key );
 #endif
@@ -356,7 +356,7 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
             status = READERR_IN;
             goto end;
         }
-#ifdef ENCRYPT_DATA
+#if ENCRYPT_DATA == 1
         /* encrypt the input file */
         rc4 ( buf, out_len, key );
 #endif
