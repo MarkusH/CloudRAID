@@ -36,9 +36,9 @@ int main ( void )
     int i;
     int status;
 #if CHECKING == 1
-    unsigned char *ascii;
+    unsigned char *ascii = NULL;
 #endif
-    FILE *fp[5];
+    FILE *fp[5] = {NULL, NULL, NULL, NULL, NULL};
     char *filename[] = {"test_raid5.dat",
                         "test_raid5.dev0.dat",
                         "test_raid5.dev1.dat",

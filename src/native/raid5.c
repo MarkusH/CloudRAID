@@ -120,16 +120,16 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
 
 int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 {
-    unsigned char *chars, *out, parity_pos = 2, *hash;
-    size_t rlen, *out_len;
+    unsigned char *chars = NULL, *out = NULL, parity_pos = 2, *hash = NULL;
+    size_t rlen, *out_len = NULL;
     int status;
 
     /* sha context
        the last element [3] is for the input file */
     struct sha256_ctx sha256_ctx[4];
     size_t sha256_len[4];
-    char *sha256_buf[4];
-    void *sha256_resblock[4];
+    char *sha256_buf[4] = {NULL, NULL, NULL, NULL};
+    void *sha256_resblock[4] = {NULL, NULL, NULL, NULL};
     int i;
 
     raid5md metadata;
@@ -240,6 +240,7 @@ int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
         ascii_from_resbuf ( hash, sha256_resblock[i] );
         set_metadata_hash ( &metadata, i, hash );
     }
+
     status = write_metadata ( meta, &metadata );
     if ( status != 0 )
     {
@@ -284,15 +285,20 @@ end:
 
 int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 {
-    unsigned char *in, *buf, parity_pos = 2;
-    size_t *in_len, out_len;
+    unsigned char *in = NULL, *buf = NULL, parity_pos = 2;
+    size_t *in_len = NULL, out_len;
     int status, mds;
-    FILE *fp1, *fp2;
+    FILE *fp1 = NULL, *fp2 = NULL;
     raid5md metadata, md_read;
 
+    new_metadata ( &metadata );
+    new_metadata ( &md_read );
+
     status = read_metadata ( meta, &metadata );
+
     create_metadata ( devices, &md_read );
     md_read.version = RAID5_METADATA_VERSION;
+
     mds = cmp_metadata ( &metadata, &md_read );
 
     if ( ( mds & METADATA_MISS_DEV0 ) == 0 && ( mds & METADATA_MISS_DEV1 ) == 0 )
@@ -423,7 +429,7 @@ int cmp_metadata ( raid5md *md1, raid5md *md2 )
         return 0xff;
     }
 
-    cmp |= ( md1->version == md2->version ) ? 0x00 : 0x10;
+    cmp |= ( md1->version == md2->version ) ? 0x00 : METADATA_MISS_VERSION;
     for ( i = 0; i < 4; i++ )
     {
         cmp |= ( cmp_metadata_hash ( md1, md2, i ) );
@@ -465,8 +471,8 @@ int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
 int create_metadata ( FILE *devices[], raid5md *md )
 {
     int i;
-    unsigned char *ascii;
-    long fpos;
+    unsigned char *ascii = NULL;
+    long fpos, l;
 
     if ( md == NULL )
     {
@@ -604,9 +610,9 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     rc4_key rc4key;
 
     /* Generate file pointers. */
-    FILE *fp;
-    FILE *devices[3];
-    FILE *meta;
+    FILE *fp = NULL;
+    FILE *devices[3] = {NULL, NULL, NULL};
+    FILE *meta = NULL;
 
     /* construct base output path:
      *  - tmpfolder: tmpLength bytes, including ending slash /
@@ -710,17 +716,17 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     const char *key = ( *env )->GetStringUTFChars ( env, _key, 0 );
     const int keyLength = _keyLength;
 
-    void *resblock;
-    char *outputBaseName, retvalue[65];
+    void *resblock = NULL;
+    char *outputBaseName = NULL, retvalue[65];
     int status;
     unsigned char i;
     const int tmpLength = strlen ( tempOutputDirPath );
     rc4_key rc4key;
 
     /* Generate file pointers. */
-    FILE *fp;
-    FILE *devices[3];
-    FILE *meta;
+    FILE *fp = NULL;
+    FILE *devices[3] = {NULL, NULL, NULL};
+    FILE *meta = NULL;
 
     /* open input file */
     fp = fopen ( inputFilePath, "rb" );

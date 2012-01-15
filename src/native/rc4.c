@@ -1,5 +1,6 @@
-/*rc4.c */
 #include "rc4.h"
+
+#include <stdlib.h>
 void swap_byte ( unsigned char *a, unsigned char *b )
 {
     unsigned char swapByte;
@@ -13,7 +14,7 @@ void prepare_key ( const unsigned char *key_data_ptr, int key_data_len, rc4_key 
 {
     unsigned char index1;
     unsigned char index2;
-    unsigned char* state;
+    unsigned char *state = NULL;
     short counter;
 
     state = &key->state[0];
@@ -38,7 +39,7 @@ void rc4 ( unsigned char *buffer_ptr, int buffer_len, rc4_key *key )
 {
     unsigned char x;
     unsigned char y;
-    unsigned char* state;
+    unsigned char *state = NULL;
     unsigned char xorIndex;
     short counter;
 
