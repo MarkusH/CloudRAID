@@ -490,8 +490,8 @@ void ascii_from_resbuf ( unsigned char* ascii, void* resblock )
 
 int build_sha256_sum ( char *filename, unsigned char *hash )
 {
-    void *resblock;
-    FILE *fp;
+    void *resblock = NULL;
+    FILE *fp = NULL;
 
     resblock = malloc ( 32 );
     if ( resblock == NULL )
@@ -516,7 +516,7 @@ int build_sha256_sum ( char *filename, unsigned char *hash )
 
 int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
 {
-    void *resblock;
+    void *resblock = NULL;
 
     if ( !fp )
     {
@@ -540,7 +540,7 @@ int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
 
 unsigned char* check_sha256_sum ( char *filename, unsigned char *hash )
 {
-    unsigned char *ascii;
+    unsigned char *ascii = NULL;
 
     ascii = ( unsigned char * ) malloc ( 65 );
     if ( ascii == NULL )

@@ -28,8 +28,8 @@
 int main ( void )
 {
     short i;
-    unsigned char *ascii;
-    FILE *fp;
+    unsigned char *ascii = NULL;
+    FILE *fp = NULL;
     char *filename = "test_sha256.dat";
     char *assumed = "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880";
 

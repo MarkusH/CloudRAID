@@ -346,9 +346,14 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
     int status, mds;
     raid5md metadata, md_read;
 
+    new_metadata ( &metadata );
+    new_metadata ( &md_read );
+
     status = read_metadata ( meta, &metadata );
+
     create_metadata ( devices, &md_read );
     md_read.version = RAID5_METADATA_VERSION;
+
     mds = cmp_metadata ( &metadata, &md_read );
 
     if ( ( mds & METADATA_MISS_DEV0 ) == 0 && ( mds & METADATA_MISS_DEV1 ) == 0 )
@@ -663,9 +668,9 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
     rc4_key rc4key;
 
     /* Generate file pointers. */
-    FILE *fp;
-    FILE *devices[3];
-    FILE *meta;
+    FILE *fp = NULL;
+    FILE *devices[3] = {NULL, NULL, NULL};
+    FILE *meta = NULL;
 
     /* construct base output path:
      *  - tmpfolder: tmpLength bytes, including ending slash /
@@ -769,17 +774,17 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     const char *key = ( *env )->GetStringUTFChars ( env, _key, 0 );
     const int keyLength = _keyLength;
 
-    void *resblock;
-    char *outputBaseName, retvalue[65];
+    void *resblock = NULL;
+    char *outputBaseName = NULL, retvalue[65];
     int status;
     unsigned char i;
     const int tmpLength = strlen ( tempOutputDirPath );
     rc4_key rc4key;
 
     /* Generate file pointers. */
-    FILE *fp;
-    FILE *devices[3];
-    FILE *meta;
+    FILE *fp = NULL;
+    FILE *devices[3] = {NULL, NULL, NULL};
+    FILE *meta = NULL;
 
     /* open input file */
     fp = fopen ( inputFilePath, "rb" );
