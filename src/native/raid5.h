@@ -25,6 +25,7 @@
 #include "rc4.h"
 
 #include <stdio.h>
+#include <stddef.h>
 #ifndef RAID5BLOCKSIZE
 #define RAID5BLOCKSIZE 1024
 #endif
@@ -41,12 +42,13 @@ extern "C"
         unsigned char hash_dev1[65];
         unsigned char hash_dev2[65];
         unsigned char hash_in[65];
+	unsigned int missing;
     } raid5md;
 
     static const unsigned int RAID5_BLOCKSIZE = RAID5BLOCKSIZE;
     static const unsigned char RAID5_METADATA_VERSION = 1;
 
-    void merge_byte_block ( const unsigned char* in, const size_t in_len[], unsigned char* out, size_t* out_len );
+    void merge_byte_block ( const unsigned char* in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char* out, size_t* out_len );
     void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[] );
 
     int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key );

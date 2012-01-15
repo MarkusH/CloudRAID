@@ -26,6 +26,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 
 #define SUCCESS_MERGE 0x02
 #define SUCCESS_SPLIT 0x04
@@ -51,26 +52,36 @@
 #define METADATA_MISS_DEV2    0x04
 #define METADATA_MISS_IN      0x08
 #define METADATA_MISS_VERSION 0x10
+#define METADATA_MISS_MISSING 0x20
 
-void merge_byte_block ( const unsigned char *in, const size_t in_len[], unsigned char *out, size_t *out_len )
+void merge_byte_block ( const unsigned char *in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char *out, size_t *out_len )
 {
-    int i;
-    if ( in_len[0] > 0 && in_len[2] == in_len[0] )
+    int i, offset, len;
+    if ( parity_pos > 2 || dead_device > 2 ) /* just to assure */
     {
-        for ( i = 0; i < in_len[1]; i++ )
-        {
-            if ( ( in[i] ^ in[RAID5_BLOCKSIZE + i] ) != in[2 * RAID5_BLOCKSIZE + i] ) /* Parity does not match */
-            {
-                printf ( "[WARNING] Parity does not match!\n" );
-            }
-        }
-        for ( i = in_len[1]; i < in_len[0]; i++ )
-        {
-            if ( ( in[i] ^ in[2 * RAID5_BLOCKSIZE + i] ) != 0xFF ) /* Parity does not match */
-            {
-                printf ( "[WARNING] Parity does not match!\n" );
-            }
-        }
+        *out_len = -1;
+        return;
+    }
+
+    /*
+     * \ Device 0
+     * / Device 1
+     * X Device 2
+     *
+     *  dead = 0           dead = 1           dead = 2
+     * ___ \\\ ///        XXX ___ ///        XXX \\\ ___    parity_pos = 0
+     * ___ XXX \\\        /// ___ \\\        /// XXX ___    parity_pos = 1
+     * ___ /// XXX        \\\ ___ XXX        \\\ /// ___    parity_pos = 2
+     * ___ \\\ ///        XXX ___ ///        XXX \\\ ___    parity_pos = 0
+     * ___ XXX \\\        /// ___ \\\        /// XXX ___    parity_pos = 1
+     * ___ /// XXX        \\\ ___ XXX        \\\ /// ___    parity_pos = 2
+     */
+
+    /*
+     * *in always contains the primary device in [0], the secondary device in [1] and the parity in [2] except the file does not exist
+     */
+    if ( dead_device == parity_pos ) /* (0|0) (1|1) (2|2) */
+    {
         memcpy ( &out[0], &in[0], in_len[0] ); /* Copy the first part of the read bytes */
         *out_len = in_len[0];
         if ( in_len[1] > 0 )
@@ -81,7 +92,46 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], unsigned
     }
     else
     {
-        *out_len = -1;
+        if ( ( dead_device + 1 ) % 3 == parity_pos ) /* get the secondary device: (0|1) (1|2) (2|0) */
+        {
+            /*
+             * in[0] is first part, in[2] is parity
+             *
+             * output is the content of in[0] plus the XOR of in[0] and in[2] for in_len[0] - missing characters
+             *
+             */
+            memcpy ( &out[0], &in[0], in_len[0] ); /* Copy the first part of the read bytes */
+            len = in_len[0] - missing; /* Set the expected length of the secondary device */
+            *out_len = in_len[0] + len;
+            for ( i = 0, offset = in_len[0]; i < len; i++, offset++ )
+            {
+                out[offset] = in[i] ^ in[2 * RAID5_BLOCKSIZE + i];
+            }
+        }
+
+        else
+        {
+            if ( ( dead_device + 2 ) % 3 == parity_pos ) /* get the primary device: (0|2) (1|0) (2|1) */
+            {
+                /*
+                 * in[1] is second part, in[2] is parity
+                 *
+                 * output is the content of XOR of in[1] and in[2] for in_len[1] - missing characters plus x[1]
+                 *
+                 */
+                len = in_len[1] - missing; /* Set the expected length of the primary device */
+                *out_len = in_len[1] + len;
+                for ( i = 0; i < len; i++ )
+                {
+                    out[i] = in[RAID5_BLOCKSIZE + i] ^ in[2 * RAID5_BLOCKSIZE + i];
+                }
+                memcpy ( &out[i], &in[1], in_len[1] ); /* Copy the second part of the read bytes */
+            }
+            else
+            {
+                *out_len = -1;
+            }
+        }
     }
 }
 
@@ -120,16 +170,16 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
 
 int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 {
-    unsigned char *chars, *out, parity_pos = 2, *hash;
-    size_t rlen, *out_len;
+    unsigned char *chars = NULL, *out = NULL, parity_pos = 2, *hash = NULL;
+    size_t rlen, *out_len = NULL, l = 0, min = -1, max = 0;
     int status;
 
     /* sha context
        the last element [3] is for the input file */
     struct sha256_ctx sha256_ctx[4];
     size_t sha256_len[4];
-    char *sha256_buf[4];
-    void *sha256_resblock[4];
+    char *sha256_buf[4] = {NULL, NULL, NULL, NULL};
+    void *sha256_resblock[4] = {NULL, NULL, NULL, NULL};
     int i;
 
     raid5md metadata;
@@ -239,7 +289,14 @@ int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
         sha256_finish_ctx ( &sha256_ctx[i], sha256_resblock[i] );
         ascii_from_resbuf ( hash, sha256_resblock[i] );
         set_metadata_hash ( &metadata, i, hash );
+        if ( i < 3 )
+        {
+            l = ftell ( devices[i] );
+            min = ( min <= l ) ? min : l;
+            max = ( max >= l ) ? max : l;
+        }
     }
+    metadata.missing = max - min;
     status = write_metadata ( meta, &metadata );
     if ( status != 0 )
     {
@@ -284,10 +341,9 @@ end:
 
 int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 {
-    unsigned char *in, *buf, parity_pos = 2;
-    size_t *in_len, out_len;
+    unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device;
+    size_t *in_len = NULL, out_len = NULL;
     int status, mds;
-    FILE *fp1, *fp2;
     raid5md metadata, md_read;
 
     status = read_metadata ( meta, &metadata );
@@ -297,25 +353,19 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 
     if ( ( mds & METADATA_MISS_DEV0 ) == 0 && ( mds & METADATA_MISS_DEV1 ) == 0 )
     {
-        parity_pos = 2;
-        fp1 = devices[0];
-        fp2 = devices[1];
+        dead_device = 2;
     }
     else
     {
         if ( ( mds & METADATA_MISS_DEV1 ) == 0 && ( mds & METADATA_MISS_DEV2 ) == 0 )
         {
-            parity_pos = 0;
-            fp1 = devices[1];
-            fp2 = devices[2];
+            dead_device = 0;
         }
         else
         {
             if ( ( mds & METADATA_MISS_DEV2 ) == 0 && ( mds & METADATA_MISS_DEV0 ) == 0 )
             {
-                parity_pos = 1;
-                fp1 = devices[2];
-                fp2 = devices[0];
+                dead_device = 1;
             }
             else
             {
@@ -344,13 +394,13 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
         goto end;
     }
 
-    in_len[0] = fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
-    in_len[1] = fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
-    in_len[2] = fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
+    in_len[0] = ( devices[ ( parity_pos + 1 ) % 3] ) ? fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] ) : 0;
+    in_len[1] = ( devices[ ( parity_pos + 2 ) % 3] ) ? fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] ) : 0;
+    in_len[2] = ( devices[parity_pos] ) ? fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] ) : 0;
 
     while ( in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0 )
     {
-        merge_byte_block ( in, in_len, buf, &out_len );
+        merge_byte_block ( in, in_len, parity_pos, dead_device, in_len[0] - in_len[1], buf, &out_len );
         if ( out_len == -1 )
         {
             status = READERR_IN;
@@ -364,9 +414,9 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
         fwrite ( buf, sizeof ( unsigned char ), out_len, out );
 
         parity_pos = ( parity_pos + 1 ) % 3;
-        in_len[0] = fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] );
-        in_len[1] = fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] );
-        in_len[2] = fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] );
+        in_len[0] = ( devices[ ( parity_pos + 1 ) % 3] ) ? fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] ) : 0;
+        in_len[1] = ( devices[ ( parity_pos + 2 ) % 3] ) ? fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] ) : 0;
+        in_len[2] = ( devices[parity_pos] ) ? fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] ) : 0;
     }
     if ( ferror ( devices[0] ) )
     {
@@ -423,7 +473,8 @@ int cmp_metadata ( raid5md *md1, raid5md *md2 )
         return 0xff;
     }
 
-    cmp |= ( md1->version == md2->version ) ? 0x00 : 0x10;
+    cmp |= ( md1->version == md2->version ) ? 0x00 : METADATA_MISS_VERSION;
+    cmp |= ( md1->missing == md2->missing ) ? 0x00 : METADATA_MISS_MISSING;
     for ( i = 0; i < 4; i++ )
     {
         cmp |= ( cmp_metadata_hash ( md1, md2, i ) );
@@ -454,7 +505,6 @@ int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
         return ( memcmp ( md1->hash_in, md2->hash_in, 64 ) != 0 ) ? METADATA_MISS_IN : 0;
     }
     return 0;
-
 }
 
 /**
@@ -465,8 +515,8 @@ int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
 int create_metadata ( FILE *devices[], raid5md *md )
 {
     int i;
-    unsigned char *ascii;
-    long fpos;
+    unsigned char *ascii = NULL;
+    size_t fpos, l = 0, min = -1, max = 0;
 
     if ( md == NULL )
     {
@@ -486,13 +536,18 @@ int create_metadata ( FILE *devices[], raid5md *md )
         if ( devices[i] )
         {
             fpos = ftell ( devices[i] );
+            rewind ( devices[i] );
             if ( build_sha256_sum_file ( devices[i], ascii ) == 0 )
             {
                 set_metadata_hash ( md, i, ascii );
             }
+            l = ftell ( devices[i] );
             fseek ( devices[i], fpos, SEEK_SET );
         }
+        min = ( min < l ) ? min : l;
+        max = ( max > l ) ? max : l;
     }
+    md->missing = l;
     free ( ascii );
     return 0;
 }
@@ -506,6 +561,7 @@ void new_metadata ( raid5md *md )
         memset ( md->hash_dev2, 0, 65 );
         memset ( md->hash_in, 0, 65 );
         md->version = 0;
+        md->missing = 0;
     }
 }
 
@@ -513,7 +569,8 @@ void print_metadata ( raid5md *md )
 {
     if ( md )
     {
-        printf ( "Version: %02x\n", md->version );
+        printf ( "\nVersion: %02x\n", md->version );
+        printf ( "Missing: %d\n", md->missing );
         printf ( "0: %64s\n", md->hash_dev0 );
         printf ( "1: %64s\n", md->hash_dev1 );
         printf ( "2: %64s\n", md->hash_dev2 );
@@ -537,6 +594,7 @@ int read_metadata ( FILE *fp, raid5md *md )
             fscanf ( fp, "%64s", md->hash_dev1 );
             fscanf ( fp, "%64s", md->hash_dev2 );
             fscanf ( fp, "%64s", md->hash_in );
+            fscanf ( fp, "%4x", & ( md->missing ) );
             return 0;
         }
         return 2;
@@ -577,6 +635,7 @@ int write_metadata ( FILE *fp, raid5md *md )
             fprintf ( fp, "%64s", md->hash_dev1 );
             fprintf ( fp, "%64s", md->hash_dev2 );
             fprintf ( fp, "%64s", md->hash_in );
+            fprintf ( fp, "%04x", md->missing );
             return 0;
         }
         return 2;
