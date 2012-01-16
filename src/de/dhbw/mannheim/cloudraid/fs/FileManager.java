@@ -18,7 +18,7 @@ public class FileManager extends Thread {
 	 * The temp directory for cloudraid.
 	 */
 	private final static String TMP = System.getProperty("java.io.tmpdir")
-			+ "/cloudraid/";
+			+ File.separator + "cloudraid" + File.separator;
 
 	/**
 	 * The file object of the temp directory.
@@ -72,6 +72,7 @@ public class FileManager extends Thread {
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					break;
 				}
 			} else {
 				if (!wasFull)
@@ -85,7 +86,7 @@ public class FileManager extends Thread {
 					continue;
 				}
 
-				if (FileLock.lock(fqe.getFileName())) {
+				if (FileLock.lock(fqe.getFileName(), this)) {
 					switch (fqe.getFileAction()) {
 					case CREATE:
 						System.out.println("Upload new file "
@@ -107,7 +108,7 @@ public class FileManager extends Thread {
 						System.err.println("This should not happen.");
 						break;
 					}
-					FileLock.unlock(fqe.getFileName());
+					FileLock.unlock(fqe.getFileName(), this);
 				} else {
 					System.err.println("File " + fqe.getFileName()
 							+ " already locked");
@@ -116,6 +117,7 @@ public class FileManager extends Thread {
 					} catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
+						break;
 					}
 				}
 			}

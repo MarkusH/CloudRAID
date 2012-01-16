@@ -29,8 +29,10 @@ import org.junit.runners.Suite.SuiteClasses;
  * @author Markus Holtermann
  */
 @RunWith(Suite.class)
-@SuiteClasses({de.dhbw.mannheim.cloudraid.util.TestConfig.class,
-		de.dhbw.mannheim.cloudraid.jni.TestRaidAccessInterface.class})
+@SuiteClasses({ de.dhbw.mannheim.cloudraid.util.TestConfig.class,
+		de.dhbw.mannheim.cloudraid.jni.TestRaidAccessInterface.class,
+		de.dhbw.mannheim.cloudraid.fs.TestFileSystemUtilities.class,
+		de.dhbw.mannheim.cloudraid.fs.TestFileLock.class })
 public class AllTests {
 
 }

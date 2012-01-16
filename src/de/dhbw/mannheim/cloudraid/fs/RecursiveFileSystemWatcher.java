@@ -29,9 +29,12 @@ public class RecursiveFileSystemWatcher extends Thread {
 
 	/**
 	 * Creates a RecursiveFileSystemWatcher that runs every 10s.
+	 * 
+	 * @param pathToWatch
+	 *            The path to be watched.
 	 */
-	public RecursiveFileSystemWatcher() {
-		dir = new File(System.getProperty("user.home") + "/Dropbox/");
+	public RecursiveFileSystemWatcher(String pathToWatch) {
+		dir = new File(pathToWatch);
 		System.out.println("Watching directory " + dir.getAbsolutePath());
 		this.setPriority(MIN_PRIORITY);
 		this.setName("RecursiveFileSystemWatcher");
@@ -43,8 +46,8 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 * @param sleepTime
 	 *            The sleeping time in ms.
 	 */
-	public RecursiveFileSystemWatcher(long sleepTime) {
-		this();
+	public RecursiveFileSystemWatcher(String pathToWatch, long sleepTime) {
+		this(pathToWatch);
 		this.sleepTime = sleepTime;
 	}
 
@@ -65,7 +68,7 @@ public class RecursiveFileSystemWatcher extends Thread {
 			// all files still in "keySet" were not found, this means they were
 			// deleted
 			for (String k : keySet) {
-				FileQueue.add(new FileQueueEntry(k, FileAction.DELETE));
+				FileQueue.add(k, FileAction.DELETE);
 				fileMap.remove(k);
 			}
 
@@ -74,6 +77,7 @@ public class RecursiveFileSystemWatcher extends Thread {
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				break;
 			}
 		}
 		System.err.println("The file system watcher is stopped");
@@ -122,16 +126,14 @@ public class RecursiveFileSystemWatcher extends Thread {
 				// the file changed
 				// System.out.println(file.getAbsolutePath() + " was changed.");
 				fileMap.put(file.getAbsolutePath(), file.lastModified());
-				FileQueue.add(new FileQueueEntry(file.getAbsolutePath(),
-						FileAction.MODIFY));
+				FileQueue.add(file.getAbsolutePath(), FileAction.MODIFY);
 			}
 			keySet.remove(name);
 		} else {
 			// a new file is found
 			// System.out.println(file.getAbsolutePath() + " is a new file.");
 			fileMap.put(file.getAbsolutePath(), file.lastModified());
-			FileQueue.add(new FileQueueEntry(file.getAbsolutePath(),
-					FileAction.CREATE));
+			FileQueue.add(file.getAbsolutePath(), FileAction.CREATE);
 		}
 	}
 
@@ -172,7 +174,8 @@ public class RecursiveFileSystemWatcher extends Thread {
 	}
 
 	public static void main(String[] args) {
-		new RecursiveFileSystemWatcher(60000).start();
+		new RecursiveFileSystemWatcher(System.getProperty("user.home")
+				+ File.separator + "Dropbox" + File.separator, 60000).start();
 		int proc = Runtime.getRuntime().availableProcessors();
 		System.out.println("Number of available CPUs: " + proc);
 		FileManager[] fma = new FileManager[proc];

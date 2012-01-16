@@ -1,6 +1,6 @@
 package de.dhbw.mannheim.cloudraid.fs;
 
-import java.util.HashSet;
+import java.util.HashMap;
 
 /**
  * Handles the locking of files.
@@ -10,7 +10,7 @@ import java.util.HashSet;
  */
 public class FileLock {
 
-	private static HashSet<String> lockedFiles = new HashSet<String>();
+	private static HashMap<String, FileManager> lockedFiles = new HashMap<String, FileManager>();
 
 	/**
 	 * Lock a file. You <b>MUST</b> unlock it later.
@@ -19,8 +19,14 @@ public class FileLock {
 	 *            The file to be locked.
 	 * @return true, if you got the lock, false, if not
 	 */
-	public static synchronized boolean lock(String filename) {
-		return lockedFiles.add(filename);
+	public static synchronized boolean lock(String filename,
+			FileManager fileManager) {
+		if (lockedFiles.containsKey(filename)) {
+			return false;
+		} else {
+			lockedFiles.put(filename, fileManager);
+			return true;
+		}
 
 	}
 
@@ -31,8 +37,18 @@ public class FileLock {
 	 *            The file to be unlocked.
 	 * @return true, if the file could be unlocked.
 	 */
-	public static synchronized boolean unlock(String filename) {
-		return lockedFiles.remove(filename);
+	public static synchronized boolean unlock(String filename,
+			FileManager fileManager) {
+		if (lockedFiles.containsKey(filename)) {
+			if (lockedFiles.get(filename) == fileManager) {
+				lockedFiles.remove(filename);
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
 }
