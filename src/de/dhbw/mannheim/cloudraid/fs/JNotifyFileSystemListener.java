@@ -10,8 +10,7 @@ import net.contentobjects.jnotify.JNotifyListener;
 public class JNotifyFileSystemListener {
 
 	private String dir;
-	private final static String TMP = System.getProperty("os.name").contains(
-			"windows") ? "C:\\temp\\cloudraid\\" : "/tmp/cloudraid/";
+	private final static String TMP = System.getProperty("java.io.tmpdir");
 	private final static File TMP_FILE = new File(TMP);
 
 	public JNotifyFileSystemListener() {

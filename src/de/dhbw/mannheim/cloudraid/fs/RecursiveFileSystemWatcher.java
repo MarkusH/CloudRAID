@@ -5,17 +5,18 @@ import java.io.IOException;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
-import de.dhbw.mannheim.cloudraid.jni.RaidAccessInterface;
+import de.dhbw.mannheim.cloudraid.fs.FileQueue.FileAction;
 
+/**
+ * Watches a directory recursively and writes newly created, modified and
+ * deleted files into the {@link FileQueue}.
+ * 
+ * @author Florian Bausch
+ * 
+ */
 public class RecursiveFileSystemWatcher extends Thread {
 
 	private File dir;
-	private final static String TMP = System.getProperty("os.name")
-			.toLowerCase().contains("windows") ? "C:\\temp\\cloudraid\\"
-			: "/tmp/cloudraid/";
-	private final static File TMP_FILE = new File(TMP);
-	private final static String KEY = "key";
-	private final static int KEYLENGTH = KEY.length();
 
 	/**
 	 * A map containing all known files.
@@ -26,16 +27,14 @@ public class RecursiveFileSystemWatcher extends Thread {
 
 	private long sleepTime = 10000;
 
-	private int count = 0;
-
 	/**
 	 * Creates a RecursiveFileSystemWatcher that runs every 10s.
 	 */
 	public RecursiveFileSystemWatcher() {
 		dir = new File(System.getProperty("user.home") + "/Dropbox/");
 		System.out.println("Watching directory " + dir.getAbsolutePath());
-		TMP_FILE.mkdirs();
 		this.setPriority(MIN_PRIORITY);
+		this.setName("RecursiveFileSystemWatcher");
 	}
 
 	/**
@@ -54,7 +53,6 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 */
 	public void run() {
 		while (!isInterrupted()) {
-			long startTime = System.currentTimeMillis();
 			keySet = new Vector<String>(fileMap.keySet());
 
 			if (!this.dir.exists()) {
@@ -67,13 +65,10 @@ public class RecursiveFileSystemWatcher extends Thread {
 			// all files still in "keySet" were not found, this means they were
 			// deleted
 			for (String k : keySet) {
-				System.out.println(k + " was deleted.");
+				FileQueue.add(new FileQueueEntry(k, FileAction.DELETE));
 				fileMap.remove(k);
 			}
 
-			long endTime = System.currentTimeMillis();
-			System.out.println("Splitting took " + (endTime - startTime));
-			System.out.println("Files: " + count);
 			try {
 				Thread.sleep(sleepTime);
 			} catch (InterruptedException e) {
@@ -127,45 +122,17 @@ public class RecursiveFileSystemWatcher extends Thread {
 				// the file changed
 				// System.out.println(file.getAbsolutePath() + " was changed.");
 				fileMap.put(file.getAbsolutePath(), file.lastModified());
-
-				this.splitFile(file.getAbsolutePath());
+				FileQueue.add(new FileQueueEntry(file.getAbsolutePath(),
+						FileAction.MODIFY));
 			}
 			keySet.remove(name);
 		} else {
 			// a new file is found
 			// System.out.println(file.getAbsolutePath() + " is a new file.");
 			fileMap.put(file.getAbsolutePath(), file.lastModified());
-
-			this.splitFile(file.getAbsolutePath());
+			FileQueue.add(new FileQueueEntry(file.getAbsolutePath(),
+					FileAction.CREATE));
 		}
-	}
-
-	private void splitFile(String filename) {
-
-		// System.out.println("Start splitting " + filename);
-		// Split the file into three RAID5 redundant files.
-		String hashedFilename = RaidAccessInterface.splitInterface(filename,
-				TMP, KEY, KEYLENGTH);
-		String name = new File(filename).getName();
-		System.out.println(RaidAccessInterface.mergeInterface(TMP,
-				hashedFilename, TMP + name, KEY, KEYLENGTH)
-				+ " "
-				+ filename
-				+ ": "
-				+ name);
-
-		/* Do something fancy. */
-
-		// Delete the split files.
-		new File(TMP + hashedFilename + ".0").delete();
-		new File(TMP + hashedFilename + ".1").delete();
-		new File(TMP + hashedFilename + ".2").delete();
-		new File(TMP + hashedFilename + ".m").delete();
-		new File(TMP + name).delete();
-
-		count++;
-		// System.out.println("done.");
-
 	}
 
 	/**
@@ -206,5 +173,12 @@ public class RecursiveFileSystemWatcher extends Thread {
 
 	public static void main(String[] args) {
 		new RecursiveFileSystemWatcher(60000).start();
+		int proc = Runtime.getRuntime().availableProcessors();
+		System.out.println("Number of available CPUs: " + proc);
+		FileManager[] fma = new FileManager[proc];
+		for (int i = 0; i < proc; i++) {
+			fma[i] = new FileManager(i);
+			fma[i].start();
+		}
 	}
 }
