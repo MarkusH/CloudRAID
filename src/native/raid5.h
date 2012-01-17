@@ -25,6 +25,10 @@
 #include "rc4.h"
 
 #include <stdio.h>
+#include <stddef.h>
+#ifndef RAID5BLOCKSIZE
+#define RAID5BLOCKSIZE 1024
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -34,25 +38,30 @@ extern "C"
     typedef struct raid5md
     {
         unsigned char version;
-        unsigned char hash_in[65];
         unsigned char hash_dev0[65];
         unsigned char hash_dev1[65];
         unsigned char hash_dev2[65];
+        unsigned char hash_in[65];
+        unsigned int missing;
     } raid5md;
 
-    static const unsigned int RAID5_BLOCKSIZE = 1024;
+    static const unsigned int RAID5_BLOCKSIZE = RAID5BLOCKSIZE;
     static const unsigned char RAID5_METADATA_VERSION = 1;
 
-    extern void merge_byte_block ( const unsigned char* in, const size_t in_len[], unsigned char* out, size_t* out_len );
-    extern void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[] );
+    void merge_byte_block ( const unsigned char* in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char* out, size_t* out_len );
+    void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[] );
 
-    extern int merge_byte ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key );
-    extern int split_byte ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key );
+    int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key );
+    int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key );
 
-    extern void print_metadata ( raid5md *md );
-    extern int read_metadata ( FILE *fp, raid5md *md );
-    extern void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] );
-    extern int write_metadata ( FILE *fp, raid5md *md );
+    int cmp_metadata ( raid5md *md1, raid5md *md2 );
+    int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx );
+    int create_metadata ( FILE *devices[], raid5md *md );
+    void new_metadata ( raid5md *md );
+    void print_metadata ( raid5md *md );
+    int read_metadata ( FILE *fp, raid5md *md );
+    void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] );
+    int write_metadata ( FILE *fp, raid5md *md );
 
 #ifdef __cplusplus
 }

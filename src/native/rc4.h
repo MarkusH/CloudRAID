@@ -12,9 +12,9 @@ extern "C"
         unsigned char y;
     } rc4_key;
 
-    extern void swap_byte ( unsigned char *a, unsigned char *b );
-    extern void prepare_key ( const unsigned char *key_data_ptr, int key_data_len, rc4_key *key );
-    extern void rc4 ( unsigned char *buffer_ptr, int buffer_len, rc4_key * key );
+    void swap_byte ( unsigned char *a, unsigned char *b );
+    void prepare_key ( const unsigned char *key_data_ptr, int key_data_len, rc4_key *key );
+    void rc4 ( unsigned char *buffer_ptr, int buffer_len, rc4_key * key );
 
 #ifdef __cplusplus
 }
