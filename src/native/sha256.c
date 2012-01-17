@@ -496,14 +496,12 @@ int build_sha256_sum ( char *filename, unsigned char *hash )
     resblock = malloc ( 32 );
     if ( resblock == NULL )
     {
-        printf ( "Cannot allocate memory" );
         return SHAERR_CALC;
     }
 
     fp = fopen ( filename, "rb" );
     if ( !fp )
     {
-        printf ( "Cannot read file!\n" );
         return SHAERR_CALC;
     }
     sha256_stream ( fp, resblock );
@@ -520,14 +518,12 @@ int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
 
     if ( !fp )
     {
-        printf ( "Cannot read file!\n" );
         return SHAERR_CALC;
     }
 
     resblock = malloc ( 32 );
     if ( resblock == NULL )
     {
-        printf ( "Cannot allocate memory" );
         return SHAERR_CALC;
     }
 
@@ -548,6 +544,7 @@ unsigned char* check_sha256_sum ( char *filename, unsigned char *hash )
         return hash;
     }
 
+    memset ( ascii, '\0', 65 );
     build_sha256_sum ( filename, ascii );
     if ( memcmp ( ascii, hash, 64 ) == 0 )
     {

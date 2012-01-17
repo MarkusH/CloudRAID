@@ -44,16 +44,18 @@ int main ( void )
                         "test_raid5.dev1.dat",
                         "test_raid5.dev2.dat",
                         "test_raid5.out.dat",
-                        "test_raid5.meta.dat"
+                        "test_raid5.meta.dat",
+                        "test_raid5.move.dat"
                        };
 
 #if CHECKING == 1
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
-                       "5a672ad40199303d6bc2d550a9e099cefdb5a5958c76bd2e5ef31e910b623680",
+                       "",
                        "51213026e91f4ca01a4522f55ae523f4c6a0d2247662db569846cf2226caceb3",
                        "0c3c738a3ca13e0c68c06fb448d095a28cbb7b548d9f790759752212ee1ccf25",
                        "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
-                       "1544a46302662591dec6a58cce795d552e7f7a011dac0bc219659aab6fd32808"
+                       "390040c8833043de57990923b7406846f5d5ac8598e893f1dc54716f568abc15",
+                       "5a672ad40199303d6bc2d550a9e099cefdb5a5958c76bd2e5ef31e910b623680"
                       };
 #endif
 #if BENCHMARK == 1
@@ -133,11 +135,14 @@ int main ( void )
     for ( i = 1; i <= 3; i++ )
     {
         fclose ( fp[i] );
+        if ( i == 1 )
+        {
+            rename ( filename[i] , filename[6] );
+        }
         fp[i] = fopen ( filename[i], "rb" );
         if ( !fp[i] )
         {
             printf ( "Cannot open device file %d!\n", i - 1 );
-            return 1;
         }
     }
 
@@ -179,12 +184,19 @@ int main ( void )
     /** Close ALL files **/
     for ( i = 0; i <= 3; i++ )
     {
-        fclose ( fp[i] );
+        if ( fp[i] )
+        {
+            fclose ( fp[i] );
+        }
     }
 
     status = 0;
-    for ( i = 0; i <= 5; i++ )
+    for ( i = 0; i <= 6; i++ )
     {
+        if ( i == 1 )
+        {
+            continue;
+        }
 #if CHECKING == 1
         printf ( "Checking file %s ... ", filename[i] );
         ascii = check_sha256_sum ( filename[i], ( unsigned char* ) assumed[i] );

@@ -42,7 +42,7 @@ extern "C"
         unsigned char hash_dev1[65];
         unsigned char hash_dev2[65];
         unsigned char hash_in[65];
-	unsigned int missing;
+        unsigned int missing;
     } raid5md;
 
     static const unsigned int RAID5_BLOCKSIZE = RAID5BLOCKSIZE;

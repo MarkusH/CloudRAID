@@ -56,7 +56,7 @@
 
 void merge_byte_block ( const unsigned char *in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char *out, size_t *out_len )
 {
-    int i, offset, len;
+    int i, len;
     if ( parity_pos > 2 || dead_device > 2 ) /* just to assure */
     {
         *out_len = -1;
@@ -103,9 +103,9 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], const un
             memcpy ( &out[0], &in[0], in_len[0] ); /* Copy the first part of the read bytes */
             len = in_len[0] - missing; /* Set the expected length of the secondary device */
             *out_len = in_len[0] + len;
-            for ( i = 0, offset = in_len[0]; i < len; i++, offset++ )
+            for ( i = 0; i < len; i++ )
             {
-                out[offset] = in[i] ^ in[2 * RAID5_BLOCKSIZE + i];
+                out[RAID5_BLOCKSIZE + i] = in[i] ^ in[2 * RAID5_BLOCKSIZE + i];
             }
         }
 
@@ -116,16 +116,20 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], const un
                 /*
                  * in[1] is second part, in[2] is parity
                  *
-                 * output is the content of XOR of in[1] and in[2] for in_len[1] - missing characters plus x[1]
+                 * output is the content of XOR of in[1] and in[2] for in_len[1] characters plus
+                 * the XOR of in[2] with 0xFF for the remaining characters up to in_len[2] plus in[1] for length in_len[1]
                  *
                  */
-                len = in_len[1] - missing; /* Set the expected length of the primary device */
-                *out_len = in_len[1] + len;
-                for ( i = 0; i < len; i++ )
+                *out_len = in_len[1] + in_len[2];
+                for ( i = 0; i < in_len[1]; i++ )
                 {
                     out[i] = in[RAID5_BLOCKSIZE + i] ^ in[2 * RAID5_BLOCKSIZE + i];
                 }
-                memcpy ( &out[i], &in[1], in_len[1] ); /* Copy the second part of the read bytes */
+                for ( i = in_len[1]; i < in_len[2]; i++ )
+                {
+                    out[i] = in[2 * RAID5_BLOCKSIZE + i] ^ 0xFF;
+                }
+                memcpy ( &out[RAID5_BLOCKSIZE], &in[RAID5_BLOCKSIZE], in_len[1] ); /* Copy the second part of the read bytes */
             }
             else
             {
@@ -251,16 +255,42 @@ int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 
         for ( i = 0; i < 3; i++ )
         {
-            if ( sha256_len[ ( parity_pos + 1 + i ) % 3] == SHA256_BLOCKSIZE )
+            if ( sha256_len[i] == SHA256_BLOCKSIZE )
             {
-                sha256_process_block ( sha256_buf[ ( parity_pos + 1 + i ) % 3], SHA256_BLOCKSIZE, &sha256_ctx[ ( parity_pos + 1 + i ) % 3] );
-                sha256_len[ ( parity_pos + 1 + i ) % 3] = 0;
+                sha256_process_block ( sha256_buf[i], SHA256_BLOCKSIZE, &sha256_ctx[i] );
+                sha256_len[i] = 0;
             }
-            if ( sha256_len[ ( parity_pos + 1 + i ) % 3] < SHA256_BLOCKSIZE )
-            {
-                memcpy ( sha256_buf[ ( parity_pos + 1 + i ) % 3] + sha256_len[ ( parity_pos + 1 + i ) % 3], &out[i * RAID5_BLOCKSIZE], out_len[ ( parity_pos + 1 + i ) % 3] );
-                sha256_len[ ( parity_pos + 1 + i ) % 3] += out_len[ ( parity_pos + 1 + i ) % 3];
-            }
+        }
+        /*
+         * parity_pos = 2
+         * i =          0       1       2
+         * Begin        0       BS      2*BS
+         *
+         * parity_pos = 0
+         * i =          0       1       2
+         * Begin        2*BS    0       BS
+         *
+         * parity_pos = 1
+         * i =          0       1       2
+         * Begin        BS      2*BS    0
+         */
+        if ( sha256_len[0] < SHA256_BLOCKSIZE )
+        {
+            i = ( parity_pos == 2 ) ? 0 : ( parity_pos == 0 ) ? 2 : 1;
+            memcpy ( sha256_buf[0] + sha256_len[0], &out[i * RAID5_BLOCKSIZE], out_len[i] );
+            sha256_len[0] += out_len[i];
+        }
+        if ( sha256_len[1] < SHA256_BLOCKSIZE )
+        {
+            i = ( parity_pos == 2 ) ? 1 : ( parity_pos == 0 ) ? 0 : 2;
+            memcpy ( sha256_buf[1] + sha256_len[1], &out[i * RAID5_BLOCKSIZE], out_len[i] );
+            sha256_len[1] += out_len[i];
+        }
+        if ( sha256_len[2] < SHA256_BLOCKSIZE )
+        {
+            i = ( parity_pos == 2 ) ? 2 : ( parity_pos == 0 ) ? 1 : 0;
+            memcpy ( sha256_buf[2] + sha256_len[2], &out[i * RAID5_BLOCKSIZE], out_len[i] );
+            sha256_len[2] += out_len[i];
         }
 
         parity_pos = ( parity_pos + 1 ) % 3;
@@ -341,8 +371,8 @@ end:
 
 int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 {
-    unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device;
-    size_t *in_len = NULL, out_len = NULL;
+    unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i;
+    size_t *in_len = NULL, out_len, l = 0;
     int status, mds;
     raid5md metadata, md_read;
 
@@ -377,6 +407,7 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
                 status = METADATA_ERROR;
                 goto end;
             }
+
         }
     }
 
@@ -402,10 +433,30 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
     in_len[0] = ( devices[ ( parity_pos + 1 ) % 3] ) ? fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] ) : 0;
     in_len[1] = ( devices[ ( parity_pos + 2 ) % 3] ) ? fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] ) : 0;
     in_len[2] = ( devices[parity_pos] ) ? fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] ) : 0;
-
     while ( in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0 )
     {
-        merge_byte_block ( in, in_len, parity_pos, dead_device, in_len[0] - in_len[1], buf, &out_len );
+        /*
+        * Detect end of file, since reading to the end but
+        * not beyond does NOT set the EOF marker! Afterwards
+        * the missing bytes can be set.
+        */
+        for ( i = 0; i < 3; i++ )
+        {
+            if ( parity_pos != i && devices[i] )
+            {
+                getc ( devices[i] );
+            }
+        }
+        l = ( ( devices[0] && feof ( devices[0] ) ) || ( devices[1] && feof ( devices[1] ) ) || ( devices[2] && feof ( devices[2] ) ) ) ? metadata.missing : 0;
+        for ( i = 0; i < 3; i++ )
+        {
+            if ( parity_pos != i && devices[i] && !feof ( devices[i] ) )
+            {
+                fseek ( devices[i], -1, SEEK_CUR );
+            }
+        }
+        /* Call the merge */
+        merge_byte_block ( in, in_len, parity_pos, dead_device, l, buf, &out_len );
         if ( out_len == -1 )
         {
             status = READERR_IN;
@@ -423,17 +474,17 @@ int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
         in_len[1] = ( devices[ ( parity_pos + 2 ) % 3] ) ? fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] ) : 0;
         in_len[2] = ( devices[parity_pos] ) ? fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] ) : 0;
     }
-    if ( ferror ( devices[0] ) )
+    if ( devices[0] && ferror ( devices[0] ) )
     {
         status = READERR_DEV0;
         goto end;
     }
-    if ( ferror ( devices[1] ) )
+    if ( devices[1] && ferror ( devices[1] ) )
     {
         status = READERR_DEV1;
         goto end;
     }
-    if ( ferror ( devices[2] ) )
+    if ( devices[2] && ferror ( devices[2] ) )
     {
         status = READERR_DEV2;
         goto end;
