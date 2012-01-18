@@ -44,6 +44,13 @@ test: clean compile
 	mkdir -p ./test/
 	${CC} test_sha256.c ${CFLAGS} ${LIB} -o ./test/test_sha256
 	${CC} test_raid5.c -DCHECKING=1 ${CFLAGS} ${LIB} -o ./test/test_raid5
+
+run-test:
+	./test/test_sha256
+	./test/test_raid5
+	./test_raid5.sh
+
+benchmark:
 	${CC} test_raid5.c -DBENCHSIZE=1073741824 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./test/test_raid5_1gib
 	${CC} test_raid5.c -DBENCHSIZE=524288000 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./test/test_raid5_500mib
 	${CC} test_raid5.c -DBENCHSIZE=262144000 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./test/test_raid5_250mib
@@ -53,7 +60,3 @@ test: clean compile
 	${CC} test_raid5.c -DBENCHSIZE=1048576 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./test/test_raid5_1mib
 	${CC} test_raid5.c -DBENCHSIZE=102400 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./test/test_raid5_100kib
 	${CC} test_raid5.c -DBENCHSIZE=10240 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./test/test_raid5_10kib
-
-run-test:
-	./test/test_sha256
-	./test/test_raid5

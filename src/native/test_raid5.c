@@ -220,7 +220,7 @@ int main ( void )
             status++;
         }
 #endif
-        remove ( filename[i] );
+        /*remove ( filename[i] );*/
     }
     return status;
 }
