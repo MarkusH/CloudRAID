@@ -1,3 +1,24 @@
+/*
+ * Copyright 2011 by the CloudRAID Team, see AUTHORS for more details.
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+
+ * http://www.apache.org/licenses/LICENSE-2.0
+
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 package de.dhbw.mannheim.cloudraid.persistence;
 
 /**
@@ -51,8 +72,10 @@ public abstract class DatabaseConnector {
 
 	/**
 	 * Creates the database schemas.
+	 * 
+	 * @return true, if the initialization could be executed.
 	 */
-	public abstract void initialize();
+	public abstract boolean initialize();
 
 	/**
 	 * Inserts a data set into the database.
@@ -104,22 +127,4 @@ public abstract class DatabaseConnector {
 	 * @return true, if the data set could be deleted.
 	 */
 	public abstract boolean delete(String path);
-
-	public static void main(String[] args) {
-		DatabaseConnector dbc = DatabaseConnector
-				.getDatabaseConnector("de.dhbw.mannheim.cloudraid.persistence.HSQLDatabaseConnector");
-		dbc.connect();
-		dbc.initialize();
-		dbc.insert("path", "hash", System.currentTimeMillis());
-		dbc.insert("path", "hash", System.currentTimeMillis());
-		dbc.insert("path3", "hash3", System.currentTimeMillis());
-		dbc.delete("path3");
-		dbc.insert("path2", "hash2", System.currentTimeMillis());
-		System.out.println(dbc.getName("hash") + " : " + dbc.getHash("path")
-				+ " : " + dbc.getLastMod("path"));
-		System.out.println(dbc.getName("hash2") + " : " + dbc.getHash("path2")
-				+ " : " + dbc.getLastMod("path2"));
-
-		dbc.disconnect();
-	}
 }
