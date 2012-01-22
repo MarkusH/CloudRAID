@@ -29,6 +29,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 
+import de.dhbw.mannheim.cloudraid.util.Config;
+
 /**
  * An implementation of the {@link DatabaseConnector} for the HSQL database
  * system.
@@ -42,10 +44,18 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 			deleteStatement;
 	private Statement statement;
 
-	private final static String DB_PATH = System.getProperty("os.name")
-			.contains("windows") ? System.getenv("APPDATA")
-			+ "\\cloudraid\\filedb" : System.getProperty("user.home")
-			+ "/.config/cloudraid/filedb";
+	private final static String DB_PATH = Config.CONFIG_HOME + "filedb";
+
+	public boolean connect(String database) {
+		try {
+			con = DriverManager.getConnection("jdbc:hsqldb:file:" + database
+					+ ";shutdown=true", "SA", "");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
 
 	public boolean connect() {
 		try {

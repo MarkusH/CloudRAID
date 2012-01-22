@@ -44,7 +44,6 @@ public abstract class DatabaseConnector {
 		try {
 			return (DatabaseConnector) Class.forName(className).newInstance();
 		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
 			// TODO Auto-generated catch block
@@ -57,14 +56,26 @@ public abstract class DatabaseConnector {
 	}
 
 	/**
-	 * Creates a connection to a database.
+	 * Creates a connection to a specific database. To use the default, use
+	 * {@link #connect()}
+	 * 
+	 * @param database
+	 *            The absolute path to the database.
+	 * 
+	 * @return true, if the connection could be opened; false, if not.
+	 */
+	public abstract boolean connect(String database);
+
+	/**
+	 * Creates a connection to the default database. To specify a certain
+	 * database, use {@link #connect(String)}
 	 * 
 	 * @return true, if the connection could be opened; false, if not.
 	 */
 	public abstract boolean connect();
 
 	/**
-	 * Closes the connection to the database opened by {@link connect()}.
+	 * Closes the connection to the database opened by {@link #connect()}.
 	 * 
 	 * @return true, if the connection could be closed.
 	 */
