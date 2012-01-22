@@ -37,7 +37,7 @@ import de.dhbw.mannheim.cloudraid.util.Config;
  * @author Florian Bausch
  * 
  */
-public class TestPersistence {
+public class TestHSQLDatabaseConnector {
 
 	private static DatabaseConnector dbc;
 	private static final String CONNECTOR_CLASS = "de.dhbw.mannheim.cloudraid.persistence.HSQLDatabaseConnector";
