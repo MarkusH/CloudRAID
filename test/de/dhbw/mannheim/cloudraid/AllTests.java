@@ -32,7 +32,8 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({ de.dhbw.mannheim.cloudraid.util.TestConfig.class,
 		de.dhbw.mannheim.cloudraid.jni.TestRaidAccessInterface.class,
 		de.dhbw.mannheim.cloudraid.fs.TestFileSystemUtilities.class,
-		de.dhbw.mannheim.cloudraid.fs.TestFileLock.class })
+		de.dhbw.mannheim.cloudraid.fs.TestFileLock.class,
+		de.dhbw.mannheim.cloudraid.persistence.TestPersistence.class })
 public class AllTests {
 
 }
