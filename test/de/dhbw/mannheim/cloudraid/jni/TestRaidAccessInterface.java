@@ -75,6 +75,7 @@ public class TestRaidAccessInterface {
 		new File(tmpPath, hash + ".0").delete();
 		new File(tmpPath, hash + ".1").delete();
 		new File(tmpPath, hash + ".2").delete();
+		new File(tmpPath, hash + ".m").delete();
 		out.delete();
 	}
 
