@@ -70,12 +70,18 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 
 	public boolean disconnect() {
 		try {
-			statement.execute("SHUTDOWN COMPACT;");
-			con.commit();
+			if (statement != null) {
+				statement.execute("SHUTDOWN COMPACT;");
+			}
+			if (con != null) {
+				con.commit();
+			}
 		} catch (SQLException e) {
 		}
 		try {
-			con.close();
+			if (con != null) {
+				con.close();
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;
@@ -116,8 +122,6 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 
 	public void insert(String path, String hash, long lastMod) {
 		try {
-			System.out.println(findStatement);
-			System.out.println(path);
 			findStatement.setString(1, path);
 			ResultSet resSet = findStatement.executeQuery();
 

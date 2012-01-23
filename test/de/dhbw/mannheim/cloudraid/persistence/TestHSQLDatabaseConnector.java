@@ -41,7 +41,10 @@ public class TestHSQLDatabaseConnector {
 
 	private static DatabaseConnector dbc;
 	private static final String CONNECTOR_CLASS = "de.dhbw.mannheim.cloudraid.persistence.HSQLDatabaseConnector";
-	private static final String DATABASE_FILE = "testfiledb";
+	private static final String DATABASE_FILE = System
+			.getProperty("java.io.tmpdir")
+			+ File.separator
+			+ "cloudraid-testdb" + File.separator + "testfiledb";
 	private static final String PATH = "path", PATH2 = "path2";
 	private static final String HASH = "hash", HASH2 = "hash2";
 	private static final long TIME = 100000L, TIME2 = 200000L;
@@ -50,6 +53,8 @@ public class TestHSQLDatabaseConnector {
 	public static void oneTimeSetUp() {
 		dbc = DatabaseConnector.getDatabaseConnector(CONNECTOR_CLASS);
 		assertTrue(dbc.connect(DATABASE_FILE));
+		assertTrue(dbc.disconnect());
+		assertTrue(dbc.connect());
 		assertTrue(dbc.initialize());
 	}
 
@@ -97,5 +102,7 @@ public class TestHSQLDatabaseConnector {
 		assertTrue(dbc.getName(hash) == null);
 		assertTrue(dbc.getHash(path) == null);
 		assertTrue(dbc.getLastMod(path) == -1L);
+
+		assertTrue(dbc.delete(path));
 	}
 }
