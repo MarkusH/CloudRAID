@@ -59,9 +59,9 @@ public class TestHSQLDatabaseConnector {
 	@AfterClass
 	public static void oneTimeTearDown() {
 		assertTrue(dbc.disconnect());
-		new File(Config.CONFIG_HOME + DATABASE_FILE + ".data").delete();
-		new File(Config.CONFIG_HOME + DATABASE_FILE + ".properties").delete();
-		new File(Config.CONFIG_HOME + DATABASE_FILE + ".script").delete();
+		new File(Config.getCloudRAIDHome() + DATABASE_FILE + ".data").delete();
+		new File(Config.getCloudRAIDHome() + DATABASE_FILE + ".properties").delete();
+		new File(Config.getCloudRAIDHome() + DATABASE_FILE + ".script").delete();
 	}
 
 	@Test

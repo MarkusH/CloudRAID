@@ -42,121 +42,171 @@ import org.junit.Test;
 public class TestConfig {
 
 	private static final String password = "CloudRAID-Config-Password";
-	private static final String configpath = System
-			.getProperty("java.io.tmpdir") + "/config.xml";
+	private static final String cloudraidHome1 = System
+			.getProperty("java.io.tmpdir") + File.separator + "cloudraid";
+	private static final String cloudraidHome2 = System
+			.getProperty("java.io.tmpdir")
+			+ File.separator
+			+ "cloudraid-new"
+			+ File.separator;
 	private static Config config;
 
 	@BeforeClass
 	public static void oneTimeSetUp() {
-		File f = new File(configpath);
+		File f = new File(cloudraidHome1);
 		if (f.exists()) {
 			f.delete();
 		}
+		Config.setCloudRAIDHome(cloudraidHome1);
 		config = Config.getInstance();
-		Config.setConfigPath(configpath);
 		config.init(password);
 	}
 
 	@AfterClass
-	public static void oneTimeTeadDown() {
-		File f = new File(configpath);
+	public static void oneTimeTearDown() {
+		File f = new File(cloudraidHome1 + File.separator + "config.xml");
 		if (f.exists()) {
 			f.delete();
 		}
-		f = new File(configpath + ".new");
+		f = new File(cloudraidHome1);
 		if (f.exists()) {
 			f.delete();
 		}
-		config = Config.getInstance();
-		Config.setConfigPath(configpath);
-		config.init(password);
+		f = new File(cloudraidHome2);
+		if (f.exists()) {
+			f.delete();
+		}
 	}
 
 	@Test
-	public void testSetPlain() {
-		config.put("plain.boolean.correct", true);
-		config.put("plain.boolean.false", false);
-
-		config.put("plain.double.correct", 1.0 / 7.0);
-		config.put("plain.double.false", 1.0 / 9.0);
-
-		config.put("plain.float.correct", 1.0 / 11.0);
-		config.put("plain.float.false", 1.0 / 13.0);
-
-		config.put("plain.int.correct", 42);
-		config.put("plain.int.false", 1337);
-
-		config.put("plain.long.correct", 9876543210l);
-		config.put("plain.long.false", 99999999999l);
-
-		config.put("plain.string.correct", "Correct");
-		config.put("plain.string.false", "False");
+	public void testCloudRAIDHome() {
+		Config.setCloudRAIDHome(cloudraidHome2);
+		assertEquals(cloudraidHome2, Config.getCloudRAIDHome());
+		Config.setCloudRAIDHome(cloudraidHome1);
+		assertEquals(cloudraidHome1 + File.separator, Config.getCloudRAIDHome());
 	}
 
 	@Test
-	public void testPlain() throws InvalidKeyException,
+	public void testConfigPath() {
+		Config.setCloudRAIDHome(cloudraidHome1);
+		assertEquals(cloudraidHome1 + File.separator + "config.xml",
+				Config.getConfigPath());
+	}
+
+	@Test
+	public void testBoolean() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
-		assertTrue(config.getBoolean("plain.boolean.correct", false));
-		assertFalse(config.getBoolean("plain.boolean.false", true));
+		config.put("plain.boolean.correct", true);
 
+		assertTrue(config.keyExists("plain.boolean.correct"));
+		assertFalse(config.keyExists("plain.boolean.false"));
+		assertTrue(config.getBoolean("plain.boolean.correct", false));
+		assertTrue(config.getBoolean("plain.boolean.false", true));
+
+		config.put("encrypted.boolean.correct", true, true);
+
+		assertTrue(config.keyExists("encrypted.boolean.correct"));
+		assertFalse(config.keyExists("encrypted.boolean.false"));
+		assertTrue(config.getBoolean("encrypted.boolean.correct", false));
+		assertTrue(config.getBoolean("encrypted.boolean.false", true));
+	}
+
+	@Test
+	public void testInt() throws InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
+		config.put("plain.int.correct", 42);
+
+		assertTrue(config.keyExists("plain.int.correct"));
+		assertFalse(config.keyExists("plain.int.false"));
+		assertEquals(42, config.getInt("plain.int.correct", 0));
+		assertEquals(1234, config.getInt("plain.int.false", 1234));
+
+		config.put("encrypted.int.correct", 1337, true);
+
+		assertTrue(config.keyExists("encrypted.int.correct"));
+		assertFalse(config.keyExists("encrypted.int.false"));
+		assertEquals(1337, config.getInt("encrypted.int.correct", 0));
+		assertEquals(19, config.getInt("encrypted.int.false", 19));
+	}
+
+	@Test
+	public void testLong() throws InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
+		config.put("plain.long.correct", 9876543210l);
+
+		assertTrue(config.keyExists("plain.long.correct"));
+		assertFalse(config.keyExists("plain.long.false"));
+		assertEquals(9876543210l, config.getLong("plain.long.correct", 0));
+		assertEquals(1l, config.getLong("plain.long.false", 1l));
+
+		config.put("encrypted.long.correct", 963852741l, true);
+
+		assertTrue(config.keyExists("encrypted.long.correct"));
+		assertFalse(config.keyExists("encrypted.long.false"));
+		assertEquals(963852741l, config.getLong("encrypted.long.correct", 0));
+		assertEquals(1l, config.getLong("encrypted.long.false", 1l));
+	}
+
+	@Test
+	public void testFloat() throws InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
+		config.put("plain.float.correct", 1.0f / 11.0f);
+
+		assertTrue(config.keyExists("plain.float.correct"));
+		assertFalse(config.keyExists("plain.float.false"));
+		assertEquals(1.0f / 11.0f,
+				config.getFloat("plain.float.correct", 1.0f), 0.00001f);
+		assertEquals(1.0f, config.getFloat("plain.float.false", 1.0f), 0.00001f);
+
+		config.put("encrypted.float.correct", 1.0f / 19.0f, true);
+
+		assertTrue(config.keyExists("encrypted.float.correct"));
+		assertFalse(config.keyExists("encrypted.float.false"));
+		assertEquals(1.0f / 19.0f,
+				config.getFloat("encrypted.float.correct", 1.0f), 0.00001f);
+		assertEquals(1.0f, config.getFloat("encrypted.float.false", 1.0f),
+				0.00001f);
+	}
+
+	@Test
+	public void testDouble() throws InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
+		config.put("plain.double.correct", 1.0 / 7.0);
+
+		assertTrue(config.keyExists("plain.double.correct"));
+		assertFalse(config.keyExists("plain.double.false"));
 		assertEquals(1.0 / 7.0, config.getDouble("plain.double.correct", 1.0),
 				0.0000000001);
-		assertFalse(1.0 == config.getDouble("plain.double.false", 1.0));
+		assertEquals(1.0, config.getDouble("plain.double.false", 1.0),
+				0.0000000001);
 
-		assertEquals(1.0f / 11.0f,
-				config.getFloat("plain.float.correct", 1.0f), 0.00001);
-		assertFalse(1.0f == config.getFloat("plain.float.false", 1.0f));
-
-		assertEquals(42, config.getInt("plain.int.correct", 0));
-		assertFalse(1234 == config.getInt("plain.int.false", 1234));
-
-		assertEquals(9876543210l, config.getLong("plain.long.correct", 0));
-		assertFalse(1l == config.getLong("plain.long.false", 1l));
-
-		assertEquals("Correct", config.getString("plain.string.correct", "foo"));
-		assertFalse("bar".equals(config.getString("plain.string.false", "bar")));
-	}
-
-	@Test
-	public void testSetEncrypted() {
-		config.put("encrypted.boolean.correct", true, true);
-		config.put("encrypted.boolean.false", false, true);
 		config.put("encrypted.double.correct", 1.0 / 15.0, true);
-		config.put("encrypted.double.false", 1.0 / 17.0, true);
-		config.put("encrypted.float.correct", 1.0 / 19.0, true);
-		config.put("encrypted.float.false", 1.0 / 21.0, true);
-		config.put("encrypted.int.correct", 12, true);
-		config.put("encrypted.int.false", 34, true);
-		config.put("encrypted.long.correct", 963852741l, true);
-		config.put("encrypted.long.false", 1472583690l, true);
-		config.put("encrypted.string.correct", "Correct", true);
-		config.put("encrypted.string.false", "False", true);
-	}
 
-	@Test
-	public void testEncrypted() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
-		assertTrue(config.getBoolean("encrypted.boolean.correct", false));
-		assertFalse(config.getBoolean("encrypted.boolean.false", true));
-
+		assertTrue(config.keyExists("encrypted.double.correct"));
+		assertFalse(config.keyExists("encrypted.double.false"));
 		assertEquals(1.0 / 15.0,
 				config.getDouble("encrypted.double.correct", 1.0), 0.0000000001);
-		assertFalse(1.0 == config.getDouble("encrypted.double.false", 1.0));
+		assertEquals(1.0, config.getDouble("encrypted.double.false", 1.0),
+				0.0000000001);
+	}
 
-		assertEquals(1.0f / 19.0f,
-				config.getFloat("encrypted.float.correct", 1.0f), 0.00001);
-		assertFalse(1.0f == config.getFloat("encrypted.float.false", 1.0f));
+	@Test
+	public void testString() throws InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
+		config.put("plain.string.correct", "Correct");
 
-		assertEquals(12, config.getInt("encrypted.int.correct", 0));
-		assertFalse(1 == config.getInt("encrypted.int.false", 1));
+		assertTrue(config.keyExists("plain.string.correct"));
+		assertFalse(config.keyExists("plain.string.false"));
+		assertEquals("Correct", config.getString("plain.string.correct", "foo"));
+		assertEquals("bar", config.getString("plain.string.false", "bar"));
 
-		assertEquals(963852741l, config.getLong("encrypted.long.correct", 0));
-		assertFalse(1l == config.getLong("encrypted.long.false", 1l));
+		config.put("encrypted.string.correct", "Correct", true);
 
+		assertTrue(config.keyExists("encrypted.string.correct"));
+		assertFalse(config.keyExists("encrypted.string.false"));
 		assertEquals("Correct",
 				config.getString("encrypted.string.correct", "foo"));
-		assertFalse("buz".equals(config.getString("encrypted.string.false",
-				"buz")));
+		assertEquals("buz", config.getString("encrypted.string.false", "buz"));
 	}
 
 	@Test
@@ -164,50 +214,87 @@ public class TestConfig {
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		config.save();
 		config.reload();
-		testPlain();
-		testEncrypted();
+		testBoolean();
+		testInt();
+		testLong();
+		testFloat();
+		testDouble();
+		testString();
 
 		/*
 		 * Changing the config file and reloading the data, the following tests
 		 * are just the inverse of the above and therefore fail in a positive
 		 * manner.
 		 */
-		Config.setConfigPath(configpath + ".new");
+		Config.setCloudRAIDHome(cloudraidHome2);
 		config.reload();
 
 		// Test plain data
+		assertFalse(config.keyExists("plain.boolean.correct"));
+		assertFalse(config.keyExists("plain.boolean.false"));
 		assertFalse(config.getBoolean("plain.boolean.correct", false));
-		assertTrue(config.getBoolean("plain.boolean.false", true));
-		assertFalse(1.0 / 7.0 == config.getDouble("plain.double.correct", 1.0));
-		assertTrue(1.0 == config.getDouble("plain.double.false", 1.0));
-		assertFalse(1.0f / 11.0f == config
-				.getFloat("plain.float.correct", 1.0f));
-		assertTrue(1.0f == config.getFloat("plain.float.false", 1.0f));
-		assertFalse(42 == config.getInt("plain.int.correct", 0));
-		assertTrue(1234 == config.getInt("plain.int.false", 1234));
-		assertFalse(9876543210l == config.getLong("plain.long.correct", 0));
-		assertTrue(1l == config.getLong("plain.long.false", 1l));
-		assertFalse("Correct".equals(config.getString("plain.string.correct",
-				"foo")));
-		assertTrue("bar".equals(config.getString("plain.string.false", "bar")));
+
+		assertFalse(config.keyExists("plain.double.correct"));
+		assertFalse(config.keyExists("plain.double.false"));
+		assertEquals(1.0, config.getDouble("plain.double.correct", 1.0),
+				0.0000000001);
+
+		assertFalse(config.keyExists("plain.float.correct"));
+		assertFalse(config.keyExists("plain.float.false"));
+		assertEquals(1.0f, config.getFloat("plain.float.correct", 1.0f),
+				0.00001f);
+
+		assertFalse(config.keyExists("plain.int.correct"));
+		assertFalse(config.keyExists("plain.int.false"));
+		assertEquals(0, config.getInt("plain.int.correct", 0));
+
+		assertFalse(config.keyExists("plain.long.correct"));
+		assertFalse(config.keyExists("plain.long.false"));
+		assertEquals(0, config.getLong("plain.long.correct", 0));
+
+		assertFalse(config.keyExists("plain.string.correct"));
+		assertFalse(config.keyExists("plain.string.false"));
+		assertEquals("foo", config.getString("plain.string.correct", "foo"));
 
 		// Test encrypted data
+		assertFalse(config.keyExists("encrypted.boolean.correct"));
+		assertFalse(config.keyExists("encrypted.boolean.false"));
 		assertFalse(config.getBoolean("encrypted.boolean.correct", false));
-		assertTrue(config.getBoolean("encrypted.boolean.false", true));
-		assertFalse(1.0 / 15.0 == config.getDouble("encrypted.double.correct",
-				1.0));
-		assertTrue(1.0 == config.getDouble("encrypted.double.false", 1.0));
-		assertFalse(1.0f / 19.0f == config.getFloat("encrypted.float.correct",
-				1.0f));
-		assertTrue(1.0f == config.getFloat("encrypted.float.false", 1.0f));
-		assertFalse(12 == config.getInt("encrypted.int.correct", 0));
-		assertTrue(1 == config.getInt("encrypted.int.false", 1));
-		assertFalse(963852741l == config.getLong("encrypted.long.correct", 0));
-		assertTrue(1l == config.getLong("encrypted.long.false", 1l));
-		assertFalse("Correct".equals(config.getString(
-				"encrypted.string.correct", "foo")));
-		assertTrue("buz".equals(config.getString("encrypted.string.false",
-				"buz")));
+
+		assertFalse(config.keyExists("encrypted.double.correct"));
+		assertFalse(config.keyExists("encrypted.double.false"));
+		assertEquals(1.0, config.getDouble("encrypted.double.correct", 1.0),
+				0.0000000001);
+
+		assertFalse(config.keyExists("encrypted.float.correct"));
+		assertFalse(config.keyExists("encrypted.float.false"));
+		assertEquals(1.0f, config.getFloat("encrypted.float.correct", 1.0f),
+				0.00001f);
+
+		assertFalse(config.keyExists("encrypted.int.correct"));
+		assertFalse(config.keyExists("encrypted.int.false"));
+		assertEquals(0, config.getInt("encrypted.int.correct", 0));
+
+		assertFalse(config.keyExists("encrypted.long.correct"));
+		assertFalse(config.keyExists("encrypted.long.false"));
+		assertEquals(0, config.getLong("encrypted.long.correct", 0));
+
+		assertFalse(config.keyExists("encrypted.string.correct"));
+		assertFalse(config.keyExists("encrypted.string.false"));
+		assertEquals("foo", config.getString("encrypted.string.correct", "foo"));
 	}
 
+	@Test
+	public void testEncryptionStatusChange() throws InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
+		config.put("key1", "Test1", false);
+		assertEquals("Test1", config.getString("key1", "Default1"));
+		config.put("key1", "Test2", true);
+		assertEquals("Test2", config.getString("key1", "Default2"));
+
+		config.put("key2", "Test3", true);
+		assertEquals("Test3", config.getString("key2", "Default3"));
+		config.put("key2", "Test4", false);
+		assertEquals("Test4", config.getString("key2", "Default4"));
+	}
 }
