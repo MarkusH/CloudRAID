@@ -176,13 +176,17 @@ public class TestConfig {
 	}
 
 	@Test
-	@Ignore("TODO: Incorrect. Needs changes!")
+	//@Ignore("TODO: Incorrect. Needs changes!")
 	public void testSave() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		config.save();
 		config.reload();
-		// testPlain();
-		// testEncrypted();
+		testBoolean();
+		testInt();
+		testLong();
+		testFloat();
+		testDouble();
+		testString();
 
 		/*
 		 * Changing the config file and reloading the data, the following tests
