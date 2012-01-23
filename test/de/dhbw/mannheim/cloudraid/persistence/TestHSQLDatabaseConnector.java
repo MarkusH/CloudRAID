@@ -23,9 +23,13 @@ package de.dhbw.mannheim.cloudraid.persistence;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import de.dhbw.mannheim.cloudraid.util.Config;
 
 /**
  * This JUnit test tests the {@link HSQLDatabaseConnector}.
@@ -33,10 +37,11 @@ import org.junit.Test;
  * @author Florian Bausch
  * 
  */
-public class TestPersistence {
+public class TestHSQLDatabaseConnector {
 
 	private static DatabaseConnector dbc;
 	private static final String CONNECTOR_CLASS = "de.dhbw.mannheim.cloudraid.persistence.HSQLDatabaseConnector";
+	private static final String DATABASE_FILE = "testfiledb";
 	private static final String PATH = "path", PATH2 = "path2";
 	private static final String HASH = "hash", HASH2 = "hash2";
 	private static final long TIME = 100000L, TIME2 = 200000L;
@@ -44,13 +49,16 @@ public class TestPersistence {
 	@BeforeClass
 	public static void oneTimeSetUp() {
 		dbc = DatabaseConnector.getDatabaseConnector(CONNECTOR_CLASS);
-		assertTrue(dbc.connect());
+		assertTrue(dbc.connect(DATABASE_FILE));
 		assertTrue(dbc.initialize());
 	}
 
 	@AfterClass
 	public static void oneTimeTearDown() {
 		assertTrue(dbc.disconnect());
+		new File(Config.CONFIG_HOME + DATABASE_FILE + ".data").delete();
+		new File(Config.CONFIG_HOME + DATABASE_FILE + ".properties").delete();
+		new File(Config.CONFIG_HOME + DATABASE_FILE + ".script").delete();
 	}
 
 	@Test

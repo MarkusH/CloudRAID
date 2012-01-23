@@ -73,12 +73,17 @@ public class Config extends HashMap<String, String> {
 	public static final int MAX_FILE_SIZE = 1024 * 1024 * 512;
 
 	/**
-	 * The path to the configuration file.
+	 * The top-level path to the programs config.
 	 */
-	private static String CONFIG_PATH = System.getProperty("os.name").contains(
-			"windows")
-			? System.getenv("APPDATA") + "\\cloudraid\\config.xml"
-			: System.getProperty("user.home") + "/.config/cloudraid.xml";
+	public static String CONFIG_HOME = System.getProperty("os.name").contains("windows")
+			? System.getenv("APPDATA") + "\\cloudraid\\"
+			: System.getProperty("user.home") + "/.config/cloudraid/";
+
+	/**
+	 * The path to the default configuration file.
+	 */
+	private static String CONFIG_PATH = CONFIG_HOME + File.separator
+			+ "config.xml";
 
 	/**
 	 * A File object of the configuration file.
@@ -789,8 +794,7 @@ public class Config extends HashMap<String, String> {
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("")
-						? ""
+				String salt = saltString == null || saltString.equals("") ? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");
