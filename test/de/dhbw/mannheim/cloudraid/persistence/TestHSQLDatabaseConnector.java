@@ -21,6 +21,7 @@
 
 package de.dhbw.mannheim.cloudraid.persistence;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -41,10 +42,7 @@ public class TestHSQLDatabaseConnector {
 
 	private static DatabaseConnector dbc;
 	private static final String CONNECTOR_CLASS = "de.dhbw.mannheim.cloudraid.persistence.HSQLDatabaseConnector";
-	private static final String DATABASE_FILE = System
-			.getProperty("java.io.tmpdir")
-			+ File.separator
-			+ "cloudraid-testdb" + File.separator + "testfiledb";
+	private static final String DATABASE_FILE = "testfiledb";
 	private static final String PATH = "path", PATH2 = "path2";
 	private static final String HASH = "hash", HASH2 = "hash2";
 	private static final long TIME = 100000L, TIME2 = 200000L;
@@ -52,9 +50,9 @@ public class TestHSQLDatabaseConnector {
 	@BeforeClass
 	public static void oneTimeSetUp() {
 		dbc = DatabaseConnector.getDatabaseConnector(CONNECTOR_CLASS);
-		assertTrue(dbc.connect(DATABASE_FILE));
-		assertTrue(dbc.disconnect());
 		assertTrue(dbc.connect());
+		assertTrue(dbc.disconnect());
+		assertTrue(dbc.connect(Config.CONFIG_HOME + DATABASE_FILE));
 		assertTrue(dbc.initialize());
 	}
 
@@ -68,19 +66,19 @@ public class TestHSQLDatabaseConnector {
 
 	@Test
 	public void testInsert() {
-		dbc.insert(PATH, HASH, TIME);
+		assertTrue(dbc.insert(PATH, HASH, TIME));
 
 		assertTrue(PATH.equals(dbc.getName(HASH)));
 		assertTrue(HASH.equals(dbc.getHash(PATH)));
 		assertTrue(TIME == dbc.getLastMod(PATH));
 
-		dbc.insert(PATH, HASH, TIME2);
+		assertTrue(dbc.insert(PATH, HASH, TIME2));
 
 		assertTrue(PATH.equals(dbc.getName(HASH)));
 		assertTrue(HASH.equals(dbc.getHash(PATH)));
 		assertTrue(TIME2 == dbc.getLastMod(PATH));
 
-		dbc.insert(PATH2, HASH2, TIME2);
+		assertTrue(dbc.insert(PATH2, HASH2, TIME2));
 
 		assertTrue(PATH2.equals(dbc.getName(HASH2)));
 		assertTrue(HASH2.equals(dbc.getHash(PATH2)));
@@ -96,7 +94,7 @@ public class TestHSQLDatabaseConnector {
 		long time = System.currentTimeMillis();
 		String path = "path3";
 		String hash = "hash3";
-		dbc.insert(path, hash, time);
+		assertTrue(dbc.insert(path, hash, time));
 		dbc.delete(path);
 
 		assertTrue(dbc.getName(hash) == null);
@@ -104,5 +102,21 @@ public class TestHSQLDatabaseConnector {
 		assertTrue(dbc.getLastMod(path) == -1L);
 
 		assertTrue(dbc.delete(path));
+	}
+
+	@Test
+	public void testAccessToClosedConnection() {
+		assertTrue(dbc.disconnect());
+
+		assertTrue(dbc.disconnect());
+		assertTrue(dbc.getHash(PATH) == null);
+		assertTrue(dbc.getName(HASH) == null);
+		assertTrue(dbc.getLastMod(PATH) == -1L);
+		assertFalse(dbc.insert(PATH, HASH, TIME));
+		assertFalse(dbc.initialize());
+		assertFalse(dbc.delete(PATH));
+
+		assertTrue(dbc.connect(Config.CONFIG_HOME + DATABASE_FILE));
+		assertTrue(dbc.initialize());
 	}
 }

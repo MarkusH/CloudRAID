@@ -41,7 +41,7 @@ import de.dhbw.mannheim.cloudraid.util.Config;
 public class HSQLDatabaseConnector extends DatabaseConnector {
 	private Connection con;
 	private PreparedStatement insertStatement, updateStatement, findStatement,
-			deleteStatement;
+			deleteStatement, findNameStatement;
 	private Statement statement;
 
 	private final static String DB_PATH = Config.CONFIG_HOME + "filedb";
@@ -58,14 +58,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 	}
 
 	public boolean connect() {
-		try {
-			con = DriverManager.getConnection("jdbc:hsqldb:file:" + DB_PATH
-					+ ";shutdown=true", "SA", "");
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return false;
-		}
-		return true;
+		return this.connect(DB_PATH);
 	}
 
 	public boolean disconnect() {
@@ -78,6 +71,14 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 			}
 		} catch (SQLException e) {
 		}
+
+		statement = null;
+		findStatement = null;
+		insertStatement = null;
+		deleteStatement = null;
+		updateStatement = null;
+		findNameStatement = null;
+
 		try {
 			if (con != null) {
 				con.close();
@@ -108,19 +109,20 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE path_name = ? ;");
 			deleteStatement = con
 					.prepareStatement("DELETE FROM cloudraid_files WHERE path_name = ? ;");
+			findNameStatement = con
+					.prepareStatement("SELECT * FROM cloudraid_files WHERE hash_name = ?;");
+
+			return true;
 		} catch (SQLException e) {
 			try {
 				con.rollback();
 			} catch (SQLException e1) {
-				e1.printStackTrace();
 			}
-			e.printStackTrace();
 			return false;
 		}
-		return true;
 	}
 
-	public void insert(String path, String hash, long lastMod) {
+	public boolean insert(String path, String hash, long lastMod) {
 		try {
 			findStatement.setString(1, path);
 			ResultSet resSet = findStatement.executeQuery();
@@ -136,13 +138,15 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 				insertStatement.execute();
 			}
 			con.commit();
+			return true;
 		} catch (SQLException e) {
 			try {
 				con.rollback();
 			} catch (SQLException e1) {
-				e1.printStackTrace();
 			}
-			e.printStackTrace();
+			return false;
+		} catch (NullPointerException e) {
+			return false;
 		}
 	}
 
@@ -154,8 +158,10 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 			rs.next();
 			return rs.getString("hash_name");
 		} catch (SQLException e) {
+			return null;
+		} catch (NullPointerException e) {
+			return null;
 		}
-		return null;
 	}
 
 	public long getLastMod(String path) {
@@ -166,22 +172,24 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 			rs.next();
 			return rs.getTimestamp("last_mod").getTime();
 		} catch (SQLException e) {
+			return -1L;
+		} catch (NullPointerException e) {
+			return -1L;
 		}
-		return -1L;
 	}
 
 	public String getName(String hash) {
 		try {
-			PreparedStatement ps = con
-					.prepareStatement("SELECT * FROM cloudraid_files WHERE hash_name = ?;");
-			ps.setString(1, hash);
-			ps.execute();
-			ResultSet rs = ps.getResultSet();
+			findNameStatement.setString(1, hash);
+			findNameStatement.execute();
+			ResultSet rs = findNameStatement.getResultSet();
 			rs.next();
 			return rs.getString("path_name");
 		} catch (SQLException e) {
+			return null;
+		} catch (NullPointerException e) {
+			return null;
 		}
-		return null;
 	}
 
 	public boolean delete(String path) {
@@ -189,6 +197,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 			deleteStatement.setString(1, path);
 			deleteStatement.execute();
 		} catch (SQLException e) {
+		} catch (NullPointerException e) {
 			return false;
 		}
 		return true;
