@@ -34,7 +34,6 @@ import javax.crypto.IllegalBlockSizeException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -93,90 +92,81 @@ public class TestConfig {
 	public void testInt() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		config.put("plain.int.correct", 42);
-		config.put("plain.int.false", 1337);
 
 		assertEquals(42, config.getInt("plain.int.correct", 0));
-		assertFalse(1234 == config.getInt("plain.int.false", 1234));
+		assertEquals(1234, config.getInt("plain.int.false", 1234));
 
-		config.put("encrypted.int.correct", 12, true);
-		config.put("encrypted.int.false", 34, true);
+		config.put("encrypted.int.correct", 1337, true);
 
-		assertEquals(12, config.getInt("encrypted.int.correct", 0));
-		assertFalse(1 == config.getInt("encrypted.int.false", 1));
+		assertEquals(1337, config.getInt("encrypted.int.correct", 0));
+		assertEquals(19, config.getInt("encrypted.int.false", 19));
 	}
 
 	@Test
 	public void testLong() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		config.put("plain.long.correct", 9876543210l);
-		config.put("plain.long.false", 99999999999l);
 
 		assertEquals(9876543210l, config.getLong("plain.long.correct", 0));
-		assertFalse(1l == config.getLong("plain.long.false", 1l));
+		assertEquals(1l, config.getLong("plain.long.false", 1l));
 
 		config.put("encrypted.long.correct", 963852741l, true);
-		config.put("encrypted.long.false", 1472583690l, true);
 
 		assertEquals(963852741l, config.getLong("encrypted.long.correct", 0));
-		assertFalse(1l == config.getLong("encrypted.long.false", 1l));
+		assertEquals(1l, config.getLong("encrypted.long.false", 1l));
 	}
 
 	@Test
 	public void testFloat() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		config.put("plain.float.correct", 1.0 / 11.0);
-		config.put("plain.float.false", 1.0 / 13.0);
 
 		assertEquals(1.0f / 11.0f,
 				config.getFloat("plain.float.correct", 1.0f), 0.00001);
-		assertFalse(1.0f == config.getFloat("plain.float.false", 1.0f));
+		assertEquals(1.0f, config.getFloat("plain.float.false", 1.0f), 0.00001);
 
 		config.put("encrypted.float.correct", 1.0 / 19.0, true);
-		config.put("encrypted.float.false", 1.0 / 21.0, true);
 
 		assertEquals(1.0f / 19.0f,
 				config.getFloat("encrypted.float.correct", 1.0f), 0.00001);
-		assertFalse(1.0f == config.getFloat("encrypted.float.false", 1.0f));
+		assertEquals(1.0f, config.getFloat("encrypted.float.false", 1.0f),
+				0.00001);
 	}
 
 	@Test
 	public void testDouble() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		config.put("plain.double.correct", 1.0 / 7.0);
-		config.put("plain.double.false", 1.0 / 9.0);
 
 		assertEquals(1.0 / 7.0, config.getDouble("plain.double.correct", 1.0),
 				0.0000000001);
-		assertFalse(1.0 == config.getDouble("plain.double.false", 1.0));
+		assertEquals(1.0, config.getDouble("plain.double.false", 1.0),
+				0.0000000001);
 
 		config.put("encrypted.double.correct", 1.0 / 15.0, true);
-		config.put("encrypted.double.false", 1.0 / 17.0, true);
 
 		assertEquals(1.0 / 15.0,
 				config.getDouble("encrypted.double.correct", 1.0), 0.0000000001);
-		assertFalse(1.0 == config.getDouble("encrypted.double.false", 1.0));
+		assertEquals(1.0, config.getDouble("encrypted.double.false", 1.0),
+				0.0000000001);
 	}
 
 	@Test
 	public void testString() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		config.put("plain.string.correct", "Correct");
-		config.put("plain.string.false", "False");
 
 		assertEquals("Correct", config.getString("plain.string.correct", "foo"));
-		assertFalse("bar".equals(config.getString("plain.string.false", "bar")));
+		assertEquals("bar", config.getString("plain.string.false", "bar"));
 
 		config.put("encrypted.string.correct", "Correct", true);
-		config.put("encrypted.string.false", "False", true);
 
 		assertEquals("Correct",
 				config.getString("encrypted.string.correct", "foo"));
-		assertFalse("buz".equals(config.getString("encrypted.string.false",
-				"buz")));
+		assertEquals("buz", config.getString("encrypted.string.false", "buz"));
 	}
 
 	@Test
-	//@Ignore("TODO: Incorrect. Needs changes!")
 	public void testSave() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
 		config.save();
@@ -198,37 +188,33 @@ public class TestConfig {
 
 		// Test plain data
 		assertFalse(config.getBoolean("plain.boolean.correct", false));
-		assertTrue(config.getBoolean("plain.boolean.false", true));
-		assertFalse(1.0 / 7.0 == config.getDouble("plain.double.correct", 1.0));
-		assertTrue(1.0 == config.getDouble("plain.double.false", 1.0));
-		assertFalse(1.0f / 11.0f == config
-				.getFloat("plain.float.correct", 1.0f));
-		assertTrue(1.0f == config.getFloat("plain.float.false", 1.0f));
-		assertFalse(42 == config.getInt("plain.int.correct", 0));
-		assertTrue(1234 == config.getInt("plain.int.false", 1234));
-		assertFalse(9876543210l == config.getLong("plain.long.correct", 0));
-		assertTrue(1l == config.getLong("plain.long.false", 1l));
-		assertFalse("Correct".equals(config.getString("plain.string.correct",
-				"foo")));
-		assertTrue("bar".equals(config.getString("plain.string.false", "bar")));
+
+		assertEquals(1.0, config.getDouble("plain.double.correct", 1.0),
+				0.0000000001);
+
+		assertEquals(1.0f, config.getFloat("plain.float.correct", 1.0f),
+				0.00001);
+
+		assertEquals(0, config.getInt("plain.int.correct", 0));
+
+		assertEquals(0, config.getLong("plain.long.correct", 0));
+
+		assertEquals("foo", config.getString("plain.string.correct", "foo"));
 
 		// Test encrypted data
 		assertFalse(config.getBoolean("encrypted.boolean.correct", false));
-		assertTrue(config.getBoolean("encrypted.boolean.false", true));
-		assertFalse(1.0 / 15.0 == config.getDouble("encrypted.double.correct",
-				1.0));
-		assertTrue(1.0 == config.getDouble("encrypted.double.false", 1.0));
-		assertFalse(1.0f / 19.0f == config.getFloat("encrypted.float.correct",
-				1.0f));
-		assertTrue(1.0f == config.getFloat("encrypted.float.false", 1.0f));
-		assertFalse(12 == config.getInt("encrypted.int.correct", 0));
-		assertTrue(1 == config.getInt("encrypted.int.false", 1));
-		assertFalse(963852741l == config.getLong("encrypted.long.correct", 0));
-		assertTrue(1l == config.getLong("encrypted.long.false", 1l));
-		assertFalse("Correct".equals(config.getString(
-				"encrypted.string.correct", "foo")));
-		assertTrue("buz".equals(config.getString("encrypted.string.false",
-				"buz")));
+
+		assertEquals(1.0, config.getDouble("encrypted.double.correct", 1.0),
+				0.0000000001);
+
+		assertEquals(1.0f, config.getFloat("encrypted.float.correct", 1.0f),
+				0.00001);
+
+		assertEquals(0, config.getInt("encrypted.int.correct", 0));
+
+		assertEquals(0, config.getLong("encrypted.long.correct", 0));
+
+		assertEquals("foo", config.getString("encrypted.string.correct", "foo"));
 	}
 
 }
