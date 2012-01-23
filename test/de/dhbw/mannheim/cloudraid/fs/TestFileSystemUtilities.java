@@ -105,7 +105,7 @@ public class TestFileSystemUtilities {
 
 		assertFalse(FileQueue.isEmpty());
 
-		FileManager fm = new FileManager();
+		FileManager fm = new FileManager(0);
 		fm.start();
 		Thread.sleep(1000);
 		fm.interrupt();
