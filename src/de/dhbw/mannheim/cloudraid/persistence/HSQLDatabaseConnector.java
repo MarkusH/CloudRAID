@@ -44,7 +44,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 			deleteStatement;
 	private Statement statement;
 
-	private final static String DB_PATH = Config.CONFIG_HOME + "filedb";
+	private final static String DB_PATH = Config.getCloudRAIDHome() + "filedb";
 
 	public boolean connect(String database) {
 		try {

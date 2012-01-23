@@ -42,34 +42,55 @@ import org.junit.Test;
 public class TestConfig {
 
 	private static final String password = "CloudRAID-Config-Password";
-	private static final String configpath = System
-			.getProperty("java.io.tmpdir") + "/config.xml";
+	private static final String cloudraidHome1 = System
+			.getProperty("java.io.tmpdir") + File.separator + "cloudraid";
+	private static final String cloudraidHome2 = System
+			.getProperty("java.io.tmpdir")
+			+ File.separator
+			+ "cloudraid-new"
+			+ File.separator;
 	private static Config config;
 
 	@BeforeClass
 	public static void oneTimeSetUp() {
-		File f = new File(configpath);
+		File f = new File(cloudraidHome1);
 		if (f.exists()) {
 			f.delete();
 		}
+		Config.setCloudRAIDHome(cloudraidHome1);
 		config = Config.getInstance();
-		Config.setConfigPath(configpath);
 		config.init(password);
 	}
 
 	@AfterClass
-	public static void oneTimeTeadDown() {
-		File f = new File(configpath);
+	public static void oneTimeTearDown() {
+		File f = new File(cloudraidHome1 + File.separator + "config.xml");
 		if (f.exists()) {
 			f.delete();
 		}
-		f = new File(configpath + ".new");
+		f = new File(cloudraidHome1);
 		if (f.exists()) {
 			f.delete();
 		}
-		config = Config.getInstance();
-		Config.setConfigPath(configpath);
-		config.init(password);
+		f = new File(cloudraidHome2);
+		if (f.exists()) {
+			f.delete();
+		}
+	}
+
+	@Test
+	public void testCloudRAIDHome() {
+		Config.setCloudRAIDHome(cloudraidHome2);
+		assertEquals(cloudraidHome2, Config.getCloudRAIDHome());
+		Config.setCloudRAIDHome(cloudraidHome1);
+		assertEquals(cloudraidHome1 + File.separator, Config.getCloudRAIDHome());
+	}
+
+	@Test
+	public void testConfigPath() {
+		Config.setCloudRAIDHome(cloudraidHome1);
+		assertEquals(cloudraidHome1 + File.separator + "config.xml",
+				Config.getConfigPath());
 	}
 
 	@Test
@@ -129,22 +150,22 @@ public class TestConfig {
 	@Test
 	public void testFloat() throws InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException, IOException {
-		config.put("plain.float.correct", 1.0 / 11.0);
+		config.put("plain.float.correct", 1.0f / 11.0f);
 
 		assertTrue(config.keyExists("plain.float.correct"));
 		assertFalse(config.keyExists("plain.float.false"));
 		assertEquals(1.0f / 11.0f,
-				config.getFloat("plain.float.correct", 1.0f), 0.00001);
-		assertEquals(1.0f, config.getFloat("plain.float.false", 1.0f), 0.00001);
+				config.getFloat("plain.float.correct", 1.0f), 0.00001f);
+		assertEquals(1.0f, config.getFloat("plain.float.false", 1.0f), 0.00001f);
 
-		config.put("encrypted.float.correct", 1.0 / 19.0, true);
+		config.put("encrypted.float.correct", 1.0f / 19.0f, true);
 
 		assertTrue(config.keyExists("encrypted.float.correct"));
 		assertFalse(config.keyExists("encrypted.float.false"));
 		assertEquals(1.0f / 19.0f,
-				config.getFloat("encrypted.float.correct", 1.0f), 0.00001);
+				config.getFloat("encrypted.float.correct", 1.0f), 0.00001f);
 		assertEquals(1.0f, config.getFloat("encrypted.float.false", 1.0f),
-				0.00001);
+				0.00001f);
 	}
 
 	@Test
@@ -205,7 +226,7 @@ public class TestConfig {
 		 * are just the inverse of the above and therefore fail in a positive
 		 * manner.
 		 */
-		Config.setConfigPath(configpath + ".new");
+		Config.setCloudRAIDHome(cloudraidHome2);
 		config.reload();
 
 		// Test plain data
@@ -221,7 +242,7 @@ public class TestConfig {
 		assertFalse(config.keyExists("plain.float.correct"));
 		assertFalse(config.keyExists("plain.float.false"));
 		assertEquals(1.0f, config.getFloat("plain.float.correct", 1.0f),
-				0.00001);
+				0.00001f);
 
 		assertFalse(config.keyExists("plain.int.correct"));
 		assertFalse(config.keyExists("plain.int.false"));
@@ -248,7 +269,7 @@ public class TestConfig {
 		assertFalse(config.keyExists("encrypted.float.correct"));
 		assertFalse(config.keyExists("encrypted.float.false"));
 		assertEquals(1.0f, config.getFloat("encrypted.float.correct", 1.0f),
-				0.00001);
+				0.00001f);
 
 		assertFalse(config.keyExists("encrypted.int.correct"));
 		assertFalse(config.keyExists("encrypted.int.false"));
@@ -263,4 +284,17 @@ public class TestConfig {
 		assertEquals("foo", config.getString("encrypted.string.correct", "foo"));
 	}
 
+	@Test
+	public void testEncryptionStatusChange() throws InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException, IOException {
+		config.put("key1", "Test1", false);
+		assertEquals("Test1", config.getString("key1", "Default1"));
+		config.put("key1", "Test2", true);
+		assertEquals("Test2", config.getString("key1", "Default2"));
+
+		config.put("key2", "Test3", true);
+		assertEquals("Test3", config.getString("key2", "Default3"));
+		config.put("key2", "Test4", false);
+		assertEquals("Test4", config.getString("key2", "Default4"));
+	}
 }

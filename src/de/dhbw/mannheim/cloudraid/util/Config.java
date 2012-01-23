@@ -75,14 +75,14 @@ public class Config extends HashMap<String, String> {
 	/**
 	 * The top-level path to the programs config.
 	 */
-	public static String CONFIG_HOME = System.getProperty("os.name").contains("windows")
-			? System.getenv("APPDATA") + "\\cloudraid\\"
+	private static String CLOUDRAID_HOME = System.getProperty("os.name")
+			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
 			: System.getProperty("user.home") + "/.config/cloudraid/";
 
 	/**
 	 * The path to the default configuration file.
 	 */
-	private static String CONFIG_PATH = CONFIG_HOME + File.separator
+	private static String CONFIG_PATH = CLOUDRAID_HOME + File.separator
 			+ "config.xml";
 
 	/**
@@ -132,6 +132,13 @@ public class Config extends HashMap<String, String> {
 	private static Random r = new Random(System.currentTimeMillis());
 
 	/**
+	 * @return Returns the CloudRAID user home path
+	 */
+	public static String getCloudRAIDHome() {
+		return CLOUDRAID_HOME;
+	}
+
+	/**
 	 * @return Returns the config path
 	 */
 	public static String getConfigPath() {
@@ -145,6 +152,21 @@ public class Config extends HashMap<String, String> {
 	 */
 	public static synchronized Config getInstance() {
 		return Holder.INSTANCE;
+	}
+
+	/**
+	 * Sets the CloudRAID user home directory path
+	 * 
+	 * @param path
+	 *            The new path
+	 */
+	public static void setCloudRAIDHome(String path) {
+		if (path.endsWith(File.separator)) {
+			CLOUDRAID_HOME = path;
+		} else {
+			CLOUDRAID_HOME = path + File.separator;
+		}
+		setConfigPath(CLOUDRAID_HOME + "config.xml");
 	}
 
 	/**
