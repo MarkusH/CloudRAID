@@ -82,8 +82,7 @@ public class Config extends HashMap<String, String> {
 	/**
 	 * The path to the default configuration file.
 	 */
-	private static String CONFIG_PATH = CLOUDRAID_HOME + File.separator
-			+ "config.xml";
+	private static String CONFIG_PATH = CLOUDRAID_HOME + "config.xml";
 
 	/**
 	 * A File object of the configuration file.
