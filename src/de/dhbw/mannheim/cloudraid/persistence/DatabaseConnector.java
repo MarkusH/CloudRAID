@@ -97,8 +97,9 @@ public abstract class DatabaseConnector {
 	 *            The hash of the file name.
 	 * @param lastMod
 	 *            The last modification date.
+	 * @return true, if the data set could be inserted into the database.
 	 */
-	public abstract void insert(String path, String hash, long lastMod);
+	public abstract boolean insert(String path, String hash, long lastMod);
 
 	/**
 	 * Looks up the hash value of an entry in the database.
