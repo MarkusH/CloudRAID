@@ -39,20 +39,14 @@ public abstract class DatabaseConnector {
 	 * @return An instance of the DatabaseConnector or, if there was an error
 	 *         creating the instance, an {@link HSQLDatabaseConnector} instance
 	 *         as fall-back.
+	 * @throws ClassNotFoundException
+	 * @throws IllegalAccessException
+	 * @throws InstantiationException
 	 */
-	public static DatabaseConnector getDatabaseConnector(String className) {
-		try {
+	public static DatabaseConnector getDatabaseConnector(String className)
+			throws InstantiationException, IllegalAccessException,
+			ClassNotFoundException, ClassCastException {
 			return (DatabaseConnector) Class.forName(className).newInstance();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return new HSQLDatabaseConnector();
 	}
 
 	/**
