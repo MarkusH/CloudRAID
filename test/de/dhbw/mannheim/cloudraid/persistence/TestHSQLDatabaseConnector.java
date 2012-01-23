@@ -52,7 +52,7 @@ public class TestHSQLDatabaseConnector {
 		dbc = DatabaseConnector.getDatabaseConnector(CONNECTOR_CLASS);
 		assertTrue(dbc.connect());
 		assertTrue(dbc.disconnect());
-		assertTrue(dbc.connect(Config.CONFIG_HOME + DATABASE_FILE));
+		assertTrue(dbc.connect(Config.getCloudRAIDHome() + DATABASE_FILE));
 		assertTrue(dbc.initialize());
 	}
 
@@ -116,7 +116,7 @@ public class TestHSQLDatabaseConnector {
 		assertFalse(dbc.initialize());
 		assertFalse(dbc.delete(PATH));
 
-		assertTrue(dbc.connect(Config.CONFIG_HOME + DATABASE_FILE));
+		assertTrue(dbc.connect(Config.getCloudRAIDHome() + DATABASE_FILE));
 		assertTrue(dbc.initialize());
 	}
 }
