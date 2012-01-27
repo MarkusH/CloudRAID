@@ -1,5 +1,6 @@
 /*
- * Copyright 2011 by the CloudRAID Team, see AUTHORS for more details.
+ * Copyright 2011 - 2012 by the CloudRAID Team
+ * see AUTHORS for more details
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
