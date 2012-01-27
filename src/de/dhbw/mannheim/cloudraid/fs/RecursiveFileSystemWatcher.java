@@ -75,6 +75,7 @@ public class RecursiveFileSystemWatcher extends Thread {
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public void run() {
 		while (!isInterrupted()) {
 			keySet = new Vector<String>(fileMap.keySet());

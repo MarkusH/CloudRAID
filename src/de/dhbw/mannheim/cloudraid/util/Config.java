@@ -76,7 +76,8 @@ public class Config extends HashMap<String, String> {
 	 * The top-level path to the programs config.
 	 */
 	private static String CLOUDRAID_HOME = System.getProperty("os.name")
-			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
+			.contains("windows")
+			? System.getenv("APPDATA") + "\\cloudraid\\"
 			: System.getProperty("user.home") + "/.config/cloudraid/";
 
 	/**
@@ -815,7 +816,8 @@ public class Config extends HashMap<String, String> {
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("") ? ""
+				String salt = saltString == null || saltString.equals("")
+						? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");

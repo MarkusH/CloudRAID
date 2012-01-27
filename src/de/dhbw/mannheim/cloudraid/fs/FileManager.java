@@ -79,6 +79,7 @@ public class FileManager extends Thread {
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public void run() {
 		boolean wasFull = false;
 		long startTime = 0;
@@ -109,25 +110,25 @@ public class FileManager extends Thread {
 
 				if (FileLock.lock(fqe.getFileName(), this)) {
 					switch (fqe.getFileAction()) {
-					case CREATE:
-						System.out.println("Upload new file "
-								+ fqe.getFileName());
-						splitFile(fqe.getFileName());
-						break;
+						case CREATE :
+							System.out.println("Upload new file "
+									+ fqe.getFileName());
+							splitFile(fqe.getFileName());
+							break;
 
-					case DELETE:
-						System.out.println("Send delete order for "
-								+ fqe.getFileName());
-						break;
+						case DELETE :
+							System.out.println("Send delete order for "
+									+ fqe.getFileName());
+							break;
 
-					case MODIFY:
-						System.out.println("Upload updated file "
-								+ fqe.getFileName());
-						splitFile(fqe.getFileName());
-						break;
-					default:
-						System.err.println("This should not happen.");
-						break;
+						case MODIFY :
+							System.out.println("Upload updated file "
+									+ fqe.getFileName());
+							splitFile(fqe.getFileName());
+							break;
+						default :
+							System.err.println("This should not happen.");
+							break;
 					}
 					FileLock.unlock(fqe.getFileName(), this);
 				} else {

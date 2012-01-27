@@ -46,7 +46,7 @@ public abstract class DatabaseConnector {
 	public static DatabaseConnector getDatabaseConnector(String className)
 			throws InstantiationException, IllegalAccessException,
 			ClassNotFoundException, ClassCastException {
-			return (DatabaseConnector) Class.forName(className).newInstance();
+		return (DatabaseConnector) Class.forName(className).newInstance();
 	}
 
 	/**

@@ -24,7 +24,6 @@ package de.dhbw.mannheim.cloudraid.osgi.util;
 
 import java.io.Console;
 import java.io.IOException;
-import java.lang.reflect.Array;
 
 import de.dhbw.mannheim.cloudraid.util.Config;
 

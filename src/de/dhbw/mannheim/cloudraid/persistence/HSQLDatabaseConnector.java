@@ -46,6 +46,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 
 	private final static String DB_PATH = Config.getCloudRAIDHome() + "filedb";
 
+	@Override
 	public boolean connect(String database) {
 		try {
 			con = DriverManager.getConnection("jdbc:hsqldb:file:" + database
@@ -57,10 +58,12 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 		return true;
 	}
 
+	@Override
 	public boolean connect() {
 		return this.connect(DB_PATH);
 	}
 
+	@Override
 	public boolean disconnect() {
 		try {
 			if (statement != null) {
@@ -90,6 +93,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 		return true;
 	}
 
+	@Override
 	public boolean initialize() {
 		try {
 			statement = con.createStatement();
@@ -122,6 +126,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 		}
 	}
 
+	@Override
 	public boolean insert(String path, String hash, long lastMod) {
 		try {
 			findStatement.setString(1, path);
@@ -150,6 +155,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 		}
 	}
 
+	@Override
 	public String getHash(String path) {
 		try {
 			findStatement.setString(1, path);
@@ -164,6 +170,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 		}
 	}
 
+	@Override
 	public long getLastMod(String path) {
 		try {
 			findStatement.setString(1, path);
@@ -178,6 +185,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 		}
 	}
 
+	@Override
 	public String getName(String hash) {
 		try {
 			findNameStatement.setString(1, hash);
@@ -192,6 +200,7 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 		}
 	}
 
+	@Override
 	public boolean delete(String path) {
 		try {
 			deleteStatement.setString(1, path);
