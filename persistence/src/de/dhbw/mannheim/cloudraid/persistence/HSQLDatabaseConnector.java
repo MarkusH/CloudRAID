@@ -43,8 +43,10 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 			deleteStatement, findNameStatement;
 	private Statement statement;
 
+	private final static String DB_PATH = Config.getCloudRAIDHome() + "filedb";
+
 	@Override
-	public boolean connect(String database) {
+	public synchronized boolean connect(String database) {
 		try {
 			con = DriverManager.getConnection("jdbc:hsqldb:file:" + database
 					+ ";shutdown=true", "SA", "");
@@ -56,7 +58,12 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public boolean disconnect() {
+	public synchronized boolean connect() {
+		return this.connect(DB_PATH);
+	}
+
+	@Override
+	public synchronized boolean disconnect() {
 		try {
 			if (statement != null) {
 				statement.execute("SHUTDOWN COMPACT;");
@@ -86,7 +93,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public boolean initialize() {
+	public synchronized boolean initialize() {
 		try {
 			statement = con.createStatement();
 			// statement.execute("DROP TABLE IF EXISTS cloudraid_files;");
@@ -119,7 +126,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public boolean insert(String path, String hash, long lastMod) {
+	public synchronized boolean insert(String path, String hash, long lastMod) {
 		try {
 			findStatement.setString(1, path);
 			ResultSet resSet = findStatement.executeQuery();
@@ -148,7 +155,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public String getHash(String path) {
+	public synchronized String getHash(String path) {
 		try {
 			findStatement.setString(1, path);
 			findStatement.execute();
@@ -163,7 +170,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public long getLastMod(String path) {
+	public synchronized long getLastMod(String path) {
 		try {
 			findStatement.setString(1, path);
 			findStatement.execute();
@@ -178,7 +185,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public String getName(String hash) {
+	public synchronized String getName(String hash) {
 		try {
 			findNameStatement.setString(1, hash);
 			findNameStatement.execute();
@@ -193,7 +200,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public boolean delete(String path) {
+	public synchronized boolean delete(String path) {
 		try {
 			deleteStatement.setString(1, path);
 			deleteStatement.execute();
