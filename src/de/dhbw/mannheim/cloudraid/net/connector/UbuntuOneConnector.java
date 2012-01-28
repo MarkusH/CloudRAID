@@ -36,7 +36,7 @@ import org.scribe.model.Response;
 import org.scribe.model.Token;
 import org.scribe.model.Verb;
 import org.scribe.oauth.OAuthService;
-import org.scribe.utils.URLUtils;
+import org.scribe.utils.OAuthEncoder;
 
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 import de.dhbw.mannheim.cloudraid.net.model.ubuntuone.UbuntuOneVolumeModel;
@@ -216,7 +216,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 	public boolean delete(String resource) {
 		Response response = sendRequest(Verb.DELETE,
 				this.service.getFileStorageEndpoint() + "/~/Ubuntu%20One/"
-						+ URLUtils.percentEncode(resource));
+						+ OAuthEncoder.encode(resource));
 		return (response.getCode() == 200 || response.getCode() == 404);
 	}
 
@@ -260,7 +260,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		}
 		Response response = sendRequest(Verb.GET,
 				this.service.getFileStorageEndpoint() + "/volumes/~/"
-						+ URLUtils.percentEncode(name) + "/");
+						+ OAuthEncoder.encode(name) + "/");
 		System.out.println(response.getBody());
 		if (response.getCode() == 200) {
 			try {
@@ -359,7 +359,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 			}
 			Response response = sendRequest(Verb.PUT,
 					this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
-							+ URLUtils.percentEncode(resource), fileBytes);
+							+ OAuthEncoder.encode(resource), fileBytes);
 			if (response.getCode() == 201) {
 				return true;
 			}

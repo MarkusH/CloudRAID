@@ -31,8 +31,8 @@ import java.util.Set;
 import org.scribe.exceptions.OAuthParametersMissingException;
 import org.scribe.extractors.HeaderExtractorImpl;
 import org.scribe.model.OAuthRequest;
+import org.scribe.utils.OAuthEncoder;
 import org.scribe.utils.Preconditions;
-import org.scribe.utils.URLUtils;
 
 /**
  * @author Markus Holtermann
@@ -81,7 +81,7 @@ public class UbuntuOneHeaderExtractor extends HeaderExtractorImpl {
 		for (String key : tmpkeyList) {
 			header.append(PARAM_SEPARATOR);
 			header.append(String.format("%s=\"%s\"", key,
-					URLUtils.percentEncode(parameters.get(key))));
+					OAuthEncoder.encode(parameters.get(key))));
 		}
 		return header.toString();
 	}
