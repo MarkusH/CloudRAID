@@ -88,7 +88,7 @@ public class AmazonS3ServiceBuilder {
 		Preconditions.checkEmptyString(apiSecret,
 				"You must provide an api secret");
 		return api.createService(new OAuthConfig(apiKey, apiSecret, null, null,
-				null));
+				null, null));
 	}
 
 	/**
