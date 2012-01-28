@@ -22,7 +22,7 @@
 
 package de.dhbw.mannheim.cloudraid.net.util;
 
-import org.scribe.utils.URLUtils;
+import org.scribe.utils.OAuthEncoder;
 
 /**
  * @author Markus Holtermann
@@ -47,10 +47,10 @@ public class NetUtils {
 		String[] splits = url.split("/");
 		StringBuffer out = new StringBuffer();
 
-		out.append(URLUtils.percentEncode(splits[0]));
+		out.append(OAuthEncoder.encode(splits[0]));
 		for (int i = 1; i < splits.length; i++) {
 			out.append("/");
-			out.append(URLUtils.percentEncode(splits[i]));
+			out.append(OAuthEncoder.encode(splits[i]));
 		}
 		return out.toString();
 	}

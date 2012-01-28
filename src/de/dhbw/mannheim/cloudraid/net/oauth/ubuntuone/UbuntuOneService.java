@@ -31,7 +31,7 @@ import org.scribe.model.Token;
 import org.scribe.model.Verb;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
-import org.scribe.utils.URLUtils;
+import org.scribe.utils.OAuthEncoder;
 
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 
@@ -109,7 +109,7 @@ public class UbuntuOneService implements OAuthService {
 		String oauthHeader = api.getHeaderExtractor().extract(request);
 		String signature = getSignature(request, token);
 		oauthHeader = oauthHeader + ", " + OAuthConstants.SIGNATURE + "=\""
-				+ URLUtils.percentEncode(signature) + "\"";
+				+ OAuthEncoder.encode(signature) + "\"";
 		request.addHeader(OAuthConstants.HEADER, oauthHeader);
 		System.err
 				.println("[DEBUG] UbuntuOneService.addSignature(): Authorization = "
@@ -225,7 +225,7 @@ public class UbuntuOneService implements OAuthService {
 				.extractConsumerToken(response.getBody());
 		this.config = new OAuthConfig(ctoken.getToken(), ctoken.getSecret(),
 				this.config.getCallback(), this.config.getSignatureType(),
-				this.config.getScope());
+				this.config.getScope(), null);
 		System.err
 				.println("[DEBUG] UbuntuOneService.getRequestToken(): config = "
 						+ this.config);
