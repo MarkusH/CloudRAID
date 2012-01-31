@@ -42,5 +42,7 @@ Import-Package: com.sun.jersey.api.core,
  org.xml.sax
 Require-Bundle: scribe-java;bundle-version="1.3.0.1-osgi",
  JSON-java;bundle-version="1.0.0.1-osgi",
- org.hsqldb.hsqldb;bundle-version="2.2.8"
+ org.hsqldb.hsqldb;bundle-version="2.2.8",
+ com.sun.jersey.jersey-core;bundle-version="1.11.0",
+ com.sun.jersey.jersey-server;bundle-version="1.11.0"
 Bundle-Activator: de.dhbw.mannheim.cloudraid.osgi.Activator
