@@ -28,7 +28,7 @@ package de.dhbw.mannheim.cloudraid.persistence;
  * @author Florian Bausch
  * 
  */
-public abstract class DatabaseConnector {
+public abstract class DatabaseConnector implements IDatabaseConnector {
 
 	/**
 	 * Creates a DatabaseConnector for a specific database type via reflection.
@@ -43,6 +43,7 @@ public abstract class DatabaseConnector {
 	 * @throws ClassNotFoundException
 	 * @throws IllegalAccessException
 	 * @throws InstantiationException
+	 * @throws ClassCastException
 	 */
 	public static DatabaseConnector getDatabaseConnector(String className)
 			throws InstantiationException, IllegalAccessException,
