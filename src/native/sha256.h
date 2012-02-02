@@ -33,6 +33,8 @@
 #ifndef SHA256_H
 #define SHA256_H 1
 
+#include "defines.h"
+
 #include <stdio.h>
 #include <stdint.h>
 
@@ -118,10 +120,10 @@ extern "C"
     /**
      * Convert the RESBLOCK to an 65 character String, including the terminating NUL!
      */
-    void ascii_from_resbuf ( unsigned char *ascii, void *resblock );
-    int build_sha256_sum ( char *filename, unsigned char *hash );
-    int build_sha256_sum_file ( FILE *filename, unsigned char *hash );
-    unsigned char *check_sha256_sum ( char *filename, unsigned char *hash );
+    DLLEXPORT void ascii_from_resbuf ( unsigned char *ascii, void *resblock );
+    DLLEXPORT int build_sha256_sum ( char *filename, unsigned char *hash );
+    DLLEXPORT int build_sha256_sum_file ( FILE *filename, unsigned char *hash );
+    DLLEXPORT unsigned char *check_sha256_sum ( char *filename, unsigned char *hash );
 
 #ifdef __cplusplus
 }
