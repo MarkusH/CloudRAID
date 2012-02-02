@@ -10,3 +10,11 @@ src/native/test/
 *.kdev4
 *.o
 *.dat
+
+# ignore DevC++ files
+*.res
+*.dll
+*.layout
+*.a
+*.def
+src/native/DevC++/test*

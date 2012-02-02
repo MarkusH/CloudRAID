@@ -1,0 +1,43 @@
+# Project: CloudRAID
+# Makefile created by Dev-C++ 4.9.9.2
+
+CPP  = gcc.exe
+CC   = gcc.exe
+WINDRES = windres.exe
+RES  = ../dll/cloudraid-dll_private.res
+OBJ  = ../dll/sha256.o ../dll/raid5.o ../dll/rc4.o $(RES)
+LINKOBJ  = ../dll/sha256.o ../dll/raid5.o ../dll/rc4.o $(RES)
+LIBS =  -L"C:/Dev-Cpp/lib" --no-export-all-symbols --add-stdcall-alias  
+INCS =  -I"C:/Dev-Cpp/include"  -I"C:/Program Files/Java/jdk1.6.0_30/include"  -I"C:/Program Files/Java/jdk1.6.0_30/include/win32" 
+CXXINCS =  -I"C:/Dev-Cpp/lib/gcc/mingw32/3.4.2/include"  -I"C:/Dev-Cpp/include/c++/3.4.2/backward"  -I"C:/Dev-Cpp/include/c++/3.4.2/mingw32"  -I"C:/Dev-Cpp/include/c++/3.4.2"  -I"C:/Dev-Cpp/include"  -I"C:/Program Files/Java/jdk1.6.0_30/include"  -I"C:/Program Files/Java/jdk1.6.0_30/include/win32" 
+BIN  = cloudraid.dll
+CXXFLAGS = $(CXXINCS) -DBUILDING_DLL=1 -DENCRYPT_DATA=1  
+CFLAGS = $(INCS) -DBUILDING_DLL=1 -DENCRYPT_DATA=1  
+RM = rm -f
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before cloudraid.dll all-after
+
+
+clean: clean-custom
+	${RM} $(OBJ) $(BIN)
+
+DLLWRAP=dllwrap.exe
+DEFFILE=libcloudraid.def
+STATICLIB=libcloudraid.a
+
+$(BIN): $(LINKOBJ)
+	$(DLLWRAP) --output-def $(DEFFILE) --driver-name c++ --implib $(STATICLIB) $(LINKOBJ) $(LIBS) -o $(BIN)
+
+../dll/sha256.o: ../../sha256.c
+	$(CPP) -c ../../sha256.c -o ../dll/sha256.o $(CXXFLAGS)
+
+../dll/raid5.o: ../../raid5.c
+	$(CPP) -c ../../raid5.c -o ../dll/raid5.o $(CXXFLAGS)
+
+../dll/rc4.o: ../../rc4.c
+	$(CPP) -c ../../rc4.c -o ../dll/rc4.o $(CXXFLAGS)
+
+../dll/cloudraid-dll_private.res: cloudraid-dll_private.rc 
+	$(WINDRES) -i cloudraid-dll_private.rc --input-format=rc -o ../dll/cloudraid-dll_private.res -O coff 
