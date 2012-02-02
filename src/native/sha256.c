@@ -97,7 +97,7 @@ static inline void set_uint32 ( char *cp, uint32_t v )
 void * sha256_read_ctx ( const struct sha256_ctx *ctx, void *resbuf )
 {
     int i;
-    char *r = resbuf;
+    char *r = (char*) resbuf;
 
     for ( i = 0; i < 8; i++ )
         set_uint32 ( r + i * sizeof ctx->state[0], SWAP ( ctx->state[i] ) );
@@ -150,7 +150,7 @@ int sha256_stream ( FILE *stream, void *resblock )
     struct sha256_ctx ctx;
     size_t sum;
 
-    char *buffer = malloc ( SHA256_BLOCKSIZE + 72 );
+    char *buffer = (char*) malloc ( SHA256_BLOCKSIZE + 72 );
     if ( !buffer )
         return 1;
 
@@ -342,7 +342,7 @@ static const uint32_t sha256_round_constants[64] =
 
 void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *ctx )
 {
-    const uint32_t *words = buffer;
+    const uint32_t *words = (uint32_t*) buffer;
     size_t nwords = len / sizeof ( uint32_t );
     const uint32_t *endp = words + nwords;
     uint32_t x[16];
@@ -479,7 +479,7 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
 #define SHAERR_INVALID 0x42
 #define SHAERR_VALID   0x43
 
-void ascii_from_resbuf ( unsigned char* ascii, void* resblock )
+DLLEXPORT void ascii_from_resbuf ( unsigned char* ascii, void* resblock )
 {
     int i;
     for ( i = 0; i < 32; i++ )
@@ -488,7 +488,7 @@ void ascii_from_resbuf ( unsigned char* ascii, void* resblock )
     }
 }
 
-int build_sha256_sum ( char *filename, unsigned char *hash )
+DLLEXPORT int build_sha256_sum ( char *filename, unsigned char *hash )
 {
     void *resblock = NULL;
     FILE *fp = NULL;
@@ -512,7 +512,7 @@ int build_sha256_sum ( char *filename, unsigned char *hash )
     return 0;
 }
 
-int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
+DLLEXPORT int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
 {
     void *resblock = NULL;
 
@@ -534,7 +534,7 @@ int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
     return 0;
 }
 
-unsigned char* check_sha256_sum ( char *filename, unsigned char *hash )
+DLLEXPORT unsigned char* check_sha256_sum ( char *filename, unsigned char *hash )
 {
     unsigned char *ascii = NULL;
 

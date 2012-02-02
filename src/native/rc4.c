@@ -1,7 +1,8 @@
 #include "rc4.h"
 
 #include <stdlib.h>
-void swap_byte ( unsigned char *a, unsigned char *b )
+
+DLLEXPORT void swap_byte ( unsigned char *a, unsigned char *b )
 {
     unsigned char swapByte;
 
@@ -10,7 +11,7 @@ void swap_byte ( unsigned char *a, unsigned char *b )
     *b = swapByte;
 }
 
-void prepare_key ( const unsigned char *key_data_ptr, int key_data_len, rc4_key *key )
+DLLEXPORT void prepare_key ( const unsigned char *key_data_ptr, int key_data_len, rc4_key *key )
 {
     unsigned char index1;
     unsigned char index2;

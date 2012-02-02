@@ -1,5 +1,6 @@
 /*
- * Copyright 2011 by the CloudRAID Team, see AUTHORS for more details.
+ * Copyright 2011 - 2012 by the CloudRAID Team
+ * see AUTHORS for more details
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -60,11 +61,13 @@ int main ( void )
 #endif
 #if BENCHMARK == 1
     struct timeval start, end;
-    float elapsed;
+    float elapsed_split, elapsed_merge;
 #endif
     rc4_key rc4key;
 
+#if BENCHMARK != 1
     printf ( "Running test for RAID5:\n\n" );
+#endif
 
     /** Create test file **/
     fp[0] = fopen ( filename[0], "wb" );
@@ -112,8 +115,10 @@ int main ( void )
     prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
 
     /** perform the split **/
+#if BENCHMARK != 1
     printf ( "Start split ... " );
     fflush ( stdout );
+#endif
 #if BENCHMARK == 1
     gettimeofday ( &start, NULL );
 #endif
@@ -121,11 +126,12 @@ int main ( void )
 #if BENCHMARK == 1
     gettimeofday ( &end, NULL );
 #endif
+#if BENCHMARK != 1
     printf ( "Done\n" );
     fflush ( stdout );
+#endif
 #if BENCHMARK == 1
-    elapsed = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
-    printf ( "split time: %.3f ms\n\n", elapsed );
+    elapsed_split = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
 #endif
 
     /** Close the input file **/
@@ -142,13 +148,14 @@ int main ( void )
         fp[i] = fopen ( filename[i], "rb" );
         if ( !fp[i] )
         {
+#if BENCHMARK != 1
             printf ( "Cannot open device file %d!\n", i - 1 );
+#endif
         }
     }
 
     fclose ( fp[4] );
     fp[4] = fopen ( filename[5], "rb" );
-    printf ( "\n%s\n", filename[5] );
     if ( !fp[4] )
     {
         printf ( "Cannot open metadata file!\n" );
@@ -165,8 +172,10 @@ int main ( void )
 
     prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
     /** perform the merge **/
+#if BENCHMARK != 1
     printf ( "Start merge ... " );
     fflush ( stdout );
+#endif
 #if BENCHMARK == 1
     gettimeofday ( &start, NULL );
 #endif
@@ -174,11 +183,12 @@ int main ( void )
 #if BENCHMARK == 1
     gettimeofday ( &end, NULL );
 #endif
+#if BENCHMARK != 1
     printf ( "Done\n" );
     fflush ( stdout );
+#endif
 #if BENCHMARK == 1
-    elapsed = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
-    printf ( "merge time: %.3f ms\n\n", elapsed );
+    elapsed_merge = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
 #endif
 
     /** Close ALL files **/
@@ -222,6 +232,9 @@ int main ( void )
 #endif
         /*remove ( filename[i] );*/
     }
+#if BENCHMARK == 1
+    printf ( "\"split\";\"%.3f\";\"merge\";\"%.3f\";\"bytes\";\"%d\"\n", elapsed_split, elapsed_merge , BENCHSIZE );
+#endif
     return status;
 }
 
