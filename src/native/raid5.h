@@ -22,6 +22,7 @@
 #ifndef RAID5_H
 #define RAID5_H 1
 
+#include "defines.h"
 #include "rc4.h"
 
 #include <stdio.h>
@@ -51,17 +52,17 @@ extern "C"
     void merge_byte_block ( const unsigned char* in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char* out, size_t* out_len );
     void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[] );
 
-    int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key );
-    int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key );
+    DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key );
+    DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key );
 
-    int cmp_metadata ( raid5md *md1, raid5md *md2 );
-    int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx );
-    int create_metadata ( FILE *devices[], raid5md *md );
-    void new_metadata ( raid5md *md );
-    void print_metadata ( raid5md *md );
-    int read_metadata ( FILE *fp, raid5md *md );
-    void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] );
-    int write_metadata ( FILE *fp, raid5md *md );
+    DLLEXPORT int cmp_metadata ( raid5md *md1, raid5md *md2 );
+    DLLEXPORT int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx );
+    DLLEXPORT int create_metadata ( FILE *devices[], raid5md *md );
+    DLLEXPORT void new_metadata ( raid5md *md );
+    DLLEXPORT void print_metadata ( raid5md *md );
+    DLLEXPORT int read_metadata ( FILE *fp, raid5md *md );
+    DLLEXPORT void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] );
+    DLLEXPORT int write_metadata ( FILE *fp, raid5md *md );
 
 #ifdef __cplusplus
 }

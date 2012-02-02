@@ -172,7 +172,7 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
     }
 }
 
-int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
+DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *chars = NULL, *out = NULL, parity_pos = 2, *hash = NULL;
     size_t rlen, *out_len = NULL, l = 0, min = -1, max = 0;
@@ -369,7 +369,7 @@ end:
     return status;
 }
 
-int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
+DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i;
     size_t *in_len = NULL, out_len, l = 0;
@@ -520,7 +520,7 @@ end:
  *
  * 0xff - memory error in md1 or md2
  */
-int cmp_metadata ( raid5md *md1, raid5md *md2 )
+DLLEXPORT int cmp_metadata ( raid5md *md1, raid5md *md2 )
 {
     int i, cmp = 0x00;
 
@@ -543,7 +543,7 @@ int cmp_metadata ( raid5md *md1, raid5md *md2 )
  * OR if the index is out of range [0..3].
  * Otherwize the error number (see cmp_metadata).
  */
-int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
+DLLEXPORT int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
 {
     if ( md1 == NULL || md2 == NULL )
     {
@@ -568,7 +568,7 @@ int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
  * file. The checksums are stored into the given metadata.
  * Returns 0 on success.
  */
-int create_metadata ( FILE *devices[], raid5md *md )
+DLLEXPORT int create_metadata ( FILE *devices[], raid5md *md )
 {
     int i;
     unsigned char *ascii = NULL;
@@ -608,7 +608,7 @@ int create_metadata ( FILE *devices[], raid5md *md )
     return 0;
 }
 
-void new_metadata ( raid5md *md )
+DLLEXPORT void new_metadata ( raid5md *md )
 {
     if ( md )
     {
@@ -621,7 +621,7 @@ void new_metadata ( raid5md *md )
     }
 }
 
-void print_metadata ( raid5md *md )
+DLLEXPORT void print_metadata ( raid5md *md )
 {
     if ( md )
     {
@@ -638,7 +638,7 @@ void print_metadata ( raid5md *md )
     }
 }
 
-int read_metadata ( FILE *fp, raid5md *md )
+DLLEXPORT int read_metadata ( FILE *fp, raid5md *md )
 {
     if ( fp )
     {
@@ -658,7 +658,7 @@ int read_metadata ( FILE *fp, raid5md *md )
     return 1;
 }
 
-void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] )
+DLLEXPORT void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] )
 {
     if ( md )
     {
@@ -680,7 +680,7 @@ void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65
     }
 }
 
-int write_metadata ( FILE *fp, raid5md *md )
+DLLEXPORT int write_metadata ( FILE *fp, raid5md *md )
 {
     if ( fp )
     {
