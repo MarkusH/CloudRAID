@@ -18,3 +18,4 @@ for i in {0..28} ; do
         echo "${BS} FALSE"
     fi
 done
+rm test_raid5.*dat
