@@ -14,6 +14,5 @@ Import-Package: com.sun.jersey.api.core,
 Require-Bundle: JSON-java;bundle-version="1.0.0.1-osgi",
  com.sun.jersey.jersey-core;bundle-version="1.11.0",
  com.sun.jersey.jersey-server;bundle-version="1.11.0"
-Bundle-Activator: de.dhbw.mannheim.cloudraid.osgi.Activator
 Export-Package: de.dhbw.mannheim.cloudraid.api,
  de.dhbw.mannheim.cloudraid.api.resources

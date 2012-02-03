@@ -1,6 +1,6 @@
 bin/
-src/native/build/
-src/native/test/
+native/build/
+native/test/
 .*
 *.project
 *.cproject
@@ -17,4 +17,4 @@ src/native/test/
 *.layout
 *.a
 *.def
-src/native/DevC++/test*
+native/DevC++/test*

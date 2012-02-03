@@ -8,8 +8,8 @@ endif
 
 CC = gcc
 
-JAVASOURCE = ./../../src/core
-JAVABIN = ./../../src/core/bin
+JAVASOURCE = ./../core/src
+JAVABIN = ./../core/bin
 SRC = raid5.c sha256.c rc4.c
 OBJ = $(SRC:.c=.o)
 LIB = ./build/usr/lib/libcloudraid.so

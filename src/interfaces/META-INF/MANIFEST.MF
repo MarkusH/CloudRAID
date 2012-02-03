@@ -1,8 +1,0 @@
-Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: CloudRAID-ipersistance
-Bundle-SymbolicName: CloudRAID-ipersistance
-Bundle-Version: 0.0.1.prealpha
-Bundle-Vendor: cloudraid
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.dhbw.mannheim.cloudraid.persistence
