@@ -40,14 +40,6 @@ public interface IDatabaseConnector {
 	public boolean connect(String database);
 
 	/**
-	 * Creates a connection to the default database. To specify a certain
-	 * database, use {@link #connect(String)}
-	 * 
-	 * @return true, if the connection could be opened; false, if not.
-	 */
-	public boolean connect();
-
-	/**
 	 * Closes the connection to the database opened by {@link #connect()}.
 	 * 
 	 * @return true, if the connection could be closed.

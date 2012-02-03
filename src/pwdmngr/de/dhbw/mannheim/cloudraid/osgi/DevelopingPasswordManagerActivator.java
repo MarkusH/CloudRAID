@@ -24,45 +24,26 @@ package de.dhbw.mannheim.cloudraid.osgi;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 
-import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.util.DevelopingPasswordManager;
 import de.dhbw.mannheim.cloudraid.util.IPasswordManager;
 
-/**
- * @author Markus Holtermann
- * 
- */
-public class Activator implements BundleActivator {
+public class DevelopingPasswordManagerActivator implements BundleActivator {
 
-	// private ServiceRegistration<?> configRegistration;
-	ServiceReference<IPasswordManager> passwordServiceReference = null;
-	IPasswordManager pwdmngr = null;
+	private ServiceRegistration<?> pwdmngrService;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext
-	 * )
-	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
-		passwordServiceReference = context
-				.getServiceReference(IPasswordManager.class);
-		pwdmngr = context.getService(passwordServiceReference);
-		Config.getInstance().init(pwdmngr.getCredentials());
+		IPasswordManager passwordManager = new DevelopingPasswordManager();
+		pwdmngrService = context.registerService(
+				DevelopingPasswordManager.class.getName(), passwordManager,
+				null);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
-	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
-		// configRegistration.unregister();
+		pwdmngrService.unregister();
 	}
 
 }

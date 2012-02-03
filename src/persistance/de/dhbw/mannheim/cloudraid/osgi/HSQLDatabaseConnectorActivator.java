@@ -24,45 +24,35 @@ package de.dhbw.mannheim.cloudraid.osgi;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 
-import de.dhbw.mannheim.cloudraid.util.Config;
-import de.dhbw.mannheim.cloudraid.util.IPasswordManager;
+import de.dhbw.mannheim.cloudraid.persistence.HSQLDatabaseConnector;
+import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 
 /**
  * @author Markus Holtermann
  * 
  */
-public class Activator implements BundleActivator {
+public class HSQLDatabaseConnectorActivator implements BundleActivator {
 
-	// private ServiceRegistration<?> configRegistration;
-	ServiceReference<IPasswordManager> passwordServiceReference = null;
-	IPasswordManager pwdmngr = null;
+	private ServiceRegistration<?> databaseService;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext
-	 * )
-	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
-		passwordServiceReference = context
-				.getServiceReference(IPasswordManager.class);
-		pwdmngr = context.getService(passwordServiceReference);
-		Config.getInstance().init(pwdmngr.getCredentials());
+		try {
+			IDatabaseConnector databaseConnector = new HSQLDatabaseConnector();
+			databaseService = context.registerService(
+					HSQLDatabaseConnector.class.getName(), databaseConnector,
+					null);
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
-	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
-		// configRegistration.unregister();
+		databaseService.unregister();
 	}
 
 }

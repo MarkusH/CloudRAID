@@ -30,13 +30,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 
-import de.dhbw.mannheim.cloudraid.util.Config;
-
 /**
  * An implementation of the {@link DatabaseConnector} for the HSQL database
  * system.
  * 
- * @author Florian Bausch
+ * @author Florian Bausch, Markus Holtermann
  * 
  */
 public class HSQLDatabaseConnector extends DatabaseConnector {
@@ -44,8 +42,6 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 	private PreparedStatement insertStatement, updateStatement, findStatement,
 			deleteStatement, findNameStatement;
 	private Statement statement;
-
-	private final static String DB_PATH = Config.getCloudRAIDHome() + "filedb";
 
 	@Override
 	public boolean connect(String database) {
@@ -57,11 +53,6 @@ public class HSQLDatabaseConnector extends DatabaseConnector {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public boolean connect() {
-		return this.connect(DB_PATH);
 	}
 
 	@Override

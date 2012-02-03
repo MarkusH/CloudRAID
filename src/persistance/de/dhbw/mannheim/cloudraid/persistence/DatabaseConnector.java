@@ -25,7 +25,7 @@ package de.dhbw.mannheim.cloudraid.persistence;
 /**
  * An abstract class for defining an interface to access various database types.
  * 
- * @author Florian Bausch
+ * @author Florian Bausch, Markus Holtermann
  * 
  */
 public abstract class DatabaseConnector implements IDatabaseConnector {
@@ -41,98 +41,21 @@ public abstract class DatabaseConnector implements IDatabaseConnector {
 	 *         creating the instance, an {@link HSQLDatabaseConnector} instance
 	 *         as fall-back.
 	 * @throws ClassNotFoundException
+	 *             if the class cannot be found
 	 * @throws IllegalAccessException
+	 *             if the class or its nullary constructor is not accessible.
 	 * @throws InstantiationException
+	 *             if this Class represents an abstract class, an interface, an
+	 *             array class, a primitive type, or void; or if the class has
+	 *             no nullary constructor; or if the instantiation fails for
+	 *             some other reason.
 	 * @throws ClassCastException
+	 *             if the given class is not of type {@link IDatabaseConnector}
 	 */
-	public static DatabaseConnector getDatabaseConnector(String className)
+	public static IDatabaseConnector getDatabaseConnector(String className)
 			throws InstantiationException, IllegalAccessException,
 			ClassNotFoundException, ClassCastException {
-		return (DatabaseConnector) Class.forName(className).newInstance();
+		return (IDatabaseConnector) Class.forName(className).newInstance();
 	}
 
-	/**
-	 * Creates a connection to a specific database. To use the default, use
-	 * {@link #connect()}
-	 * 
-	 * @param database
-	 *            The absolute path to the database.
-	 * 
-	 * @return true, if the connection could be opened; false, if not.
-	 */
-	public abstract boolean connect(String database);
-
-	/**
-	 * Creates a connection to the default database. To specify a certain
-	 * database, use {@link #connect(String)}
-	 * 
-	 * @return true, if the connection could be opened; false, if not.
-	 */
-	public abstract boolean connect();
-
-	/**
-	 * Closes the connection to the database opened by {@link #connect()}.
-	 * 
-	 * @return true, if the connection could be closed.
-	 */
-	public abstract boolean disconnect();
-
-	/**
-	 * Creates the database schemas.
-	 * 
-	 * @return true, if the initialization could be executed.
-	 */
-	public abstract boolean initialize();
-
-	/**
-	 * Inserts a data set into the database.
-	 * 
-	 * @param path
-	 *            The path of a file.
-	 * @param hash
-	 *            The hash of the file name.
-	 * @param lastMod
-	 *            The last modification date.
-	 * @return true, if the data set could be inserted into the database.
-	 */
-	public abstract boolean insert(String path, String hash, long lastMod);
-
-	/**
-	 * Looks up the hash value of an entry in the database.
-	 * 
-	 * @param path
-	 *            The path of the file (identifies the data set).
-	 * @return The hash value. Or <code>null</code>, if the path does not exist
-	 *         in the database.
-	 */
-	public abstract String getHash(String path);
-
-	/**
-	 * Looks up the last modification date of a file.
-	 * 
-	 * @param path
-	 *            The path of the file.
-	 * @return The last modification date. Or <code>-1L</code>, if the path does
-	 *         not exist in the database.
-	 */
-	public abstract long getLastMod(String path);
-
-	/**
-	 * Looks up a file name for a given hash value.
-	 * 
-	 * @param hash
-	 *            The hash value.
-	 * @return The path of the file. Or <code>null</code>, if the hash does not
-	 *         exist in the database.
-	 */
-	public abstract String getName(String hash);
-
-	/**
-	 * Deletes a data set in the database defined by the path.
-	 * 
-	 * @param path
-	 *            The path of the file.
-	 * @return true, if the data set could be deleted.
-	 */
-	public abstract boolean delete(String path);
 }

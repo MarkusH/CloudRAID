@@ -1,6 +1,6 @@
 /*
  * Copyright 2011 - 2012 by the CloudRAID Team
- * see AUTHORS for more details
+ * see AUTHORS for more details.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -20,10 +20,22 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.osgi.util;
+package de.dhbw.mannheim.cloudraid.util;
 
-import de.dhbw.mannheim.cloudraid.util.Config;
+/**
+ * @author Markus Holtermann
+ * 
+ */
+public class DevelopingPasswordManager implements IPasswordManager {
 
-public interface ConfigService {
-	public Config getConfig();
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.dhbw.mannheim.cloudraid.util.IPasswordManager#getCredentials()
+	 */
+	@Override
+	public String getCredentials() {
+		return "Test!P4ssw0rd";
+	}
+
 }
