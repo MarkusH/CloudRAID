@@ -6,6 +6,10 @@ else
 CFLAGS = -O3 ${FEATURES}
 endif
 
+ifndef DESTDIR
+DESTDIR = /
+endif
+
 CC = gcc
 
 JAVASOURCE = ./../../src
@@ -21,26 +25,22 @@ jcompile:
 	javac -sourcepath ${JAVASOURCE}/de/dhbw/mannheim/cloudraid/jni/ -classpath ${JAVASOURCE} -d ${JAVABIN} ${JAVASOURCE}/de/dhbw/mannheim/cloudraid/jni/RaidAccessInterface.java
 	javah -classpath ${JAVABIN}:. -d . de.dhbw.mannheim.cloudraid.jni.RaidAccessInterface
 
-compile: jcompile ${OBJ}
+compile: ${OBJ}
 	mkdir -p ./build/usr/lib
 	${CC} ${CFLAGS} -shared -o ${LIB} ${OBJ}
-
-#${OBJ}:
-#	${CC} ${SRC} -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${CFLAGS} -c
 
 .c.o:
 	${CC} -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${CFLAGS} -c $<
 
 install:
-	cp -rvf ./build/* /
+	cp -rvf ./build/* ${DESTDIR}
 
 clean:
 	rm -rf ./build
 	rm -rf ./test
 	rm -f ${OBJ}
-	rm -f de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface.h
 
-test: clean compile
+test:
 	mkdir -p ./test/
 	${CC} test_sha256.c ${CFLAGS} ${LIB} -o ./test/test_sha256
 	${CC} test_raid5.c -DCHECKING=1 ${CFLAGS} ${LIB} -o ./test/test_raid5
