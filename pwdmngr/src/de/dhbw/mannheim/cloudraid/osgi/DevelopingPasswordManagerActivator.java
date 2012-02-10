@@ -37,8 +37,7 @@ public class DevelopingPasswordManagerActivator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		IPasswordManager passwordManager = new DevelopingPasswordManager();
 		pwdmngrService = context.registerService(
-				DevelopingPasswordManager.class.getName(), passwordManager,
-				null);
+				IPasswordManager.class.getName(), passwordManager, null);
 	}
 
 	@Override

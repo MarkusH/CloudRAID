@@ -31,13 +31,13 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 
 /**
- * An implementation of the {@link DatabaseConnector} for the HSQL database
+ * An implementation of the {@link IDatabaseConnector} for the HSQL database
  * system.
  * 
  * @author Florian Bausch, Markus Holtermann
  * 
  */
-public class HSQLDatabaseConnector extends DatabaseConnector {
+public class HSQLDatabaseConnector implements IDatabaseConnector {
 	private Connection con;
 	private PreparedStatement insertStatement, updateStatement, findStatement,
 			deleteStatement, findNameStatement;

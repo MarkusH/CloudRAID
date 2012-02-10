@@ -39,15 +39,9 @@ public class HSQLDatabaseConnectorActivator implements BundleActivator {
 
 	@Override
 	public void start(BundleContext context) throws Exception {
-		try {
-			IDatabaseConnector databaseConnector = new HSQLDatabaseConnector();
-			databaseService = context.registerService(
-					HSQLDatabaseConnector.class.getName(), databaseConnector,
-					null);
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			e.printStackTrace();
-		}
+		IDatabaseConnector databaseConnector = new HSQLDatabaseConnector();
+		databaseService = context.registerService(
+				IDatabaseConnector.class.getName(), databaseConnector, null);
 	}
 
 	@Override
