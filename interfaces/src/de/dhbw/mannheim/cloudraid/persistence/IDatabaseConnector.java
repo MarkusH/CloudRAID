@@ -29,8 +29,7 @@ package de.dhbw.mannheim.cloudraid.persistence;
 public interface IDatabaseConnector {
 
 	/**
-	 * Creates a connection to a specific database. To use the default, use
-	 * {@link #connect()}
+	 * Creates a connection to a specific database.
 	 * 
 	 * @param database
 	 *            The absolute path to the database.
@@ -40,7 +39,7 @@ public interface IDatabaseConnector {
 	public boolean connect(String database);
 
 	/**
-	 * Closes the connection to the database opened by {@link #connect()}.
+	 * Closes the connection to the database opened by {@link #connect(String)}.
 	 * 
 	 * @return true, if the connection could be closed.
 	 */
