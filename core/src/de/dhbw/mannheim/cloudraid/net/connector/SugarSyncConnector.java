@@ -624,7 +624,17 @@ public class SugarSyncConnector implements IStorageConnector {
 	@Override
 	public boolean put(String resource) {
 		File f = new File("/tmp/" + resource);
-		if (f.length() > Config.MAX_FILE_SIZE) {
+		int max_filesize;
+		try {
+			max_filesize = Config.getInstance().getInt("filesize.max", null);
+			if (f.length() > max_filesize) {
+				System.err.println("File too big");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		if (f.length() > max_filesize) {
 			System.err.println("File too big");
 		} else if (!f.exists()) {
 			System.err.println("File does not exist");

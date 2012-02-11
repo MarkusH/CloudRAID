@@ -29,12 +29,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import de.dhbw.mannheim.cloudraid.util.Config;
 
 /**
  * @author Markus Holtermann
@@ -47,16 +53,31 @@ public class TestRaidAccessInterface {
 	private static String content;
 
 	private static final int CONTENT_LENGTH = 1024 * 20;
-	private static final String tmpPath = System.getProperty("java.io.tmpdir")
-			+ File.separator;
 	private static final String KEY = "CloudRAID";
-	private static final int KEY_LENGTH = KEY.length();
+	private static String mergeInPath;
+	private static String mergeOutPath;
+	private static String splitInPath;
+	private static String splitOutPath;
 
 	@BeforeClass
-	public static void oneTimeSetUp() throws IOException {
+	public static void oneTimeSetUp() throws IOException, InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException {
 		int i;
-		in = new File(tmpPath, "TestRaidAccessInterface.in");
-		out = new File(tmpPath, "TestRaidAccessInterface.out");
+
+		mergeInPath = Config.getInstance().getString("split.input.dir", null);
+		mergeOutPath = Config.getInstance().getString("split.output.dir", null);
+
+		splitInPath = Config.getInstance().getString("split.input.dir", null);
+		splitOutPath = Config.getInstance().getString("split.output.dir", null);
+
+		new File(mergeInPath).mkdirs();
+		new File(mergeOutPath).mkdirs();
+		new File(splitInPath).mkdirs();
+		new File(splitOutPath).mkdirs();
+
+		in = new File(splitInPath, "TestRaidAccessInterface.in");
+		out = new File(mergeOutPath, "TestRaidAccessInterface.out");
+
 		FileWriter fw = new FileWriter(in);
 		content_array = new char[CONTENT_LENGTH];
 
@@ -69,26 +90,28 @@ public class TestRaidAccessInterface {
 		fw.write(content);
 		fw.close();
 	}
-
 	@AfterClass
 	public static void oneTimeTearDown() {
 		in.delete();
-		new File(tmpPath, hash + ".0").delete();
-		new File(tmpPath, hash + ".1").delete();
-		new File(tmpPath, hash + ".2").delete();
-		new File(tmpPath, hash + ".m").delete();
+		new File(mergeInPath, hash + ".0").delete();
+		new File(mergeInPath, hash + ".1").delete();
+		new File(mergeInPath, hash + ".2").delete();
+		new File(mergeInPath, hash + ".m").delete();
 		out.delete();
 	}
 
 	@Test
 	public void testSplit() throws NoSuchAlgorithmException,
 			UnsupportedEncodingException {
-		hash = RaidAccessInterface.splitInterface(in.getAbsolutePath(),
-				tmpPath, KEY, KEY_LENGTH);
+
+		hash = RaidAccessInterface.splitInterface(splitInPath, in
+				.getAbsolutePath().substring(splitInPath.length()),
+				splitOutPath, KEY);
 
 		MessageDigest digest = MessageDigest.getInstance("SHA-256");
 		digest.reset();
-		byte[] expected = digest.digest(in.getAbsolutePath().getBytes("UTF-8"));
+		byte[] expected = digest.digest(in.getAbsolutePath()
+				.substring(splitInPath.length()).getBytes("UTF-8"));
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < expected.length; i++) {
 			sb.append(Integer.toString((expected[i] & 0xff) + 0x100, 16)
@@ -96,11 +119,20 @@ public class TestRaidAccessInterface {
 		}
 		assertEquals(sb.toString(), hash);
 	}
-
 	@Test
 	public void testMerge() {
-		int i = RaidAccessInterface.mergeInterface(tmpPath, hash,
-				out.getAbsolutePath(), KEY, KEY_LENGTH);
+
+		new File(splitOutPath, hash + ".0").renameTo(new File(mergeInPath, hash
+				+ ".0"));
+		new File(splitOutPath, hash + ".1").renameTo(new File(mergeInPath, hash
+				+ ".1"));
+		new File(splitOutPath, hash + ".2").renameTo(new File(mergeInPath, hash
+				+ ".2"));
+		new File(splitOutPath, hash + ".m").renameTo(new File(mergeInPath, hash
+				+ ".m"));
+
+		int i = RaidAccessInterface.mergeInterface(mergeInPath, hash,
+				out.getAbsolutePath(), KEY);
 		assertEquals(0x02, i);
 	}
 

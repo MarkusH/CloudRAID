@@ -276,9 +276,19 @@ public class DropboxConnector implements IStorageConnector {
 		if (!f.exists()) {
 			System.err.println("File does not exist.");
 			return false;
-		} else if (f.length() > Config.MAX_FILE_SIZE) {
-			System.err.println("File too big");
-			return false;
+		} else {
+			int max_filesize;
+			try {
+				max_filesize = Config.getInstance()
+						.getInt("filesize.max", null);
+				if (f.length() > max_filesize) {
+					System.err.println("File too big");
+					return false;
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
 		}
 
 		byte[] fileBytes = new byte[(int) f.length()];
