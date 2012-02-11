@@ -71,13 +71,34 @@ public class Config extends HashMap<String, String> {
 	/**
 	 * Maximum file size in MiB
 	 */
-	public static final int MAX_FILE_SIZE = 1024 * 1024 * 512;
+	private static final int DEFAULT_FILESIZE_MAX = 1024 * 1024 * 512;
+	private static final String DEFAULT_MERGE_INPUT_DIR = System
+			.getProperty("java.io.tmpdir")
+			+ File.separator
+			+ "cloudraid-merge-input" + File.separator;
+	private static final String DEFAULT_MERGE_OUTPUT_DIR = System
+			.getProperty("java.io.tmpdir")
+			+ File.separator
+			+ "cloudraid-merge-output" + File.separator;
+	private static final String DEFAULT_SPLIT_INPUT_DIR = System
+			.getProperty("java.io.tmpdir")
+			+ File.separator
+			+ "cloudraid-split-input" + File.separator;
+	private static final String DEFAULT_SPLIT_OUTPUT_DIR = System
+			.getProperty("java.io.tmpdir")
+			+ File.separator
+			+ "cloudraid-split-output" + File.separator;
+	private static final String DEFAULT_UPLOAD_DIR = System
+			.getProperty("java.io.tmpdir")
+			+ File.separator
+			+ "cloudraid-upload" + File.separator;
 
 	/**
 	 * The top-level path to the programs config.
 	 */
 	private static String CLOUDRAID_HOME = System.getProperty("os.name")
-			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
+			.contains("windows")
+			? System.getenv("APPDATA") + "\\cloudraid\\"
 			: System.getProperty("user.home") + "/.config/cloudraid/";
 
 	/**
@@ -89,6 +110,8 @@ public class Config extends HashMap<String, String> {
 	 * A File object of the configuration file.
 	 */
 	private static File CONFIG_FILE = new File(CONFIG_PATH);
+
+	private static HashMap<String, String> defaultData = new HashMap<String, String>();
 
 	/**
 	 * A HashMap of allowed allowed ciphers. The keys of the map contain the
@@ -186,6 +209,12 @@ public class Config extends HashMap<String, String> {
 	 */
 	private Config() {
 		Config.allowedCiphers.put("AES", 256);
+		Config.defaultData.put("filesize.max", "" + DEFAULT_FILESIZE_MAX);
+		Config.defaultData.put("merge.input.dir", DEFAULT_MERGE_INPUT_DIR);
+		Config.defaultData.put("merge.output.dir", DEFAULT_MERGE_OUTPUT_DIR);
+		Config.defaultData.put("split.input.dir", DEFAULT_SPLIT_INPUT_DIR);
+		Config.defaultData.put("split.output.dir", DEFAULT_SPLIT_OUTPUT_DIR);
+		Config.defaultData.put("upload.dir", DEFAULT_UPLOAD_DIR);
 	}
 
 	/**
@@ -281,13 +310,20 @@ public class Config extends HashMap<String, String> {
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized boolean getBoolean(String key, boolean defaultVal)
+	public synchronized boolean getBoolean(String key, Boolean defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
 			BadPaddingException, IOException {
 		try {
 			String str = this.get(key);
 			return Boolean.parseBoolean(str);
 		} catch (NoSuchElementException e) {
+			if (defaultVal == null) {
+				if (!Config.defaultData.containsKey(key)) {
+					throw new NoSuchElementException();
+				}
+				return Boolean.parseBoolean(Config.defaultData.get(key));
+
+			}
 			return defaultVal;
 		}
 	}
@@ -315,13 +351,20 @@ public class Config extends HashMap<String, String> {
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized double getDouble(String key, double defaultVal)
+	public synchronized double getDouble(String key, Double defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
 			BadPaddingException, IOException {
 		try {
 			String str = this.get(key);
 			return Double.parseDouble(str);
 		} catch (NoSuchElementException e) {
+			if (defaultVal == null) {
+				if (!Config.defaultData.containsKey(key)) {
+					throw new NoSuchElementException();
+				}
+				return Double.parseDouble(Config.defaultData.get(key));
+
+			}
 			return defaultVal;
 		}
 	}
@@ -349,13 +392,20 @@ public class Config extends HashMap<String, String> {
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized float getFloat(String key, float defaultVal)
+	public synchronized float getFloat(String key, Float defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
 			BadPaddingException, IOException {
 		try {
 			String str = this.get(key);
 			return Float.parseFloat(str);
 		} catch (NoSuchElementException e) {
+			if (defaultVal == null) {
+				if (!Config.defaultData.containsKey(key)) {
+					throw new NoSuchElementException();
+				}
+				return Float.parseFloat(Config.defaultData.get(key));
+
+			}
 			return defaultVal;
 		}
 	}
@@ -383,13 +433,20 @@ public class Config extends HashMap<String, String> {
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized int getInt(String key, int defaultVal)
+	public synchronized int getInt(String key, Integer defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
 			BadPaddingException, IOException {
 		try {
 			String str = this.get(key);
 			return Integer.parseInt(str);
 		} catch (NoSuchElementException e) {
+			if (defaultVal == null) {
+				if (!Config.defaultData.containsKey(key)) {
+					throw new NoSuchElementException();
+				}
+				return Integer.parseInt(Config.defaultData.get(key));
+
+			}
 			return defaultVal;
 		}
 	}
@@ -417,13 +474,20 @@ public class Config extends HashMap<String, String> {
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 */
-	public synchronized long getLong(String key, long defaultVal)
+	public synchronized long getLong(String key, Long defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
 			BadPaddingException, IOException {
 		try {
 			String str = this.get(key);
 			return Long.parseLong(str);
 		} catch (NoSuchElementException e) {
+			if (defaultVal == null) {
+				if (!Config.defaultData.containsKey(key)) {
+					throw new NoSuchElementException();
+				}
+				return Long.parseLong(Config.defaultData.get(key));
+
+			}
 			return defaultVal;
 		}
 	}
@@ -457,6 +521,13 @@ public class Config extends HashMap<String, String> {
 			String str = this.get(key);
 			return str;
 		} catch (NoSuchElementException e) {
+			if (defaultVal == null) {
+				if (!Config.defaultData.containsKey(key)) {
+					throw new NoSuchElementException();
+				}
+				return Config.defaultData.get(key);
+
+			}
 			return defaultVal;
 		}
 	}
@@ -486,8 +557,9 @@ public class Config extends HashMap<String, String> {
 	 * 
 	 * @param password
 	 *            The users masterpassword
+	 * @return returns the instance
 	 */
-	public void init(String password) {
+	public Config init(String password) {
 		this.password = password.getBytes();
 
 		try {
@@ -503,6 +575,7 @@ public class Config extends HashMap<String, String> {
 		}
 
 		reload();
+		return this;
 	}
 
 	/**
@@ -741,14 +814,19 @@ public class Config extends HashMap<String, String> {
 				.replace(">", "&gt;").replace("\"", "&quot;"));
 	}
 
-	public void reload() {
+	/**
+	 * (Re)load the config
+	 * 
+	 * @return the current config instance
+	 */
+	public Config reload() {
 		this.clear();
 		this.salts.clear();
 
 		setConfigPath(CONFIG_PATH);
 
 		if (!CONFIG_FILE.exists()) {
-			return;
+			return null;
 		}
 
 		// Create DocumentBuilder for XML files.
@@ -758,7 +836,7 @@ public class Config extends HashMap<String, String> {
 					.newDocumentBuilder();
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
-			return;
+			return null;
 		}
 		docBuilder.setErrorHandler(null);
 
@@ -768,10 +846,10 @@ public class Config extends HashMap<String, String> {
 			doc = docBuilder.parse(CONFIG_FILE);
 		} catch (SAXException e) {
 			e.printStackTrace();
-			return;
+			return null;
 		} catch (IOException e) {
 			e.printStackTrace();
-			return;
+			return null;
 		}
 
 		// we read the encryption algorithm from the config file. If and only if
@@ -794,6 +872,7 @@ public class Config extends HashMap<String, String> {
 				this.salts.put(node.getAttribute("name").trim(), node
 						.getAttribute("salt").trim());
 		}
+		return this;
 	}
 
 	/**
@@ -816,7 +895,8 @@ public class Config extends HashMap<String, String> {
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("") ? ""
+				String salt = saltString == null || saltString.equals("")
+						? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");

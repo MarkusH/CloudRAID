@@ -39,6 +39,8 @@ public class FileLock {
 	 * 
 	 * @param filename
 	 *            The file to be locked.
+	 * @param fileManager
+	 *            defines the {@link FileManager} that will handle this file
 	 * @return true, if you got the lock, false, if not
 	 */
 	public static synchronized boolean lock(String filename,
@@ -57,6 +59,8 @@ public class FileLock {
 	 * 
 	 * @param filename
 	 *            The file to be unlocked.
+	 * @param fileManager
+	 *            defines the {@link FileManager} that will handle this file
 	 * @return true, if the file could be unlocked.
 	 */
 	public static synchronized boolean unlock(String filename,

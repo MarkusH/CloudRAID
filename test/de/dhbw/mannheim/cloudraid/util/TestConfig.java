@@ -137,14 +137,14 @@ public class TestConfig {
 
 		assertTrue(config.keyExists("plain.long.correct"));
 		assertFalse(config.keyExists("plain.long.false"));
-		assertEquals(9876543210l, config.getLong("plain.long.correct", 0));
+		assertEquals(9876543210l, config.getLong("plain.long.correct", 0l));
 		assertEquals(1l, config.getLong("plain.long.false", 1l));
 
 		config.put("encrypted.long.correct", 963852741l, true);
 
 		assertTrue(config.keyExists("encrypted.long.correct"));
 		assertFalse(config.keyExists("encrypted.long.false"));
-		assertEquals(963852741l, config.getLong("encrypted.long.correct", 0));
+		assertEquals(963852741l, config.getLong("encrypted.long.correct", 0l));
 		assertEquals(1l, config.getLong("encrypted.long.false", 1l));
 	}
 
@@ -251,7 +251,7 @@ public class TestConfig {
 
 		assertFalse(config.keyExists("plain.long.correct"));
 		assertFalse(config.keyExists("plain.long.false"));
-		assertEquals(0, config.getLong("plain.long.correct", 0));
+		assertEquals(0, config.getLong("plain.long.correct", 0l));
 
 		assertFalse(config.keyExists("plain.string.correct"));
 		assertFalse(config.keyExists("plain.string.false"));
@@ -278,7 +278,7 @@ public class TestConfig {
 
 		assertFalse(config.keyExists("encrypted.long.correct"));
 		assertFalse(config.keyExists("encrypted.long.false"));
-		assertEquals(0, config.getLong("encrypted.long.correct", 0));
+		assertEquals(0, config.getLong("encrypted.long.correct", 0l));
 
 		assertFalse(config.keyExists("encrypted.string.correct"));
 		assertFalse(config.keyExists("encrypted.string.false"));

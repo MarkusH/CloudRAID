@@ -26,6 +26,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import de.dhbw.mannheim.cloudraid.util.Config;
+
 /**
  * @author Markus Holtermann
  */
@@ -36,5 +38,9 @@ import org.junit.runners.Suite.SuiteClasses;
 		de.dhbw.mannheim.cloudraid.fs.TestFileLock.class,
 		de.dhbw.mannheim.cloudraid.persistence.TestHSQLDatabaseConnector.class })
 public class AllTests {
+
+	static {
+		Config.getInstance().init("CloudRAID-unitTests");
+	}
 
 }

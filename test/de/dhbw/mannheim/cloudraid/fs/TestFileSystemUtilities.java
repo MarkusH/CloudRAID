@@ -35,18 +35,38 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class TestFileSystemUtilities {
-	private final static String TMP = System.getProperty("java.io.tmpdir")
-			+ File.separator + "cloudraid-test" + File.separator;
+import de.dhbw.mannheim.cloudraid.util.Config;
 
-	private static File tmpfile, subdir, file1, file2, file3, file4;
+public class TestFileSystemUtilities {
+
+	private static File file1, file2, file3, file4;
+	private static String splitInputDir, mergeInputDir,
+			mergeOutputDir;
 
 	@BeforeClass
 	public static void oneTimeSetUp() throws IOException {
-		tmpfile = new File(TMP);
-		tmpfile.mkdirs();
-		subdir = new File(TMP + "subdir");
-		subdir.mkdir();
+		String TMP = System.getProperty("java.io.tmpdir") + File.separator
+				+ "cloudraid-test" + File.separator;
+		Config.getInstance().put("merge.input.dir", TMP);
+		Config.getInstance().put("merge.output.dir",
+				TMP + "out" + File.separator);
+		Config.getInstance().put("split.input.dir", TMP);
+		Config.getInstance().put("split.output.dir", TMP);
+
+		try {
+			mergeInputDir = Config.getInstance().getString("merge.input.dir",
+					TMP);
+			mergeOutputDir = Config.getInstance().getString("merge.output.dir",
+					TMP + "out" + File.separator);
+			splitInputDir = Config.getInstance().getString("split.input.dir",
+					TMP);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		new File(splitInputDir).mkdirs();
+		new File(splitInputDir + "subdir" + File.separator).mkdirs();
+		new File(mergeOutputDir).mkdirs();
 		file1 = new File(TMP + "file1");
 		file1.createNewFile();
 		file2 = new File(TMP + "file2");
@@ -60,22 +80,27 @@ public class TestFileSystemUtilities {
 		file3.delete();
 		file2.delete();
 		file1.delete();
-		subdir.delete();
-		tmpfile.delete();
+		new File(mergeOutputDir).delete();
+		new File(splitInputDir + "subdir" + File.separator).delete();
+		new File(splitInputDir).delete();
 	}
 
 	@Test
 	public void testRecursiveFileSystemWatcher() throws InterruptedException,
 			IOException {
-		RecursiveFileSystemWatcher rfsw = new RecursiveFileSystemWatcher(TMP,
+		RecursiveFileSystemWatcher rfsw = new RecursiveFileSystemWatcher(splitInputDir,
 				500);
 		rfsw.start();
-		Thread.sleep(2000);
+		Thread.sleep(1000);
 		FileQueueEntry fqe;
 		for (int i = 0; i < 3; i++) {
 			assertFalse(FileQueue.isEmpty());
 			fqe = FileQueue.get();
 			String filename = fqe.getFileName();
+			if (filename.endsWith("file4")) {
+				FileQueue.add(fqe.getFileName(), CREATE);
+				continue;
+			}
 			boolean isValidName = filename.equals(file1.getAbsolutePath())
 					|| filename.equals(file2.getAbsolutePath())
 					|| filename.equals(file3.getAbsolutePath());
@@ -83,7 +108,7 @@ public class TestFileSystemUtilities {
 			assertTrue(fqe.getFileAction().equals(CREATE));
 		}
 
-		file4 = new File(TMP + File.separator + "subdir" + File.separator
+		file4 = new File(splitInputDir + File.separator + "subdir" + File.separator
 				+ "file4");
 		file4.createNewFile();
 		Thread.sleep(1000);
