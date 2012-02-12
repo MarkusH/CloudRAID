@@ -705,14 +705,14 @@ DLLEXPORT int write_metadata ( FILE *fp, raid5md *md )
  * class.
  */
 JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
-( JNIEnv * env, jclass cls, jstring _tempInputDirPath, jstring _hash, jstring _outputFilePath, jstring _key, jint _keyLength )
+( JNIEnv * env, jclass cls, jstring _tempInputDirPath, jstring _hash, jstring _outputFilePath, jstring _key )
 {
     /* Convert the Java Strings to char arrays for usage in the C program. */
     const char *tempInputDirPath = ( *env )->GetStringUTFChars ( env, _tempInputDirPath, 0 );
     const char *hash = ( *env )->GetStringUTFChars ( env, _hash, 0 );
     const char *outputFilePath = ( *env )->GetStringUTFChars ( env, _outputFilePath, 0 );
     const char *key = ( *env )->GetStringUTFChars ( env, _key, 0 );
-    const int keyLength = _keyLength;
+    const int keyLength = ( *env )->GetStringLength ( env, _key );
 
     const int tmpLength = strlen ( ( char * ) tempInputDirPath );
     int status, i;
@@ -818,16 +818,17 @@ end:
  * class.
  */
 JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
-( JNIEnv *env, jclass cls, jstring _inputFilePath, jstring _tempOutputDirPath, jstring _key, jint _keyLength )
+( JNIEnv *env, jclass cls, jstring _inputBasePath, jstring _inputFilePath, jstring _tempOutputDirPath, jstring _key )
 {
     /* Convert the Java Strings to char arrays for usage in this C program. */
+    const char *inputBasePath = ( *env )->GetStringUTFChars ( env, _inputBasePath, 0 );
     const char *inputFilePath = ( *env )->GetStringUTFChars ( env, _inputFilePath, 0 );
     const char *tempOutputDirPath = ( *env )->GetStringUTFChars ( env, _tempOutputDirPath, 0 );
     const char *key = ( *env )->GetStringUTFChars ( env, _key, 0 );
-    const int keyLength = _keyLength;
+    const int keyLength = ( *env )->GetStringLength ( env, _key );
 
     void *resblock = NULL;
-    char *outputBaseName = NULL, retvalue[65];
+    char *inputPath = NULL, *outputBaseName = NULL, retvalue[65];
     int status;
     unsigned char i;
     const int tmpLength = strlen ( tempOutputDirPath );
@@ -838,8 +839,18 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterfac
     FILE *devices[3] = {NULL, NULL, NULL};
     FILE *meta = NULL;
 
+    /* generate the complete absolute input path */
+    inputPath = malloc ( strlen ( inputBasePath ) + strlen ( inputFilePath ) + 1 );
+    if ( inputPath == NULL )
+    {
+        status = OPENERR_IN;
+        goto end;
+    }
+    memcpy ( inputPath, inputBasePath, strlen ( inputBasePath ) );
+    memcpy ( &inputPath[strlen ( inputBasePath )], inputFilePath, strlen ( inputFilePath ) );
+
     /* open input file */
-    fp = fopen ( inputFilePath, "rb" );
+    fp = fopen ( inputPath, "rb" );
     if ( fp == NULL )
     {
         status = OPENERR_IN;
@@ -936,8 +947,13 @@ end:
     {
         free ( outputBaseName );
     }
+    if ( inputPath )
+    {
+        free ( inputPath );
+    }
 
     /* Clean the memory. / Release the char arrays. */
+    ( *env )->ReleaseStringUTFChars ( env, _inputFilePath, inputBasePath );
     ( *env )->ReleaseStringUTFChars ( env, _inputFilePath, inputFilePath );
     ( *env )->ReleaseStringUTFChars ( env, _tempOutputDirPath, tempOutputDirPath );
     ( *env )->ReleaseStringUTFChars ( env, _key, key );

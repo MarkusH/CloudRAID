@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.NoSuchElementException;
 
 import de.dhbw.mannheim.cloudraid.jni.RaidAccessInterface;
+import de.dhbw.mannheim.cloudraid.util.Config;
 
 /**
  * Reads as a thread the {@link FileQueue} and handles the files according to
@@ -36,25 +37,9 @@ import de.dhbw.mannheim.cloudraid.jni.RaidAccessInterface;
  */
 public class FileManager extends Thread {
 
-	/**
-	 * The temp directory for cloudraid.
-	 */
-	private final static String TMP = System.getProperty("java.io.tmpdir")
-			+ File.separator + "cloudraid" + File.separator;
-
-	/**
-	 * The file object of the temp directory.
-	 */
-	private final static File TMP_FILE = new File(TMP);
-
 	private final static String KEY = "key";
-	private final static int KEYLENGTH = KEY.length();
 
 	private int interval = 2000;
-
-	static {
-		TMP_FILE.mkdirs();
-	}
 
 	/**
 	 * Creates a FileManager thread with minimal priority.
@@ -163,20 +148,36 @@ public class FileManager extends Thread {
 					+ " is not existing anymore");
 			return;
 		}
-		String hashedFilename = RaidAccessInterface.splitInterface(filename,
-				TMP, KEY, KEYLENGTH);
+
+		String splitInputDir, splitOutputDir, mergeInputDir, mergeOutputDir;
+		try {
+			mergeInputDir = Config.getInstance().getString("merge.input.dir",
+					null);
+			mergeOutputDir = Config.getInstance().getString("merge.output.dir",
+					null);
+			splitInputDir = Config.getInstance().getString("split.input.dir",
+					null);
+			splitOutputDir = Config.getInstance().getString("split.output.dir",
+					null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+		String hashedFilename = RaidAccessInterface.splitInterface(
+				splitInputDir, filename.substring(splitInputDir.length()),
+				splitOutputDir, KEY);
 		String name = new File(filename).getName();
-		RaidAccessInterface.mergeInterface(TMP, hashedFilename, TMP + name,
-				KEY, KEYLENGTH);
+		RaidAccessInterface.mergeInterface(mergeInputDir, hashedFilename,
+				mergeOutputDir + name, KEY);
 
 		/* Do something fancy. */
 
 		// Delete the split files.
-		new File(TMP + hashedFilename + ".0").delete();
-		new File(TMP + hashedFilename + ".1").delete();
-		new File(TMP + hashedFilename + ".2").delete();
-		new File(TMP + hashedFilename + ".m").delete();
-		new File(TMP + name).delete();
+		new File(splitOutputDir + hashedFilename + ".0").delete();
+		new File(splitOutputDir + hashedFilename + ".1").delete();
+		new File(splitOutputDir + hashedFilename + ".2").delete();
+		new File(splitOutputDir + hashedFilename + ".m").delete();
+		new File(mergeOutputDir + name).delete();
 
 	}
 

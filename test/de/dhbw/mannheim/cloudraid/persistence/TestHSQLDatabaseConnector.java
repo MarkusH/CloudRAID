@@ -43,7 +43,7 @@ import de.dhbw.mannheim.cloudraid.util.Config;
  */
 public class TestHSQLDatabaseConnector {
 
-	private static DatabaseConnector dbc;
+	private static IDatabaseConnector dbc;
 	private static final String CONNECTOR_CLASS = "de.dhbw.mannheim.cloudraid.persistence.HSQLDatabaseConnector";
 	private static final String DATABASE_FILE = "testfiledb";
 	private static final String PATH = "path", PATH2 = "path2";
@@ -54,8 +54,6 @@ public class TestHSQLDatabaseConnector {
 	public static void oneTimeSetUp() throws InstantiationException,
 			IllegalAccessException, ClassNotFoundException, ClassCastException {
 		dbc = DatabaseConnector.getDatabaseConnector(CONNECTOR_CLASS);
-		assertTrue(dbc.connect());
-		assertTrue(dbc.disconnect());
 		assertTrue(dbc.connect(Config.getCloudRAIDHome() + DATABASE_FILE));
 		assertTrue(dbc.initialize());
 	}

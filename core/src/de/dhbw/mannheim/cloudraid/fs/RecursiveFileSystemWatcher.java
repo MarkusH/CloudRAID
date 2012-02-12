@@ -65,6 +65,8 @@ public class RecursiveFileSystemWatcher extends Thread {
 	/**
 	 * Creates a RecursiveFileSystemWatcher that runs in the given interval.
 	 * 
+	 * @param pathToWatch
+	 *            Specifies the path that will be watched for changes.
 	 * @param sleepTime
 	 *            The sleeping time in ms.
 	 */
@@ -110,7 +112,7 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 * Runs through the list of files in the given directory and handles the
 	 * files according to their type.
 	 * 
-	 * @param file
+	 * @param dir
 	 *            The directory to be handled.
 	 */
 	private void checkDir(File dir) {
