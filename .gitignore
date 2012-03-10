@@ -1,6 +1,6 @@
 bin/
 src/native/build/
-src/native/test/
+src/native/testing/
 .*
 *.project
 *.cproject
