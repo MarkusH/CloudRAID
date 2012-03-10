@@ -402,31 +402,31 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 
 end:
 
-    if ( hash )
+    if ( hash != NULL )
     {
         free ( hash );
     }
 
     for ( i = 0; i < 4; i++ )
     {
-        if ( sha256_buf[i] )
+        if ( sha256_buf[i] != NULL )
         {
             free ( sha256_buf[i] );
         }
-        if ( sha256_resblock[i] )
+        if ( sha256_resblock[i] != NULL )
         {
             free ( sha256_resblock[i] );
         }
     }
-    if ( out_len )
+    if ( out_len != NULL )
     {
         free ( out_len );
     }
-    if ( out )
+    if ( out != NULL )
     {
         free ( out );
     }
-    if ( chars )
+    if ( chars != NULL )
     {
         free ( chars );
     }
@@ -569,15 +569,15 @@ DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key 
     status = SUCCESS_MERGE;
 
 end:
-    if ( buf )
+    if ( buf != NULL )
     {
         free ( buf );
     }
-    if ( in_len )
+    if ( in_len != NULL )
     {
         free ( in_len );
     }
-    if ( in )
+    if ( in != NULL )
     {
         free ( in );
     }
@@ -664,7 +664,7 @@ DLLEXPORT int create_metadata ( FILE *devices[], raid5md *md )
 
     for ( i = 0; i < 3; i++ )
     {
-        if ( devices[i] )
+        if ( devices[i] != NULL )
         {
             fpos = ftell ( devices[i] );
             rewind ( devices[i] );
@@ -688,7 +688,7 @@ DLLEXPORT int create_metadata ( FILE *devices[], raid5md *md )
  */
 DLLEXPORT void new_metadata ( raid5md *md )
 {
-    if ( md )
+    if ( md != NULL )
     {
         memset ( md->hash_dev0, 0, 65 );
         memset ( md->hash_dev1, 0, 65 );
@@ -704,7 +704,7 @@ DLLEXPORT void new_metadata ( raid5md *md )
  */
 DLLEXPORT void print_metadata ( raid5md *md )
 {
-    if ( md )
+    if ( md != NULL )
     {
         printf ( "\nVersion: %02x\n", md->version );
         printf ( "Missing: %d\n", md->missing );
@@ -726,9 +726,9 @@ DLLEXPORT void print_metadata ( raid5md *md )
  */
 DLLEXPORT int read_metadata ( FILE *fp, raid5md *md )
 {
-    if ( fp )
+    if ( fp != NULL )
     {
-        if ( md )
+        if ( md != NULL )
         {
             new_metadata ( md ); /* clean the metadata */
             fscanf ( fp, "%2hhu", & ( md->version ) );
@@ -754,7 +754,7 @@ DLLEXPORT int read_metadata ( FILE *fp, raid5md *md )
  */
 DLLEXPORT void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] )
 {
-    if ( md )
+    if ( md != NULL )
     {
         switch ( idx )
         {
@@ -780,9 +780,9 @@ DLLEXPORT void set_metadata_hash ( raid5md *md, const int idx, const unsigned ch
  */
 DLLEXPORT int write_metadata ( FILE *fp, raid5md *md )
 {
-    if ( fp )
+    if ( fp != NULL )
     {
-        if ( md )
+        if ( md != NULL )
         {
             fprintf ( fp, "%02x", md->version );
             fprintf ( fp, "%64s", md->hash_dev0 );
@@ -813,7 +813,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
 
     const int tmpLength = strlen ( ( char * ) tempInputDirPath );
     int status, i;
-    char *inputBaseName;
+    char *inputBaseName = NULL;
     rc4_key rc4key;
 
     /* Generate file pointers. */
@@ -881,23 +881,23 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
 
 end:
     /* Close the files. */
-    if ( fp )
+    if ( fp != NULL )
     {
         fclose ( fp );
     }
     for ( i=0; i < 3; i++ )
     {
-        if ( devices[i] )
+        if ( devices[i] != NULL )
         {
             fclose ( devices[i] );
         }
     }
-    if ( meta )
+    if ( meta != NULL )
     {
         fclose ( meta );
     }
 
-    if ( inputBaseName )
+    if ( inputBaseName != NULL )
     {
         free ( inputBaseName );
     }
@@ -1020,31 +1020,31 @@ end:
         retvalue[1] = '\0';
     }
     /* Close the files. */
-    if ( fp )
+    if ( fp != NULL )
     {
         fclose ( fp );
     }
     for ( i=0; i < 3; i++ )
     {
-        if ( devices[i] )
+        if ( devices[i] != NULL )
         {
             fclose ( devices[i] );
         }
     }
-    if ( meta )
+    if ( meta != NULL )
     {
         fclose ( meta );
     }
 
-    if ( resblock )
+    if ( resblock != NULL )
     {
         free ( resblock );
     }
-    if ( outputBaseName )
+    if ( outputBaseName != NULL )
     {
         free ( outputBaseName );
     }
-    if ( inputPath )
+    if ( inputPath != NULL )
     {
         free ( inputPath );
     }
