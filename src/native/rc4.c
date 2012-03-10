@@ -1,3 +1,8 @@
+/*
+ * Code is taken from http://www.cypherspace.org/rsa/rc4.html and was adjusted
+ * to the style guides and requirements within the CloudRAID project.
+ */
+
 #include "rc4.h"
 
 #include <stdlib.h>

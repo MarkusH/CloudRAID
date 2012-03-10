@@ -54,7 +54,31 @@
 #define METADATA_MISS_IN      0x08
 #define METADATA_MISS_VERSION 0x10
 #define METADATA_MISS_MISSING 0x20
+#define METADATA_MEMORY_ERROR 0x80
 
+/**
+ * This function is used to merge two input char arrays to the output array.
+ *
+ * `*in` MUST have a length of `3*RAID5_BLOCKSIZE`.
+ *
+ * The `in_len` array contains the length of the three possible input char
+ * arrays, where each in put array has at most `RAID5_BLOCKSIZE` characters.
+ *
+ * Depending on the current parity position `parity_pos`, the primary device is
+ * `(parity_pos+1)%3` and the secondary device `(parity_pos+2)%3`.
+ *
+ * The `dead_device` parameter denotes the device that is not taken into
+ * account for building the original char array.
+ *
+ * The `missing` parameter tells this function how many characters are missing
+ * in the secondary device `(parity_pos+2)%3`. This information must be read
+ * from the meta data file and cannot be retrieved from the other parameters.
+ *
+ * `*out` is a pointer to the output char array. `*out` NEED NOT to be NULL and
+ * MUST have a size of `2*RAID5_BLOCKSIZE`!
+ *
+ * `*out_len` will contain the length of the `*out` buffer. Or -1 if something went wrong
+ */
 void merge_byte_block ( const unsigned char *in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char *out, size_t *out_len )
 {
     int i, len;
@@ -67,7 +91,7 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], const un
     /*
      * \ Device 0
      * / Device 1
-     * X Device 2
+     * X Device 2 = Parity
      *
      *  dead = 0           dead = 1           dead = 2
      * ___ \\\ ///        XXX ___ ///        XXX \\\ ___    parity_pos = 0
@@ -81,7 +105,7 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], const un
     /*
      * *in always contains the primary device in [0], the secondary device in [1] and the parity in [2] except the file does not exist
      */
-    if ( dead_device == parity_pos ) /* (0|0) (1|1) (2|2) */
+    if ( dead_device == parity_pos ) /* (x0|y0) (x1|y1) (x2|y2) */
     {
         memcpy ( &out[0], &in[0], in_len[0] ); /* Copy the first part of the read bytes */
         *out_len = in_len[0];
@@ -93,7 +117,7 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], const un
     }
     else
     {
-        if ( ( dead_device + 1 ) % 3 == parity_pos ) /* get the secondary device: (0|1) (1|2) (2|0) */
+        if ( ( dead_device + 1 ) % 3 == parity_pos ) /* get the secondary device: (x0|y1) (x1|y2) (x2|y0) */
         {
             /*
              * in[0] is first part, in[2] is parity
@@ -112,7 +136,7 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], const un
 
         else
         {
-            if ( ( dead_device + 2 ) % 3 == parity_pos ) /* get the primary device: (0|2) (1|0) (2|1) */
+            if ( ( dead_device + 2 ) % 3 == parity_pos ) /* get the primary device: (x0|y2) (x1|y0) (x2|y1) */
             {
                 /*
                  * in[1] is second part, in[2] is parity
@@ -140,6 +164,32 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], const un
     }
 }
 
+/**
+ * Split the input char array `*in` into three output arrays in `*out`.
+ *
+ * `*in` is the input char array that will be split into two parts plus a
+ * parity.
+ *
+ * `in_len` is the length of the `*in` buffer.
+ *
+ * The output will be stored in `*out` as follows:
+ *  - The primary device will be stored at `&out[0]`.
+ *  - The secondary device will be stored at `&out[RAID5_BLOCKSIZE]`.
+ *  - The tertiary device, also know as the parity, will be stored in
+ *    `&out[2*RAID5_BLOCKSIZE]`.
+ *
+ * The length of the three output buffers, that are stored in `*out`, will be
+ * saved in `out_len[]` as follows:
+ *  - `out_len[0]` contains the length for the primary device.
+ *  - `out_len[1]` contains the length for the secondary device.
+ *  - `out_len[2]` contains the length for the tertiary device / parity.
+ *
+ * If the input length `in_len` is smaller or equal the `RAID5_BLOCKSIZE`, the
+ * `out_len[0]` and `out_len[2]` will be `in_len` and `out_len[1]` will be 0.
+ * Otherwise `out_len[0]` and `out_len[2]` will be equal to the
+ * `RAID5_BLOCKSIZE` and `out_len[1]` will be the difference between `in_len`
+ * and `RAID5_BLOCKSIZE`.
+ */
 void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[] )
 {
     int i, partial;
@@ -173,6 +223,19 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
     }
 }
 
+/**
+ * Split the input file `*in` into three device files `devices[0]`,
+ * `devices[1]` and `devices[2]`. The parity for the first `2*RAID5_BLOCKSIZE`
+ * characters read from `*in` will be stored in `devices[2]` and will continue
+ * on devices`[0]` and devices`[1]`
+ *
+ * The meta data will be written to the `*meta` parameter.
+ *
+ * `*key` is the result of the `prepare_key()` function.
+ *
+ * All other return codes than `SUCCESS_SPLIT` (0x04) mark a failure during
+ * split.
+ */
 DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *chars = NULL, *out = NULL, parity_pos = 2, *hash = NULL;
@@ -370,6 +433,19 @@ end:
     return status;
 }
 
+/**
+ * Merge the device files `devices[0]`, `devices[1]` and `devices[2]` and write
+ * them to `*out`. The parity for the first `2*RAID5_BLOCKSIZE` characters
+ * written to `*out` will be taken from `devices[2]` and will continue on
+ * devices`[0]` and devices`[1]`.
+ *
+ * The meta data will be read from the `*meta` parameter.
+ *
+ * `*key` is the result of the `prepare_key()` function.
+ *
+ * All other return codes than `SUCCESS_MERGE` (0x02) mark a failure during
+ * merge.
+ */
 DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i;
@@ -509,17 +585,15 @@ end:
 }
 
 /**
- * result might be:
- * 0x00 - metadata matches
- *
- * or either any combination of the following:
- * 0x01 - hash_dev0 differs (METADATA_MISS_DEV0)
- * 0x02 - hash_dev1 differs (METADATA_MISS_DEV1)
- * 0x04 - hash_dev2 differs (METADATA_MISS_DEV2)
- * 0x08 - hash_in differs   (METADATA_MISS_IN)
- * 0x10 - version missmatch (METADATA_MISS_VERSION)
- *
- * 0xff - memory error in md1 or md2
+ * Compare to variables of type raid5md and return either
+ * 0x00 in case `*md1` and `*md2` are equal, or any sum of the following:
+ *  - 0x01: hash_dev0 differs (METADATA_MISS_DEV0)
+ *  - 0x02: hash_dev1 differs (METADATA_MISS_DEV1)
+ *  - 0x04: hash_dev2 differs (METADATA_MISS_DEV2)
+ *  - 0x08: hash_in differs   (METADATA_MISS_IN)
+ *  - 0x10: version missmatch (METADATA_MISS_VERSION)
+ *  - 0x20: missing information about missing bytes (METADATA_MISS_MISSING)
+ *  - 0x80: memory error in md1 or md2 (METADATA_MEMORY_ERROR)
  */
 DLLEXPORT int cmp_metadata ( raid5md *md1, raid5md *md2 )
 {
@@ -527,7 +601,7 @@ DLLEXPORT int cmp_metadata ( raid5md *md1, raid5md *md2 )
 
     if ( md1 == NULL || md2 == NULL )
     {
-        return 0xff;
+        return METADATA_MEMORY_ERROR;
     }
 
     cmp |= ( md1->version == md2->version ) ? 0x00 : METADATA_MISS_VERSION;
@@ -540,9 +614,9 @@ DLLEXPORT int cmp_metadata ( raid5md *md1, raid5md *md2 )
 }
 
 /**
- * Returns 0 iff the hash specified by idx matches md1 and md2
- * OR if the index is out of range [0..3].
- * Otherwize the error number (see cmp_metadata).
+ * Returns 0 if and only if the hash specified by `idx` matches the meta data
+ * representations in `*md1` and `*md2` OR if the index is out of range [0..3].
+ * Otherwize the error number (see `cmp_metadata()`).
  */
 DLLEXPORT int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
 {
@@ -565,9 +639,9 @@ DLLEXPORT int cmp_metadata_hash ( raid5md *md1, raid5md *md2, const int idx )
 }
 
 /**
- * Takes 3 devices and calculates the sha256 sum of each
- * file. The checksums are stored into the given metadata.
- * Returns 0 on success.
+ * Takes 3 devices (`*devices[]`) and calculates the sha256 sum of each
+ * file. The checksums are stored into the given raid5 meta data `*md`.
+ * The function returns 0 on success or non-zero on error.
  */
 DLLEXPORT int create_metadata ( FILE *devices[], raid5md *md )
 {
@@ -609,6 +683,9 @@ DLLEXPORT int create_metadata ( FILE *devices[], raid5md *md )
     return 0;
 }
 
+/**
+ * Initialize a new raid5 meta data object `*md` with zeros.
+ */
 DLLEXPORT void new_metadata ( raid5md *md )
 {
     if ( md )
@@ -622,6 +699,9 @@ DLLEXPORT void new_metadata ( raid5md *md )
     }
 }
 
+/**
+ * Print the given raid5 meta data object `*md`.
+ */
 DLLEXPORT void print_metadata ( raid5md *md )
 {
     if ( md )
@@ -639,6 +719,11 @@ DLLEXPORT void print_metadata ( raid5md *md )
     }
 }
 
+/**
+ * Read the meta data from the file pointer `*fp` and store it in the raid5
+ * meta data object `*md`. The function returns 0 on success, 1 if `*fp` is
+ * NULL and 2 if `*md` is NULL.
+ */
 DLLEXPORT int read_metadata ( FILE *fp, raid5md *md )
 {
     if ( fp )
@@ -659,6 +744,14 @@ DLLEXPORT int read_metadata ( FILE *fp, raid5md *md )
     return 1;
 }
 
+/**
+ * Set the hash `hash[65]` for a certain index `idx` in the raid5 meta data
+ * object `*md`. Index will be used as follows:
+ *  - 0: raid5md->hash_dev0
+ *  - 1: raid5md->hash_dev1
+ *  - 2: raid5md->hash_dev2
+ *  - 3: raid5md->hash_in
+ */
 DLLEXPORT void set_metadata_hash ( raid5md *md, const int idx, const unsigned char hash[65] )
 {
     if ( md )
@@ -681,6 +774,10 @@ DLLEXPORT void set_metadata_hash ( raid5md *md, const int idx, const unsigned ch
     }
 }
 
+/**
+ * Write the meta data object `*md` to file `*fp`. The function returns 0 on
+ * success, 1 if `*fp` is NULL and 2 if `*md` is NULL.
+ */
 DLLEXPORT int write_metadata ( FILE *fp, raid5md *md )
 {
     if ( fp )
