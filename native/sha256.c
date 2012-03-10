@@ -500,7 +500,7 @@ DLLEXPORT int build_sha256_sum ( char *filename, unsigned char *hash )
     }
 
     fp = fopen ( filename, "rb" );
-    if ( !fp )
+    if ( fp == NULL )
     {
         return SHAERR_CALC;
     }
@@ -516,7 +516,7 @@ DLLEXPORT int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
 {
     void *resblock = NULL;
 
-    if ( !fp )
+    if ( fp == NULL )
     {
         return SHAERR_CALC;
     }
