@@ -3,10 +3,10 @@ Bundle-ManifestVersion: 2
 Bundle-Name: CloudRAID-pwdmngr
 Bundle-SymbolicName: CloudRAID-pwdmngr
 Bundle-Version: 0.0.1.prealpha
-Bundle-Activator: de.dhbw.mannheim.cloudraid.osgi.DevelopingPasswordManagerActivator
-Export-Package: de.dhbw.mannheim.cloudraid.osgi,
- de.dhbw.mannheim.cloudraid.util
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: org.osgi.framework;version="1.6.0"
 Bundle-Vendor: cloudraid
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-Activator: de.dhbw.mannheim.cloudraid.osgi.DevelopingPasswordManagerActivator
+Export-Package: de.dhbw.mannheim.cloudraid.osgi;uses:="org.osgi.framework",
+ de.dhbw.mannheim.cloudraid.util
+Import-Package: org.osgi.framework;version="1.6.0"
 Require-Bundle: CloudRAID-interfaces;bundle-version="0.0.1"
