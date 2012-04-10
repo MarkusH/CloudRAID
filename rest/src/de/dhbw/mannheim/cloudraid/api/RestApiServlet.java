@@ -63,14 +63,23 @@ public class RestApiServlet extends HttpServlet {
 				RestApiServlet.class.getMethod("fileinfo",
 						HttpServletRequest.class, RestApiResponse.class,
 						ArrayList.class)));
+		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
+				RestApiServlet.class.getMethod("fileinfo2",
+						HttpServletRequest.class, RestApiResponse.class,
+						ArrayList.class)));
 		mappings.add(new RestApiUrlMapping("^/filelist/$", "GET",
 				RestApiServlet.class.getMethod("filelist",
 						HttpServletRequest.class, RestApiResponse.class,
 						ArrayList.class)));
 	}
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+	/**
+	 * @param req
+	 * @param resp
+	 * @throws ServletException
+	 * @throws IOException
+	 */
+	protected void doRequest(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		String mime = req.getHeader("Accept");
 		RestApiResponse r;
@@ -108,6 +117,45 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		r.send();
+	}
+
+	@Override
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		this.doRequest(req, resp);
+	}
+
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		this.doRequest(req, resp);
+	}
+
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		this.doRequest(req, resp);
+	}
+
+	@Override
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		this.doRequest(req, resp);
+	}
+
+	/**
+	 * @param req
+	 * @param resp
+	 * @param args
+	 */
+	public void fileinfo2(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		int i = 0;
+		for (String arg : args) {
+			resp.addField("" + i++, arg);
+		}
+		resp.addField("method", req.getMethod());
+		resp.addPayload(req.toString());
 	}
 
 	/**

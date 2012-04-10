@@ -137,6 +137,21 @@ public class RestApiUrlMapping {
 	}
 
 	/**
+	 * @param pattern
+	 * @param function
+	 * @throws IllegalArgumentException
+	 */
+	public RestApiUrlMapping(String pattern, Method function)
+			throws IllegalArgumentException {
+		if (null == pattern)
+			throw new IllegalArgumentException("Pattern must not be null!");
+		if (null == function)
+			throw new IllegalArgumentException("Pattern must not be null!");
+		this.pattern = Pattern.compile(pattern);
+		this.function = function;
+	}
+
+	/**
 	 * @param req
 	 * @return returns the function to invoke or null
 	 */
