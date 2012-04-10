@@ -23,9 +23,12 @@
 package de.dhbw.mannheim.cloudraid.api;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
+
+import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
 
 /**
  * @author Markus Holtermann
@@ -34,13 +37,34 @@ import org.osgi.service.http.NamespaceException;
 public class RestApiComponent {
 
 	/**
-     * Main path for the REST API
-     */
+	 * Main path for the REST API
+	 */
 	private static final String SERVLET_ALIAS = "/";
-	
+
 	/**
-     * Service that handles all the request. Injected by the component.xml
-     */
+	 * @param req
+	 * @param resp
+	 */
+	public static void error404(HttpServletRequest req, RestApiResponse resp) {
+		resp.setStatusCode(404);
+		resp.addPayload("No page matching " + req.getPathInfo());
+	}
+
+	/**
+	 * @param req
+	 * @param resp
+	 * @param msg
+	 */
+	public static void error500(HttpServletRequest req, RestApiResponse resp,
+			String msg) {
+		resp.setStatusCode(500);
+		resp.addPayload("Servererror for page " + req.getPathInfo());
+		resp.addField("msg", msg);
+	}
+
+	/**
+	 * Service that handles all the request. Injected by the component.xml
+	 */
 	private HttpService httpService;
 
 	/**
@@ -51,16 +75,21 @@ public class RestApiComponent {
 	}
 
 	/**
-     * Unregister the service.
-     */
+	 * Unregister the service.
+	 */
 	protected void shutdown() {
 		httpService.unregister(SERVLET_ALIAS);
 	}
 
 	/**
-     * Initialize and start the service. 
-     */
-	protected void startup() {
+	 * Initialize and start the service.
+	 * 
+	 * @throws NoSuchMethodException
+	 * @throws SecurityException
+	 * @throws IllegalArgumentException
+	 */
+	protected void startup() throws IllegalArgumentException,
+			SecurityException, NoSuchMethodException {
 		try {
 			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
 			RestApiServlet servlet = new RestApiServlet();
