@@ -22,48 +22,54 @@
 
 package de.dhbw.mannheim.cloudraid.api;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import javax.servlet.ServletException;
+
+import org.osgi.service.http.HttpService;
+import org.osgi.service.http.NamespaceException;
 
 /**
  * @author Markus Holtermann
+ * 
  */
-public class JSONResource {
-
-	private JSONObject jo;
+public class RestApiComponent {
 
 	/**
-	 * 
+     * Main path for the REST API
+     */
+	private static final String SERVLET_ALIAS = "/";
+	
+	/**
+     * Service that handles all the request. Injected by the component.xml
+     */
+	private HttpService httpService;
+
+	/**
+	 * @param httpService
 	 */
-	public JSONResource() {
-		this.jo = new JSONObject();
+	public void setHttpService(HttpService httpService) {
+		this.httpService = httpService;
 	}
 
-	public JSONObject addField(String name, String payload) {
+	/**
+     * Unregister the service.
+     */
+	protected void shutdown() {
+		httpService.unregister(SERVLET_ALIAS);
+	}
+
+	/**
+     * Initialize and start the service. 
+     */
+	protected void startup() {
 		try {
-			return this.jo.append(name, payload);
-		} catch (JSONException e) {
+			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
+			RestApiServlet servlet = new RestApiServlet();
+			httpService.registerServlet(SERVLET_ALIAS, servlet, null, null);
+		} catch (ServletException e) {
+			e.printStackTrace();
+		} catch (NamespaceException e) {
 			e.printStackTrace();
 		}
-		return this.jo;
-	}
-
-	public JSONObject addPayload(String payload) {
-		return this.addField("payload", payload);
-	}
-
-	public JSONObject read(String payload) {
-		try {
-			this.jo = new JSONObject(payload);
-			return this.jo;
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		return this.jo;
-	}
-
-	public String write() {
-		return this.jo.toString();
 	}
 
 }
