@@ -144,3 +144,20 @@ Testing the C code::
     make clean (optional)
     make test (optional DEBUG=1)
     make run-test
+
+Run
+===
+
+To run CloudRAID, you need to start the OSGi console with
+``-Dorg.osgi.service.http.port=PORT``. Replace ``PORT`` with any unbound port >
+1024 if you don't have administrative privileges.
+
+Please start the bundles in the following order:
+
+#. org.eclipse.equinox.ds_1.3.1.R37x_v20110701
+#. org.eclipse.equinox.http.jetty_2.0.100.v20110502
+#. org.eclipse.equinox.http.servlet_1.1.200.v20110502
+#. CloudRAID-pwdmngr_0.0.1.prealpha
+#. CloudRAID-persistance_0.0.1.prealpha
+#. CloudRAID-core_0.0.1.prealpha
+#. CloudRAID-rest_0.0.1.prealpha
