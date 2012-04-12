@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
+
 /**
  * @author Markus Holtermann
  * 
@@ -72,6 +74,7 @@ public class RestApiUrlMapping {
 			return this.function;
 		}
 	}
+
 	/**
 	 * 
 	 */
@@ -93,12 +96,46 @@ public class RestApiUrlMapping {
 	 */
 	public RestApiUrlMapping(Pattern pattern, Method function)
 			throws IllegalArgumentException {
-		if (null == pattern)
-			throw new IllegalArgumentException("Pattern must not be null!");
-		if (null == function)
-			throw new IllegalArgumentException("Pattern must not be null!");
-		this.pattern = pattern;
-		this.function = function;
+		this(pattern, null, function);
+	}
+
+	/**
+	 * @param pattern
+	 * @param function
+	 * @throws IllegalArgumentException
+	 */
+	public RestApiUrlMapping(String pattern, Method function)
+			throws IllegalArgumentException {
+		this(Pattern.compile(pattern), null, function);
+	}
+
+	/**
+	 * @param pattern
+	 * @param klass
+	 * @param function
+	 * @throws IllegalArgumentException
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
+	 */
+	public RestApiUrlMapping(Pattern pattern, Class<?> klass, String function)
+			throws IllegalArgumentException, SecurityException,
+			NoSuchMethodException {
+		this(pattern, null, RestApiUrlMapping.findFunction(klass, function));
+	}
+
+	/**
+	 * @param pattern
+	 * @param klass
+	 * @param function
+	 * @throws IllegalArgumentException
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
+	 */
+	public RestApiUrlMapping(String pattern, Class<?> klass, String function)
+			throws IllegalArgumentException, SecurityException,
+			NoSuchMethodException {
+		this(Pattern.compile(pattern), null, RestApiUrlMapping.findFunction(
+				klass, function));
 	}
 
 	/**
@@ -124,31 +161,58 @@ public class RestApiUrlMapping {
 	 * @param method
 	 * @param function
 	 * @throws IllegalArgumentException
+	 * 
 	 */
 	public RestApiUrlMapping(String pattern, String method, Method function)
 			throws IllegalArgumentException {
-		if (null == pattern)
-			throw new IllegalArgumentException("Pattern must not be null!");
-		if (null == function)
-			throw new IllegalArgumentException("Pattern must not be null!");
-		this.pattern = Pattern.compile(pattern);
-		this.method = method;
-		this.function = function;
+		this(Pattern.compile(pattern), method, function);
 	}
 
 	/**
 	 * @param pattern
+	 * @param method
+	 * @param klass
 	 * @param function
 	 * @throws IllegalArgumentException
+	 * @throws NoSuchMethodException
+	 * @throws SecurityException
 	 */
-	public RestApiUrlMapping(String pattern, Method function)
-			throws IllegalArgumentException {
-		if (null == pattern)
-			throw new IllegalArgumentException("Pattern must not be null!");
-		if (null == function)
-			throw new IllegalArgumentException("Pattern must not be null!");
-		this.pattern = Pattern.compile(pattern);
-		this.function = function;
+	public RestApiUrlMapping(Pattern pattern, String method, Class<?> klass,
+			String function) throws IllegalArgumentException,
+			SecurityException, NoSuchMethodException {
+		this(pattern, method, RestApiUrlMapping.findFunction(klass, function));
+	}
+
+	/**
+	 * @param pattern
+	 * @param method
+	 * @param klass
+	 * @param function
+	 * @throws IllegalArgumentException
+	 * @throws NoSuchMethodException
+	 * @throws SecurityException
+	 */
+	public RestApiUrlMapping(String pattern, String method, Class<?> klass,
+			String function) throws IllegalArgumentException,
+			SecurityException, NoSuchMethodException {
+		this(Pattern.compile(pattern), method, RestApiUrlMapping.findFunction(
+				klass, function));
+	}
+
+	/**
+	 * @param klass
+	 * @param function
+	 * @return Return the Method object described by <code>klass</code> and
+	 *         <code>function</code>.
+	 * @throws IllegalArgumentException
+	 * @throws NoSuchMethodException
+	 * @throws SecurityException
+	 */
+	private static Method findFunction(Class<?> klass, String function)
+			throws IllegalArgumentException, SecurityException,
+			NoSuchMethodException {
+		return klass.getMethod(function, HttpServletRequest.class,
+				RestApiResponse.class, ArrayList.class);
 	}
 
 	/**
@@ -195,6 +259,8 @@ public class RestApiUrlMapping {
 		sb.append(this.pattern.pattern());
 		if (null != this.method) {
 			sb.append(" (" + this.method + ")");
+		} else {
+			sb.append(" (*)");
 		}
 		sb.append(" --> ");
 		sb.append(this.function.getName());
