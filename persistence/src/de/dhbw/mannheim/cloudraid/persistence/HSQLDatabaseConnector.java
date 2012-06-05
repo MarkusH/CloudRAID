@@ -43,8 +43,6 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 			deleteStatement, findNameStatement;
 	private Statement statement;
 
-	private final static String DB_PATH = Config.getCloudRAIDHome() + "filedb";
-
 	@Override
 	public synchronized boolean connect(String database) {
 		try {
@@ -55,11 +53,6 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 			return false;
 		}
 		return true;
-	}
-
-	@Override
-	public synchronized boolean connect() {
-		return this.connect(DB_PATH);
 	}
 
 	@Override
