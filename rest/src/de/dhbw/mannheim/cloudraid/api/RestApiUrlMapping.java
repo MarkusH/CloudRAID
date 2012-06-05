@@ -73,6 +73,21 @@ public class RestApiUrlMapping {
 		public Method getFunction() {
 			return this.function;
 		}
+		
+		public String toString() {
+			StringBuffer sb = new StringBuffer();
+			sb.append(this.function.getName());
+			sb.append("(");
+			if (this.args.size() == 0) {
+			} else {
+				sb.append("\n");
+				for (String s : this.args) {
+					sb.append(s + "\n,");
+				}
+			}
+			sb.append(")");
+			return sb.toString();
+		}
 	}
 
 	/**
@@ -150,7 +165,7 @@ public class RestApiUrlMapping {
 		if (null == pattern)
 			throw new IllegalArgumentException("Pattern must not be null!");
 		if (null == function)
-			throw new IllegalArgumentException("Pattern must not be null!");
+			throw new IllegalArgumentException("Function must not be null!");
 		this.pattern = pattern;
 		this.method = method;
 		this.function = function;
@@ -208,7 +223,7 @@ public class RestApiUrlMapping {
 	 * @throws NoSuchMethodException
 	 * @throws SecurityException
 	 */
-	private static Method findFunction(Class<?> klass, String function)
+	static Method findFunction(Class<?> klass, String function)
 			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
 		return klass.getMethod(function, HttpServletRequest.class,
