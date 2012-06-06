@@ -24,13 +24,10 @@ package de.dhbw.mannheim.cloudraid.api;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.Math;
 import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -42,14 +39,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
-
-import org.mortbay.jetty.Request;
 
 import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
 import de.dhbw.mannheim.cloudraid.api.responses.JsonApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
+import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
 /**
@@ -68,14 +63,19 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	private static ArrayList<RestApiUrlMapping> mappings = new ArrayList<RestApiUrlMapping>();
 
-	private static Config config;
+	/**
+	 * 
+	 */
+	private IDatabaseConnector database = null;
 
 	/**
+	 * @param database
 	 * @throws IllegalArgumentException
 	 * @throws SecurityException
 	 * @throws NoSuchMethodException
 	 */
-	public RestApiServlet() throws IllegalArgumentException, SecurityException,
+	public RestApiServlet(IDatabaseConnector database)
+			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "GET",
 				RestApiServlet.class, "fileinfo"));
@@ -83,10 +83,13 @@ public class RestApiServlet extends HttpServlet {
 				RestApiServlet.class, "fileNew"));
 		mappings.add(new RestApiUrlMapping("^/filelist/$", "GET",
 				RestApiServlet.class, "filelist"));
-		mappings.add(new RestApiUrlMapping("^/auth/$", "POST",
+		mappings.add(new RestApiUrlMapping("^/user/add/$", "POST",
+				RestApiServlet.class, "userAdd"));
+		mappings.add(new RestApiUrlMapping("^/user/auth/$", "POST",
 				RestApiServlet.class, "auth"));
-		mappings.add(new RestApiUrlMapping("^/auth/logout/$", "GET",
+		mappings.add(new RestApiUrlMapping("^/user/auth/logout/$", "GET",
 				RestApiServlet.class, "authLogout"));
+		this.database = database;
 	}
 
 	/**
@@ -199,7 +202,7 @@ public class RestApiServlet extends HttpServlet {
 		byte[] inputBytes = new byte[bufsize];
 		int readLength;
 		while ((readLength = bis.read(inputBytes)) >= 0) {
-			bos.write(inputBytes);
+			bos.write(inputBytes, 0, readLength);
 		}
 
 		resp.addPayload(f.getAbsolutePath());
@@ -230,8 +233,41 @@ public class RestApiServlet extends HttpServlet {
 			return;
 		}
 		HttpSession session = req.getSession();
+		Enumeration<String> e = session.getAttributeNames();
+		while (e.hasMoreElements()) {
+			String attr = e.nextElement();
+			resp.addField(attr, session.getAttribute(attr).toString());
+		}
 		resp.addPayload("X" + session.getCreationTime() + "Y"
 				+ session.getLastAccessedTime() + "Z");
+	}
+
+	/**
+	 * @param req
+	 * @param resp
+	 * @param args
+	 */
+	public void userAdd(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		if (this.validateSession(req, resp)) {
+			resp.setStatusCode(403);
+			resp.addPayload("Already logged in!");
+			return;
+		}
+		String username = req.getHeader("X-Username");
+		String password = req.getHeader("X-Password");
+		if (username == null || password == null) {
+			resp.setStatusCode(401);
+			resp.addPayload("Username or password missing!");
+			return;
+		}
+		if (database.addUser(username, password)) {
+			resp.setStatusCode(200);
+			resp.addPayload("User created");
+		} else {
+			resp.setStatusCode(500);
+			resp.addPayload("An error occured");
+		}
 	}
 
 	/**
@@ -243,6 +279,7 @@ public class RestApiServlet extends HttpServlet {
 			ArrayList<String> args) {
 		String username = req.getHeader("X-Username");
 		String password = req.getHeader("X-Password");
+		password = password + "";
 		HttpSession session = req.getSession(false);
 		if (session != null) {
 			resp.setStatusCode(301);
@@ -255,8 +292,17 @@ public class RestApiServlet extends HttpServlet {
 			resp.addPayload("Session could ne be created!");
 			return;
 		}
-		session.setAttribute("auth", true);
-		session.setAttribute("username", username);
+		int id = database.authUser(username, password);
+		if (id > -1) {
+			session.setAttribute("auth", true);
+			session.setAttribute("username", username);
+			session.setAttribute("id", id);
+		} else {
+			session.invalidate();
+			resp.setStatusCode(403);
+			resp.addPayload("Credentials invalid!");
+			return;
+		}
 	}
 
 	/**
@@ -272,6 +318,17 @@ public class RestApiServlet extends HttpServlet {
 		req.getSession().invalidate();
 	}
 
+	/**
+	 * @param req
+	 * @param resp
+	 * @return True if and only if all of the following points are true:
+	 *         <ul>
+	 *         <li>There is an existing session</li>
+	 *         <li>The session id is taken from a cookie</li>
+	 *         <li>The value of the session attribute <code>auth</code> is
+	 *         <code>true</code></li>
+	 *         </ul>
+	 */
 	private boolean validateSession(HttpServletRequest req, RestApiResponse resp) {
 		HttpSession session = req.getSession(false);
 		if (session == null) {

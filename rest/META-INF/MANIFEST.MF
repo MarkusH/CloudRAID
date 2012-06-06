@@ -8,6 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.dhbw.mannheim.cloudraid.api
 Import-Package: javax.servlet,
  javax.servlet.http;version="2.5.0",
+ org.osgi.framework;version="1.6.0",
  org.osgi.service.http;version="1.2.1"
 Service-Component: OSGI-INF/component.xml
 Require-Bundle: javax.servlet;bundle-version="2.5.0",
@@ -23,5 +24,6 @@ Require-Bundle: javax.servlet;bundle-version="2.5.0",
  org.eclipse.equinox.ds;bundle-version="1.3.1",
  org.eclipse.equinox.util;bundle-version="1.0.300",
  JSON-java;bundle-version="1.0.0",
- CloudRAID-core;bundle-version="0.0.1"
+ CloudRAID-core;bundle-version="0.0.1",
+ CloudRAID-interfaces;bundle-version="0.0.1"
 

@@ -35,6 +35,9 @@ import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
  */
 public class HSQLDatabaseConnectorActivator implements BundleActivator {
 
+	/**
+	 * 
+	 */
 	private ServiceRegistration<?> databaseService;
 
 	@Override

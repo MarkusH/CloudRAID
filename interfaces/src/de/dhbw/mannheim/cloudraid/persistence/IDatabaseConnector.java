@@ -24,7 +24,7 @@ package de.dhbw.mannheim.cloudraid.persistence;
 
 /**
  * @author Florian Bausch, Markus Holtermann
- *
+ * 
  */
 public interface IDatabaseConnector {
 
@@ -61,46 +61,79 @@ public interface IDatabaseConnector {
 	 *            The hash of the file name.
 	 * @param lastMod
 	 *            The last modification date.
+	 * @param user_id
+	 *            The user id this file belongs to
 	 * @return true, if the data set could be inserted into the database.
 	 */
-	public boolean insert(String path, String hash, long lastMod);
+	public boolean insert(String path, String hash, long lastMod, int user_id);
 
 	/**
 	 * Looks up the hash value of an entry in the database.
 	 * 
 	 * @param path
 	 *            The path of the file (identifies the data set).
+	 * @param user_id
+	 *            The user id this file belongs to
 	 * @return The hash value. Or <code>null</code>, if the path does not exist
 	 *         in the database.
 	 */
-	public String getHash(String path);
+	public String getHash(String path, int user_id);
 
 	/**
 	 * Looks up the last modification date of a file.
 	 * 
 	 * @param path
 	 *            The path of the file.
+	 * @param user_id
+	 *            The user id this file belongs to
 	 * @return The last modification date. Or <code>-1L</code>, if the path does
 	 *         not exist in the database.
 	 */
-	public long getLastMod(String path);
+	public long getLastMod(String path, int user_id);
 
 	/**
 	 * Looks up a file name for a given hash value.
 	 * 
 	 * @param hash
 	 *            The hash value.
+	 * @param user_id
+	 *            The user id this file belongs to
 	 * @return The path of the file. Or <code>null</code>, if the hash does not
 	 *         exist in the database.
 	 */
-	public String getName(String hash);
+	public String getName(String hash, int user_id);
 
 	/**
 	 * Deletes a data set in the database defined by the path.
 	 * 
 	 * @param path
 	 *            The path of the file.
+	 * @param user_id
+	 *            The user id this file belongs to
 	 * @return true, if the data set could be deleted.
 	 */
-	public boolean delete(String path);
+	public boolean delete(String path, int user_id);
+
+	/**
+	 * @param username
+	 *            The username of the new user. Max length is 32 characters
+	 * @param password
+	 *            The password
+	 * @return true, if and only if the new user has been created, otherwise
+	 *         false;
+	 */
+	public boolean addUser(String username, String password);
+
+	/**
+	 * This function must return the user id on success. Otherwise this function
+	 * <b>must</b> return -1
+	 * 
+	 * @param username
+	 *            The username
+	 * @param password
+	 *            The password (UTF-8 encoded)
+	 * @return -1, if either the username does not exist or the password does
+	 *         not match the record in the database
+	 */
+	public int authUser(String username, String password);
 }

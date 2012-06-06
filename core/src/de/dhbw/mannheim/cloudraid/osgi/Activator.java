@@ -26,6 +26,7 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
+import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 import de.dhbw.mannheim.cloudraid.util.Config;
 import de.dhbw.mannheim.cloudraid.util.IPasswordManager;
 
@@ -35,9 +36,20 @@ import de.dhbw.mannheim.cloudraid.util.IPasswordManager;
  */
 public class Activator implements BundleActivator {
 
-	// private ServiceRegistration<?> configRegistration;
-	ServiceReference<IPasswordManager> passwordServiceReference = null;
-	IPasswordManager pwdmngr = null;
+	/**
+	 * 
+	 */
+	private IPasswordManager pwdmngr = null;
+
+	/**
+	 * 
+	 */
+	private IDatabaseConnector database = null;
+
+	/**
+	 * 
+	 */
+	private Config config;
 
 	/*
 	 * (non-Javadoc)
@@ -48,10 +60,31 @@ public class Activator implements BundleActivator {
 	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
-		passwordServiceReference = context
+		ServiceReference<IPasswordManager> passwordServiceReference = context
 				.getServiceReference(IPasswordManager.class);
 		pwdmngr = context.getService(passwordServiceReference);
-		Config.getInstance().init(pwdmngr.getCredentials());
+		config = Config.getInstance();
+		config.init(pwdmngr.getCredentials());
+
+		ServiceReference<IDatabaseConnector> databaseServiceReference = context
+				.getServiceReference(IDatabaseConnector.class);
+		database = context.getService(databaseServiceReference);
+
+		String databasename = config.getString("database.name", null);
+		database.connect(databasename);
+		database.initialize();
+		System.out.println(database.insert("path1", "a1b2c3",
+				System.nanoTime(), 1));
+		System.out.println(database.insert("path1", "a1b2c3",
+				System.nanoTime(), 1));
+		System.out.println(database.getHash("path1", 1));
+		System.out.println(database.getLastMod("path1", 1));
+		System.out.println(database.getName("a1b2c3", 1));
+		System.out.println(database.getHash("path1", 2));
+		System.out.println(database.getLastMod("path1", 2));
+		System.out.println(database.getName("a1b2c3", 2));
+		System.out.println(database.insert("path2", "d4e5f6",
+				System.nanoTime(), 2));
 	}
 
 	/*
@@ -62,7 +95,7 @@ public class Activator implements BundleActivator {
 	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
-		// configRegistration.unregister();
+		database.disconnect();
 	}
 
 }

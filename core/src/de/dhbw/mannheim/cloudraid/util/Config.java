@@ -97,14 +97,16 @@ public class Config extends HashMap<String, String> {
 	 * The top-level path to the programs config.
 	 */
 	private static String CLOUDRAID_HOME = System.getProperty("os.name")
-			.contains("windows")
-			? System.getenv("APPDATA") + "\\cloudraid\\"
+			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
 			: System.getProperty("user.home") + "/.config/cloudraid/";
 
 	/**
 	 * The path to the default configuration file.
 	 */
 	private static String CONFIG_PATH = CLOUDRAID_HOME + "config.xml";
+
+	private static final String DEFAULT_DATABASE_NAME = CLOUDRAID_HOME
+			+ "database";
 
 	/**
 	 * A File object of the configuration file.
@@ -215,6 +217,7 @@ public class Config extends HashMap<String, String> {
 		Config.defaultData.put("split.input.dir", DEFAULT_SPLIT_INPUT_DIR);
 		Config.defaultData.put("split.output.dir", DEFAULT_SPLIT_OUTPUT_DIR);
 		Config.defaultData.put("upload.dir", DEFAULT_UPLOAD_DIR);
+		Config.defaultData.put("database.name", DEFAULT_DATABASE_NAME);
 	}
 
 	/**
@@ -895,8 +898,7 @@ public class Config extends HashMap<String, String> {
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("")
-						? ""
+				String salt = saltString == null || saltString.equals("") ? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");

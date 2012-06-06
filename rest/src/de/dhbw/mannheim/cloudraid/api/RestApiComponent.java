@@ -25,10 +25,13 @@ package de.dhbw.mannheim.cloudraid.api;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
 import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
+import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 
 /**
  * @author Markus Holtermann
@@ -40,6 +43,11 @@ public class RestApiComponent {
 	 * Main path for the REST API
 	 */
 	private static final String SERVLET_ALIAS = "/";
+
+	/**
+	 * 
+	 */
+	private IDatabaseConnector database = null;
 
 	/**
 	 * @param req
@@ -84,16 +92,25 @@ public class RestApiComponent {
 	/**
 	 * Initialize and start the service.
 	 * 
+	 * @param context
+	 * 
 	 * @throws NoSuchMethodException
 	 * @throws SecurityException
 	 * @throws IllegalArgumentException
 	 */
-	protected void startup() throws IllegalArgumentException,
-			SecurityException, NoSuchMethodException {
+	protected void startup(BundleContext context)
+			throws IllegalArgumentException, SecurityException,
+			NoSuchMethodException {
 		try {
+			ServiceReference<IDatabaseConnector> databaseServiceReference = context
+					.getServiceReference(IDatabaseConnector.class);
+			database = context.getService(databaseServiceReference);
 			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
-			RestApiServlet servlet = new RestApiServlet();
+			RestApiServlet servlet = new RestApiServlet(database);
 			httpService.registerServlet(SERVLET_ALIAS, servlet, null, null);
+			System.out.println(database.getHash("path2", 2));
+			System.out.println(database.getLastMod("path2", 2));
+			System.out.println(database.getName("d4e5f6", 2));
 		} catch (ServletException e) {
 			e.printStackTrace();
 		} catch (NamespaceException e) {
