@@ -36,7 +36,8 @@ import de.dhbw.mannheim.cloudraid.util.Config;
 		de.dhbw.mannheim.cloudraid.jni.TestRaidAccessInterface.class,
 		de.dhbw.mannheim.cloudraid.fs.TestFileSystemUtilities.class,
 		de.dhbw.mannheim.cloudraid.fs.TestFileLock.class,
-		de.dhbw.mannheim.cloudraid.persistence.TestHSQLDatabaseConnector.class })
+		de.dhbw.mannheim.cloudraid.persistence.TestHSQLDatabaseConnector.class,
+		de.dhbw.mannheim.cloudraid.api.TestRestApi.class })
 public class AllTests {
 
 	static {

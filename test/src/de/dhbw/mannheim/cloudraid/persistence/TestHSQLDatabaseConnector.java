@@ -49,6 +49,7 @@ public class TestHSQLDatabaseConnector {
 	private static final String PATH = "path", PATH2 = "path2";
 	private static final String HASH = "hash", HASH2 = "hash2";
 	private static final long TIME = 100000L, TIME2 = 200000L;
+	private static int user1Id, user2Id;
 
 	@BeforeClass
 	public static void oneTimeSetUp() throws InstantiationException,
@@ -56,6 +57,10 @@ public class TestHSQLDatabaseConnector {
 		dbc = DatabaseConnector.getDatabaseConnector(CONNECTOR_CLASS);
 		assertTrue(dbc.connect(Config.getCloudRAIDHome() + DATABASE_FILE));
 		assertTrue(dbc.initialize());
+		dbc.addUser("User1", "Password1");
+		dbc.addUser("User2", "Password2");
+		user1Id = dbc.authUser("User1", "Password1");
+		user2Id = dbc.authUser("User2", "Password2");
 	}
 
 	@AfterClass
@@ -70,27 +75,36 @@ public class TestHSQLDatabaseConnector {
 
 	@Test
 	public void testInsert() {
-		assertTrue(dbc.insert(PATH, HASH, TIME));
+		// Insert first file
+		assertTrue(dbc.insert(PATH, HASH, TIME, user1Id));
 
-		assertEquals(PATH, dbc.getName(HASH));
-		assertEquals(HASH, dbc.getHash(PATH));
-		assertEquals(TIME, dbc.getLastMod(PATH));
+		assertEquals(PATH, dbc.getName(HASH, user1Id));
+		assertEquals(HASH, dbc.getHash(PATH, user1Id));
+		assertEquals(TIME, dbc.getLastMod(PATH, user1Id));
+		assertNull(dbc.getName(HASH, user2Id));
+		assertNull(dbc.getHash(PATH, user2Id));
+		assertEquals(-1L, dbc.getLastMod(PATH, user2Id));
 
-		assertTrue(dbc.insert(PATH, HASH, TIME2));
+		// Update first file
+		assertTrue(dbc.insert(PATH, HASH, TIME2, user1Id));
 
-		assertEquals(PATH, dbc.getName(HASH));
-		assertEquals(HASH, dbc.getHash(PATH));
-		assertEquals(TIME2, dbc.getLastMod(PATH));
+		assertEquals(PATH, dbc.getName(HASH, user1Id));
+		assertEquals(HASH, dbc.getHash(PATH, user1Id));
+		assertEquals(TIME2, dbc.getLastMod(PATH, user1Id));
+		assertNull(dbc.getName(HASH, user2Id));
+		assertNull(dbc.getHash(PATH, user2Id));
+		assertEquals(-1L, dbc.getLastMod(PATH, user2Id));
 
-		assertTrue(dbc.insert(PATH2, HASH2, TIME2));
+		// Insert second file for both users
+		assertTrue(dbc.insert(PATH2, HASH2, TIME2, user1Id));
+		assertTrue(dbc.insert(PATH2, HASH2, TIME2, user2Id));
 
-		assertEquals(PATH2, dbc.getName(HASH2));
-		assertEquals(HASH2, dbc.getHash(PATH2));
-		assertEquals(TIME2, dbc.getLastMod(PATH2));
-
-		assertEquals(PATH, dbc.getName(HASH));
-		assertEquals(HASH, dbc.getHash(PATH));
-		assertEquals(TIME2, dbc.getLastMod(PATH));
+		assertEquals(PATH2, dbc.getName(HASH2, user1Id)); // User 1
+		assertEquals(HASH2, dbc.getHash(PATH2, user1Id));
+		assertEquals(TIME2, dbc.getLastMod(PATH2, user1Id));
+		assertEquals(PATH2, dbc.getName(HASH2, user2Id)); // User 2
+		assertEquals(HASH2, dbc.getHash(PATH2, user2Id));
+		assertEquals(TIME2, dbc.getLastMod(PATH2, user2Id));
 	}
 
 	@Test
@@ -98,14 +112,27 @@ public class TestHSQLDatabaseConnector {
 		long time = System.currentTimeMillis();
 		String path = "path3";
 		String hash = "hash3";
-		assertTrue(dbc.insert(path, hash, time));
-		assertTrue(dbc.delete(path));
+		assertTrue(dbc.insert(path, hash, time, user1Id));
+		assertEquals(dbc.delete(path, user1Id), 1);
 
-		assertNull(dbc.getName(hash));
-		assertNull(dbc.getHash(path));
-		assertEquals(dbc.getLastMod(path), -1L);
+		assertNull(dbc.getName(hash, user1Id));
+		assertNull(dbc.getHash(path, user1Id));
+		assertEquals(dbc.getLastMod(path, user1Id), -1L);
 
-		assertTrue(dbc.delete(path));
+		assertEquals(dbc.delete(path, user1Id), 0);
+	}
+
+	@Test
+	public void testAuthUser() {
+		assertTrue(dbc.addUser("testuser", "testpw"));
+		assertEquals(dbc.authUser("testuser", "testpw"), 2);
+		assertEquals(dbc.authUser("testuser", "secondpw"), -1);
+	}
+
+	@Test
+	public void testAddUser() {
+		assertTrue(dbc.addUser("testuser2", "testpw"));
+		assertFalse(dbc.addUser("testuser2", "secondpw"));
 	}
 
 	@Test
@@ -113,17 +140,17 @@ public class TestHSQLDatabaseConnector {
 		assertTrue(dbc.disconnect());
 
 		assertTrue(dbc.disconnect());
-		assertNull(dbc.getHash(PATH));
-		assertNull(dbc.getName(HASH));
-		assertEquals(dbc.getLastMod(PATH), -1L);
-		assertFalse(dbc.insert(PATH, HASH, TIME));
+		assertNull(dbc.getHash(PATH, user1Id));
+		assertNull(dbc.getName(HASH, user1Id));
+		assertEquals(dbc.getLastMod(PATH, user1Id), -1L);
+		assertFalse(dbc.insert(PATH, HASH, TIME, user1Id));
 		assertFalse(dbc.initialize());
-		assertFalse(dbc.delete(PATH));
+		assertEquals(dbc.delete(PATH, user1Id), -1);
 
 		assertTrue(dbc.connect(Config.getCloudRAIDHome() + DATABASE_FILE));
 		assertTrue(dbc.initialize());
 	}
-
+	
 	@Test(expected = ClassNotFoundException.class)
 	public void testWrongClassname() throws InstantiationException,
 			IllegalAccessException, ClassNotFoundException, ClassCastException {

@@ -108,9 +108,6 @@ public class RestApiComponent {
 			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
 			RestApiServlet servlet = new RestApiServlet(database);
 			httpService.registerServlet(SERVLET_ALIAS, servlet, null, null);
-			System.out.println(database.getHash("path2", 2));
-			System.out.println(database.getLastMod("path2", 2));
-			System.out.println(database.getName("d4e5f6", 2));
 		} catch (ServletException e) {
 			e.printStackTrace();
 		} catch (NamespaceException e) {

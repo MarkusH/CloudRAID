@@ -61,58 +61,58 @@ public interface IDatabaseConnector {
 	 *            The hash of the file name.
 	 * @param lastMod
 	 *            The last modification date.
-	 * @param user_id
+	 * @param userId
 	 *            The user id this file belongs to
 	 * @return true, if the data set could be inserted into the database.
 	 */
-	public boolean insert(String path, String hash, long lastMod, int user_id);
+	public boolean insert(String path, String hash, long lastMod, int userId);
 
 	/**
 	 * Looks up the hash value of an entry in the database.
 	 * 
 	 * @param path
 	 *            The path of the file (identifies the data set).
-	 * @param user_id
+	 * @param userId
 	 *            The user id this file belongs to
 	 * @return The hash value. Or <code>null</code>, if the path does not exist
 	 *         in the database.
 	 */
-	public String getHash(String path, int user_id);
+	public String getHash(String path, int userId);
 
 	/**
 	 * Looks up the last modification date of a file.
 	 * 
 	 * @param path
 	 *            The path of the file.
-	 * @param user_id
+	 * @param userId
 	 *            The user id this file belongs to
 	 * @return The last modification date. Or <code>-1L</code>, if the path does
 	 *         not exist in the database.
 	 */
-	public long getLastMod(String path, int user_id);
+	public long getLastMod(String path, int userId);
 
 	/**
 	 * Looks up a file name for a given hash value.
 	 * 
 	 * @param hash
 	 *            The hash value.
-	 * @param user_id
+	 * @param userId
 	 *            The user id this file belongs to
 	 * @return The path of the file. Or <code>null</code>, if the hash does not
 	 *         exist in the database.
 	 */
-	public String getName(String hash, int user_id);
+	public String getName(String hash, int userId);
 
 	/**
 	 * Deletes a data set in the database defined by the path.
 	 * 
 	 * @param path
 	 *            The path of the file.
-	 * @param user_id
+	 * @param userId
 	 *            The user id this file belongs to
-	 * @return true, if the data set could be deleted.
+	 * @return The number of deleted records or -1
 	 */
-	public boolean delete(String path, int user_id);
+	public int delete(String path, int userId);
 
 	/**
 	 * @param username

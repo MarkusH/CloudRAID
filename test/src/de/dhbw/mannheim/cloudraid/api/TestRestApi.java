@@ -91,12 +91,8 @@ public class TestRestApi {
 		for (int p = 0; p < paths.length; p++) {
 			for (int m = 0; m < methods.length; m++) {
 				for (int r = 0; r < mappings.size(); r++) {
+					// Total number of iterations: 512
 					mr = mappings.get(r).match(paths[p], methods[m]);
-					System.out.println(mr);
-					System.out.println("Path: " + paths[p]);
-					System.out.println("Method: " + methods[m]);
-					System.out.println("Mapping: " + mappings.get(r));
-					System.out.println();
 					if (p % 2 == 1) {
 						// This covers every 2. path from the above array.
 						// They do not match (coverage: 256)

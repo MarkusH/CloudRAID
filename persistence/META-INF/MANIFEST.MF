@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: CloudRAID-persistance
-Bundle-SymbolicName: CloudRAID-persistance
+Bundle-Name: CloudRAID-persistence
+Bundle-SymbolicName: CloudRAID-persistence
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

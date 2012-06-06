@@ -73,18 +73,6 @@ public class Activator implements BundleActivator {
 		String databasename = config.getString("database.name", null);
 		database.connect(databasename);
 		database.initialize();
-		System.out.println(database.insert("path1", "a1b2c3",
-				System.nanoTime(), 1));
-		System.out.println(database.insert("path1", "a1b2c3",
-				System.nanoTime(), 1));
-		System.out.println(database.getHash("path1", 1));
-		System.out.println(database.getLastMod("path1", 1));
-		System.out.println(database.getName("a1b2c3", 1));
-		System.out.println(database.getHash("path1", 2));
-		System.out.println(database.getLastMod("path1", 2));
-		System.out.println(database.getName("a1b2c3", 2));
-		System.out.println(database.insert("path2", "d4e5f6",
-				System.nanoTime(), 2));
 	}
 
 	/*

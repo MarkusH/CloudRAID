@@ -192,26 +192,29 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 				e1.printStackTrace();
 			}
 			return false;
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			return false;
 		}
 	}
 
 	@Override
-	public boolean insert(String path, String hash, long lastMod, int user_id) {
+	public boolean insert(String path, String hash, long lastMod, int userId) {
 		try {
 			findStatement.setString(1, path);
-			findStatement.setInt(2, user_id);
+			findStatement.setInt(2, userId);
 			ResultSet resSet = findStatement.executeQuery();
 
 			if (resSet.next()) {
 				updateStatement.setTimestamp(1, new Timestamp(lastMod));
 				updateStatement.setString(2, path);
-				updateStatement.setInt(3, user_id);
+				updateStatement.setInt(3, userId);
 				updateStatement.execute();
 			} else {
 				insertStatement.setString(1, path);
 				insertStatement.setString(2, hash);
 				insertStatement.setTimestamp(3, new Timestamp(lastMod));
-				insertStatement.setInt(4, user_id);
+				insertStatement.setInt(4, userId);
 				insertStatement.execute();
 			}
 			con.commit();
@@ -224,14 +227,17 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 				e1.printStackTrace();
 			}
 			return false;
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			return false;
 		}
 	}
 
 	@Override
-	public String getHash(String path, int user_id) {
+	public String getHash(String path, int userId) {
 		try {
 			findStatement.setString(1, path);
-			findStatement.setInt(2, user_id);
+			findStatement.setInt(2, userId);
 			findStatement.execute();
 			ResultSet rs = findStatement.getResultSet();
 			if (rs.next()) {
@@ -241,14 +247,17 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			return null;
 		}
 	}
 
 	@Override
-	public long getLastMod(String path, int user_id) {
+	public long getLastMod(String path, int userId) {
 		try {
 			findStatement.setString(1, path);
-			findStatement.setInt(2, user_id);
+			findStatement.setInt(2, userId);
 			findStatement.execute();
 			ResultSet rs = findStatement.getResultSet();
 			if (rs.next()) {
@@ -258,14 +267,17 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return -1L;
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			return -1L;
 		}
 	}
 
 	@Override
-	public String getName(String hash, int user_id) {
+	public String getName(String hash, int userId) {
 		try {
 			findNameStatement.setString(1, hash);
-			findNameStatement.setInt(2, user_id);
+			findNameStatement.setInt(2, userId);
 			findNameStatement.execute();
 			ResultSet rs = findNameStatement.getResultSet();
 			if (rs.next()) {
@@ -275,20 +287,26 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			return null;
 		}
 	}
 
 	@Override
-	public boolean delete(String path, int user_id) {
+	public int delete(String path, int userId) {
 		try {
 			deleteStatement.setString(1, path);
-			deleteStatement.setInt(2, user_id);
+			deleteStatement.setInt(2, userId);
 			deleteStatement.execute();
+			return deleteStatement.getUpdateCount();
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return false;
+			return -1;
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+			return -1;
 		}
-		return true;
 	}
 
 	/*
@@ -323,6 +341,8 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
 			e.printStackTrace();
 		}
 		return -1;
@@ -372,6 +392,8 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
+		} catch (NullPointerException e) {
+			e.printStackTrace();
 		}
 		return false;
 	}
