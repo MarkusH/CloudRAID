@@ -22,19 +22,35 @@
 
 package de.dhbw.mannheim.cloudraid.api;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.Math;
+import java.security.InvalidKeyException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
+
+import org.mortbay.jetty.Request;
 
 import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
 import de.dhbw.mannheim.cloudraid.api.responses.JsonApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
+import de.dhbw.mannheim.cloudraid.util.Config;
 
 /**
  * @author Markus Holtermann
@@ -52,6 +68,8 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	private static ArrayList<RestApiUrlMapping> mappings = new ArrayList<RestApiUrlMapping>();
 
+	private static Config config;
+
 	/**
 	 * @throws IllegalArgumentException
 	 * @throws SecurityException
@@ -61,10 +79,14 @@ public class RestApiServlet extends HttpServlet {
 			NoSuchMethodException {
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "GET",
 				RestApiServlet.class, "fileinfo"));
-		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
-				RestApiServlet.class, "fileinfo2"));
+		mappings.add(new RestApiUrlMapping("^/file/new/([^/]+)/$",
+				RestApiServlet.class, "fileNew"));
 		mappings.add(new RestApiUrlMapping("^/filelist/$", "GET",
 				RestApiServlet.class, "filelist"));
+		mappings.add(new RestApiUrlMapping("^/auth/$", "POST",
+				RestApiServlet.class, "auth"));
+		mappings.add(new RestApiUrlMapping("^/auth/logout/$", "GET",
+				RestApiServlet.class, "authLogout"));
 	}
 
 	/**
@@ -141,15 +163,46 @@ public class RestApiServlet extends HttpServlet {
 	 * @param req
 	 * @param resp
 	 * @param args
+	 * @throws IOException
+	 * @throws BadPaddingException
+	 * @throws IllegalBlockSizeException
+	 * @throws InvalidKeyException
 	 */
-	public void fileinfo2(HttpServletRequest req, RestApiResponse resp,
-			ArrayList<String> args) {
+	public void fileNew(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) throws IOException, InvalidKeyException,
+			IllegalBlockSizeException, BadPaddingException {
 		int i = 0;
 		for (String arg : args) {
 			resp.addField("" + i++, arg);
 		}
+		Enumeration<String> e = req.getHeaderNames();
+		while (e.hasMoreElements()) {
+			String header = e.nextElement();
+			resp.addField(header, req.getHeader(header));
+		}
 		resp.addField("method", req.getMethod());
-		resp.addPayload(req.toString());
+
+		int bufsize = Math.min(1024, req.getContentLength());
+		String filename = args.get(0);
+
+		BufferedInputStream bis = new BufferedInputStream(req.getInputStream(),
+				bufsize);
+
+		File f = new File(Config.getInstance().getString("split.input.dir",
+				null)
+				+ filename);
+		f.getParentFile().mkdirs();
+
+		BufferedOutputStream bos = new BufferedOutputStream(
+				new FileOutputStream(f), bufsize);
+
+		byte[] inputBytes = new byte[bufsize];
+		int readLength;
+		while ((readLength = bis.read(inputBytes)) >= 0) {
+			bos.write(inputBytes);
+		}
+
+		resp.addPayload(f.getAbsolutePath());
 	}
 
 	/**
@@ -173,11 +226,70 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	public void filelist(HttpServletRequest req, RestApiResponse resp,
 			ArrayList<String> args) {
-		int i = 0;
-		for (String arg : args) {
-			resp.addField("" + i++, arg);
+		if (!this.validateSession(req, resp)) {
+			return;
 		}
-		resp.addPayload(req.toString());
+		HttpSession session = req.getSession();
+		resp.addPayload("X" + session.getCreationTime() + "Y"
+				+ session.getLastAccessedTime() + "Z");
+	}
+
+	/**
+	 * @param req
+	 * @param resp
+	 * @param args
+	 */
+	public void auth(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		String username = req.getHeader("X-Username");
+		String password = req.getHeader("X-Password");
+		HttpSession session = req.getSession(false);
+		if (session != null) {
+			resp.setStatusCode(301);
+			resp.addPayload("Session already exists!");
+			return;
+		}
+		session = req.getSession(true);
+		if (session == null) {
+			resp.setStatusCode(500);
+			resp.addPayload("Session could ne be created!");
+			return;
+		}
+		session.setAttribute("auth", true);
+		session.setAttribute("username", username);
+	}
+
+	/**
+	 * @param req
+	 * @param resp
+	 * @param args
+	 */
+	public void authLogout(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		req.getSession().invalidate();
+	}
+
+	private boolean validateSession(HttpServletRequest req, RestApiResponse resp) {
+		HttpSession session = req.getSession(false);
+		if (session == null) {
+			resp.setStatusCode(301);
+			resp.addPayload("Session does not exist!");
+			return false;
+		}
+		if (!req.isRequestedSessionIdFromCookie()) {
+			resp.setStatusCode(405);
+			resp.addPayload("Session not submitted via Cookie!");
+			return false;
+		}
+		if (!((Boolean) session.getAttribute("auth"))) {
+			resp.setStatusCode(403);
+			resp.addPayload("Not logged in!");
+			return false;
+		}
+		return true;
 	}
 
 }
