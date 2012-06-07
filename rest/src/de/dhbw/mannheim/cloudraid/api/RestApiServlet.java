@@ -79,7 +79,7 @@ public class RestApiServlet extends HttpServlet {
 			NoSuchMethodException {
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "GET",
 				RestApiServlet.class, "fileinfo"));
-		mappings.add(new RestApiUrlMapping("^/file/new/([^/]+)/$",
+		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "PUT",
 				RestApiServlet.class, "fileNew"));
 		mappings.add(new RestApiUrlMapping("^/filelist/$", "GET",
 				RestApiServlet.class, "filelist"));
