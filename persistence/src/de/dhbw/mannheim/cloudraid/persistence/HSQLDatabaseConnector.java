@@ -93,7 +93,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	private Statement statement = null;
 
 	@Override
-	public boolean connect(String database) {
+	public synchronized boolean connect(String database) {
 		try {
 			Class.forName("org.hsqldb.jdbcDriver");
 			con = DriverManager.getConnection("jdbc:hsqldb:file:" + database
@@ -109,7 +109,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public boolean disconnect() {
+	public synchronized boolean disconnect() {
 		try {
 			if (statement != null) {
 				statement.execute("SHUTDOWN COMPACT;");
@@ -142,7 +142,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public boolean initialize() {
+	public synchronized boolean initialize() {
 		try {
 			statement = con.createStatement();
 			String createTable = "CREATE CACHED TABLE IF NOT EXISTS cloudraid_users ("
@@ -199,7 +199,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public boolean insert(String path, String hash, long lastMod, int userId) {
+	public synchronized boolean insert(String path, String hash, long lastMod, int userId) {
 		try {
 			findStatement.setString(1, path);
 			findStatement.setInt(2, userId);
@@ -234,7 +234,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public String getHash(String path, int userId) {
+	public synchronized String getHash(String path, int userId) {
 		try {
 			findStatement.setString(1, path);
 			findStatement.setInt(2, userId);
@@ -254,7 +254,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public long getLastMod(String path, int userId) {
+	public synchronized long getLastMod(String path, int userId) {
 		try {
 			findStatement.setString(1, path);
 			findStatement.setInt(2, userId);
@@ -274,7 +274,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public String getName(String hash, int userId) {
+	public synchronized String getName(String hash, int userId) {
 		try {
 			findNameStatement.setString(1, hash);
 			findNameStatement.setInt(2, userId);
@@ -294,7 +294,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	}
 
 	@Override
-	public int delete(String path, int userId) {
+	public synchronized int delete(String path, int userId) {
 		try {
 			deleteStatement.setString(1, path);
 			deleteStatement.setInt(2, userId);

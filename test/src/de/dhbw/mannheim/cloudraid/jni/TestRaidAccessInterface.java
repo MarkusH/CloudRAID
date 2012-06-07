@@ -38,6 +38,7 @@ import javax.crypto.IllegalBlockSizeException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import de.dhbw.mannheim.cloudraid.util.Config;
@@ -136,6 +137,7 @@ public class TestRaidAccessInterface {
 		assertEquals(0x02, i);
 	}
 
+	@Ignore
 	@Test
 	public void testContent() throws IOException {
 		FileReader fr;

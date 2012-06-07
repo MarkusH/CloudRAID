@@ -35,7 +35,7 @@ public class NetUtils {
 	 * with the <code>/</code> again.
 	 * 
 	 * From<br>
-	 * <code>/this is/a/t€§t</code><br>
+	 * <code>/this is/a/t&#8364;&#167;t</code><br>
 	 * to<br>
 	 * <code>/this%20is/a/t%E2%82%AC%C2%A7t</code>.
 	 * 
