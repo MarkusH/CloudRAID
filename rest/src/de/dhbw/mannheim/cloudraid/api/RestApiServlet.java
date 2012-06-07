@@ -78,7 +78,7 @@ public class RestApiServlet extends HttpServlet {
 			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "GET",
-				RestApiServlet.class, "fileinfo"));
+				RestApiServlet.class, "fileDownload"));
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "PUT",
 				RestApiServlet.class, "fileNew"));
 		mappings.add(new RestApiUrlMapping("^/filelist/$", "GET",
@@ -213,7 +213,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @param resp
 	 * @param args
 	 */
-	public void fileinfo(HttpServletRequest req, RestApiResponse resp,
+	public void fileDownload(HttpServletRequest req, RestApiResponse resp,
 			ArrayList<String> args) {
 		int i = 0;
 		for (String arg : args) {
