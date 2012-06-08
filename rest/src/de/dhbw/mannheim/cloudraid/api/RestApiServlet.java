@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.security.InvalidKeyException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -59,47 +58,68 @@ public class RestApiServlet extends HttpServlet {
 	private static final long serialVersionUID = 1967811240645738359L;
 
 	/**
-	 * 
+	 * Stores all URL mappings.
 	 */
 	private static ArrayList<RestApiUrlMapping> mappings = new ArrayList<RestApiUrlMapping>();
 
 	/**
-	 * 
+	 * A reference to the database that is used
 	 */
 	private IDatabaseConnector database = null;
 
 	/**
+	 * Initializes all URL mappings and stores a reference to the
+	 * {@link IDatabaseConnector}
+	 * 
 	 * @param database
+	 *            The {@link IDatabaseConnector} that will be used for all
+	 *            database requests
 	 * @throws IllegalArgumentException
+	 *             Thrown if the pattern or the function is invalid.
 	 * @throws SecurityException
+	 *             Thrown if the function cannot be accessed
 	 * @throws NoSuchMethodException
+	 *             Thrown if no such function can be found
 	 */
 	public RestApiServlet(IDatabaseConnector database)
 			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
+		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "DELETE",
+				RestApiServlet.class, "fileDelete"));
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "GET",
 				RestApiServlet.class, "fileDownload"));
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "PUT",
 				RestApiServlet.class, "fileNew"));
-		mappings.add(new RestApiUrlMapping("^/filelist/$", "GET",
-				RestApiServlet.class, "filelist"));
+		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/info/$", "GET",
+				RestApiServlet.class, "fileInfo"));
+		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/update/$", "GET",
+				RestApiServlet.class, "fileUpdate"));
+		mappings.add(new RestApiUrlMapping("^/list/$", "GET",
+				RestApiServlet.class, "list"));
 		mappings.add(new RestApiUrlMapping("^/user/add/$", "POST",
 				RestApiServlet.class, "userAdd"));
 		mappings.add(new RestApiUrlMapping("^/user/auth/$", "POST",
-				RestApiServlet.class, "auth"));
+				RestApiServlet.class, "userAuth"));
 		mappings.add(new RestApiUrlMapping("^/user/auth/logout/$", "GET",
-				RestApiServlet.class, "authLogout"));
+				RestApiServlet.class, "userLogout"));
+		mappings.add(new RestApiUrlMapping("^/user/chgpw/$", "POST",
+				RestApiServlet.class, "userChangePass"));
+		mappings.add(new RestApiUrlMapping("^/user/del/$", "DELETE",
+				RestApiServlet.class, "userDelete"));
 		this.database = database;
 	}
 
 	/**
 	 * @param req
+	 *            The request
 	 * @param resp
-	 * @throws ServletException
+	 *            The response. The status code of the response might be
+	 *            overwritten by views
 	 * @throws IOException
+	 *             Thrown if the response cannot be written and send
 	 */
 	protected void doRequest(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+			throws IOException {
 		String mime = req.getHeader("Accept");
 		RestApiResponse r;
 		if (JsonApiResponse.MIMETYPE.equals(mime)) {
@@ -163,27 +183,108 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
+	 * View to delete a file. Method must be <code>DELETE</code> and path
+	 * pattern <code>^/file/([^/]+)/$</code>.
+	 * 
 	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
 	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>404 - File not found</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>500 - Error deleting the file</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
 	 * @param args
+	 *            <ol>
+	 *            <li>The filename</li>
+	 *            </ol>
+	 */
+	public void fileDelete(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented!");
+	}
+
+	/**
+	 * View to download a file. Method must be <code>GET</code> and path pattern
+	 * <code>^/file/([^/]+)/$</code>.
+	 * 
+	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>404 - File not found</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>500 - Error deleting the file</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
+	 * @param args
+	 *            <ol>
+	 *            <li>The filename</li>
+	 *            </ol>
+	 */
+	public void fileDownload(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented!");
+	}
+
+	/**
+	 * View to upload a new file. Method must be <code>PUT</code> and path
+	 * pattern <code>^/file/([^/]+)/$</code>.
+	 * 
+	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>201 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>409 - File already exists</li>
+	 *            <li>500 - Error adding the file</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
+	 * @param args
+	 *            <ol>
+	 *            <li>The filename</li>
+	 *            </ol>
 	 * @throws IOException
+	 *             Thrown if the new file cannot be written
 	 * @throws BadPaddingException
+	 *             Thrown if the output directory cannot be determined
 	 * @throws IllegalBlockSizeException
+	 *             Thrown if the output directory cannot be determined
 	 * @throws InvalidKeyException
+	 *             Thrown if the output directory cannot be determined
 	 */
 	public void fileNew(HttpServletRequest req, RestApiResponse resp,
 			ArrayList<String> args) throws IOException, InvalidKeyException,
 			IllegalBlockSizeException, BadPaddingException {
-		int i = 0;
-		for (String arg : args) {
-			resp.addField("" + i++, arg);
-		}
-		Enumeration<String> e = req.getHeaderNames();
-		while (e.hasMoreElements()) {
-			String header = e.nextElement();
-			resp.addField(header, req.getHeader(header));
-		}
-		resp.addField("method", req.getMethod());
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented!");
 
 		int bufsize = Math.min(1024, req.getContentLength());
 		String filename = args.get(0);
@@ -206,46 +307,132 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		resp.addPayload(f.getAbsolutePath());
+
 	}
 
 	/**
+	 * View to show information about a file. Method must be <code>GET</code>
+	 * and path pattern <code>^/file/([^/]+)/info/$</code>.
+	 * 
 	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
 	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>404 - File not found</li>
+	 *            <li>405 - Session id not submitteded via cookie</li>
+	 *            <li>500 - Error getting the file information</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
 	 * @param args
+	 *            <ol>
+	 *            <li>The filename</li>
+	 *            </ol>
 	 */
-	public void fileDownload(HttpServletRequest req, RestApiResponse resp,
-			ArrayList<String> args) {
-		int i = 0;
-		for (String arg : args) {
-			resp.addField("" + i++, arg);
-		}
-		resp.addPayload(req.toString());
-	}
-
-	/**
-	 * @param req
-	 * @param resp
-	 * @param args
-	 */
-	public void filelist(HttpServletRequest req, RestApiResponse resp,
+	public void fileInfo(HttpServletRequest req, RestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
-		HttpSession session = req.getSession();
-		Enumeration<String> e = session.getAttributeNames();
-		while (e.hasMoreElements()) {
-			String attr = e.nextElement();
-			resp.addField(attr, session.getAttribute(attr).toString());
-		}
-		resp.addPayload("X" + session.getCreationTime() + "Y"
-				+ session.getLastAccessedTime() + "Z");
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented!");
 	}
 
 	/**
+	 * View to update a file. Method must be <code>PUT</code> and path pattern
+	 * <code>^/file/([^/]+)/update/$</code>.
+	 * 
 	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
 	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>404 - File not found</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>500 - Error deleting the file</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
 	 * @param args
+	 *            <ol>
+	 *            <li>The filename</li>
+	 *            </ol>
+	 */
+	public void fileUpdate(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented!");
+	}
+
+	/**
+	 * View to list all files. Method must be <code>GET</code> and path pattern
+	 * <code>^/list/$</code>.
+	 * 
+	 * @param req
+	 *            The request
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>405 - Session id not submitted viaia cookie</li>
+	 *            <li>500 - Error getting the file information</li>
+	 *            <li>503 - Session does not existsxist</li>
+	 *            </ul>
+	 * @param args
+	 *            No arguments
+	 */
+	public void list(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented!");
+		/*
+		 * HttpSession session = req.getSession(); Enumeration<String> e =
+		 * session.getAttributeNames(); while (e.hasMoreElements()) { String
+		 * attr = e.nextElement(); resp.addField(attr,
+		 * session.getAttribute(attr).toString()); } resp.addPayload("X" +
+		 * session.getCreationTime() + "Y" + session.getLastAccessedTime() +
+		 * "Z");
+		 */
+	}
+
+	/**
+	 * View to add a user. Method must be <code>POST</code> and path pattern
+	 * <code>^/user/add/$</code>.
+	 * 
+	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>X-Username: USERNAME</code></li>
+	 *            <li><code>X-Password: PASSWORD</code></li>
+	 *            <li><code>X-Confirm: CONFIRMATION</code></li>
+	 *            </ul>
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>400 - User name and/or password and/or confirmation
+	 *            missing/wrong.</li>
+	 *            <li>406 - Already logged in</li>
+	 *            <li>500 - Error while adding the user to the database</li>
+	 *            </ul>
+	 * @param args
+	 *            No arguments
 	 */
 	public void userAdd(HttpServletRequest req, RestApiResponse resp,
 			ArrayList<String> args) {
@@ -271,11 +458,27 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
+	 * View to login a user. Method must be <code>POST</code> and path pattern
+	 * <code>^/user/auth/$</code>.
+	 * 
 	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>X-Username: USERNAME</code></li>
+	 *            <li><code>X-Password: PASSWORD</code></li>
+	 *            </ul>
 	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>202 - Success</li>
+	 *            <li>400 - User name and/or password missing/wrong.</li>
+	 *            <li>406 - AlreadyAlready logged in</li>
+	 *            <li>503 - Session could not be created.</li>
+	 *            </ul>
 	 * @param args
+	 *            No arguments
 	 */
-	public void auth(HttpServletRequest req, RestApiResponse resp,
+	public void userAuth(HttpServletRequest req, RestApiResponse resp,
 			ArrayList<String> args) {
 		String username = req.getHeader("X-Username");
 		String password = req.getHeader("X-Password");
@@ -306,11 +509,26 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
+	 * View to logout a user. Method must be <code>GET</code> and path pattern
+	 * <code>^/user/auth/logout/$</code>.
+	 * 
 	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
 	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
 	 * @param args
+	 *            No arguments
 	 */
-	public void authLogout(HttpServletRequest req, RestApiResponse resp,
+	public void userLogout(HttpServletRequest req, RestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -319,8 +537,82 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
+	 * View to change the password of a user. Method must be <code>POST</code>
+	 * and path pattern <code>^/user/chgpw/$</code>.
+	 * 
 	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            <li><code>X-Username: USERNAME</code></li>
+	 *            <li><code>X-Password: PASSWORD</code></li>
+	 *            <li><code>X-Confirm: CONFIRMATION</code></li>
+	 *            </ul>
 	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>400 - User name and/or password and/or confirmation
+	 *            missing/wrong.</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>500 - Error while updating the user record</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
+	 * @param args
+	 *            No arguments
+	 */
+	public void userChangePass(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented!");
+	}
+
+	/**
+	 * View to delete a user. Method must be <code>DELETE</code> and path
+	 * pattern <code>^/user/del/$</code>.
+	 * 
+	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            <li><code>X-Username: USERNAME</code></li>
+	 *            <li><code>X-Password: PASSWORD</code></li>
+	 *            </ul>
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>400 - User name and/or password missing/wrong.</li>
+	 *            <li>401 - Not logged in405Session id not submitted via cookie</li>
+	 *            <li>500 - Error while updating the userser record</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
+	 * @param args
+	 *            No arguments
+	 */
+	public void userDelete(HttpServletRequest req, RestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented!");
+	}
+
+	/**
+	 * @param req
+	 *            The request
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
 	 * @return True if and only if all of the following points are true:
 	 *         <ul>
 	 *         <li>There is an existing session</li>
@@ -332,7 +624,7 @@ public class RestApiServlet extends HttpServlet {
 	private boolean validateSession(HttpServletRequest req, RestApiResponse resp) {
 		HttpSession session = req.getSession(false);
 		if (session == null) {
-			resp.setStatusCode(301);
+			resp.setStatusCode(503);
 			resp.addPayload("Session does not exist!");
 			return false;
 		}
@@ -342,7 +634,7 @@ public class RestApiServlet extends HttpServlet {
 			return false;
 		}
 		if (!((Boolean) session.getAttribute("auth"))) {
-			resp.setStatusCode(403);
+			resp.setStatusCode(401);
 			resp.addPayload("Not logged in!");
 			return false;
 		}
