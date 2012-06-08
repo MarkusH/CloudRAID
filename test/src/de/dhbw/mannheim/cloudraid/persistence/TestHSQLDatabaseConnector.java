@@ -113,13 +113,13 @@ public class TestHSQLDatabaseConnector {
 		String path = "path3";
 		String hash = "hash3";
 		assertTrue(dbc.insert(path, hash, time, user1Id));
-		assertEquals(dbc.delete(path, user1Id), 1);
+		assertEquals(dbc.fileDelete(path, user1Id), 1);
 
 		assertNull(dbc.getName(hash, user1Id));
 		assertNull(dbc.getHash(path, user1Id));
 		assertEquals(dbc.getLastMod(path, user1Id), -1L);
 
-		assertEquals(dbc.delete(path, user1Id), 0);
+		assertEquals(dbc.fileDelete(path, user1Id), 0);
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class TestHSQLDatabaseConnector {
 		assertEquals(dbc.getLastMod(PATH, user1Id), -1L);
 		assertFalse(dbc.insert(PATH, HASH, TIME, user1Id));
 		assertFalse(dbc.initialize());
-		assertEquals(dbc.delete(PATH, user1Id), -1);
+		assertEquals(dbc.fileDelete(PATH, user1Id), -1);
 
 		assertTrue(dbc.connect(Config.getCloudRAIDHome() + DATABASE_FILE));
 		assertTrue(dbc.initialize());

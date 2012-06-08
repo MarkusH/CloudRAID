@@ -22,11 +22,17 @@
 
 package de.dhbw.mannheim.cloudraid.persistence;
 
+import java.sql.ResultSet;
+
 /**
  * @author Florian Bausch, Markus Holtermann
  * 
  */
 public interface IDatabaseConnector {
+
+	public enum FILE_STATUS {
+		UPLOADED, SPLITTING, SPLITTED, DISTRIBUTING, DISTRIBUTED, READY
+	};
 
 	/**
 	 * Creates a connection to a specific database.
@@ -55,6 +61,8 @@ public interface IDatabaseConnector {
 	/**
 	 * Inserts a data set into the database.
 	 * 
+	 * @deprecated Will be replaced by fileNew() and fileUpdate()
+	 * 
 	 * @param path
 	 *            The path of a file.
 	 * @param hash
@@ -70,6 +78,8 @@ public interface IDatabaseConnector {
 	/**
 	 * Looks up the hash value of an entry in the database.
 	 * 
+	 * @deprecated Not needed
+	 * 
 	 * @param path
 	 *            The path of the file (identifies the data set).
 	 * @param userId
@@ -82,6 +92,8 @@ public interface IDatabaseConnector {
 	/**
 	 * Looks up the last modification date of a file.
 	 * 
+	 * @deprecated Not needed
+	 * 
 	 * @param path
 	 *            The path of the file.
 	 * @param userId
@@ -93,6 +105,8 @@ public interface IDatabaseConnector {
 
 	/**
 	 * Looks up a file name for a given hash value.
+	 * 
+	 * @deprecated Not needed
 	 * 
 	 * @param hash
 	 *            The hash value.
@@ -112,7 +126,48 @@ public interface IDatabaseConnector {
 	 *            The user id this file belongs to
 	 * @return The number of deleted records or -1
 	 */
-	public int delete(String path, int userId);
+	public int fileDelete(String path, int userId);
+
+	/**
+	 * Checks, if the given file is available for the certain user
+	 * 
+	 * @param path
+	 *            The path of the file.
+	 * @param userId
+	 *            The user id this file belongs to
+	 * @return The SQL ResultSet of the file
+	 */
+	public ResultSet fileGet(String path, int userId);
+
+	/**
+	 * Inserts a data set into the database.
+	 * 
+	 * @param path
+	 *            The path of a file.
+	 * @param hash
+	 *            The hash of the file name.
+	 * @param lastMod
+	 *            The last modification date.
+	 * @param userId
+	 *            The user id this file belongs to
+	 * @return true, if the data set could be inserted into the database.
+	 */
+	public boolean fileNew(String path, String hash, long lastMod, int userId);
+
+	/**
+	 * Inserts a data set into the database.
+	 * 
+	 * @param path
+	 *            The path of a file.
+	 * @param hash
+	 *            The hash of the file name.
+	 * @param lastMod
+	 *            The last modification date.
+	 * @param userId
+	 *            The user id this file belongs to
+	 * @return true, if the data set could be inserted into the database.
+	 */
+	public boolean fileUpdate(String path, String hash, long lastMod, int userId);
 
 	/**
 	 * @param username

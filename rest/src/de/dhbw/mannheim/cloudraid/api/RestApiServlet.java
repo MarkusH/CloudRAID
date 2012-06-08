@@ -29,6 +29,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.security.InvalidKeyException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.crypto.BadPaddingException;
@@ -211,8 +213,21 @@ public class RestApiServlet extends HttpServlet {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
-		resp.setStatusCode(501);
-		resp.addPayload("Not implemented!");
+		HttpSession s = req.getSession();
+		ResultSet rs = database.fileGet(args.get(0),
+				(Integer) s.getAttribute("userid"));
+		try {
+			if (rs == null) {
+				resp.setStatusCode(404);
+				return;
+			}
+			rs.deleteRow();
+		} catch (SQLException e) {
+			resp.setStatusCode(500);
+			e.printStackTrace();
+			return;
+		}
+		resp.setStatusCode(200);
 	}
 
 	/**
@@ -231,7 +246,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>401 - Not logged in</li>
 	 *            <li>404 - File not found</li>
 	 *            <li>405 - Session id not submitted via cookie</li>
-	 *            <li>500 - Error deleting the file</li>
+	 *            <li>500 - Error retrieving the file data</li>
 	 *            <li>503 - Session does not exist</li>
 	 *            </ul>
 	 * @param args
@@ -244,8 +259,21 @@ public class RestApiServlet extends HttpServlet {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
-		resp.setStatusCode(501);
-		resp.addPayload("Not implemented!");
+		HttpSession s = req.getSession();
+		ResultSet rs = database.fileGet(args.get(0),
+				(Integer) s.getAttribute("userid"));
+		try {
+			if (rs == null) {
+				resp.setStatusCode(404);
+				return;
+			}
+			resp.addPayload(rs.getString("hash_name"));
+		} catch (SQLException e) {
+			resp.setStatusCode(500);
+			e.printStackTrace();
+			return;
+		}
+		resp.setStatusCode(200);
 	}
 
 	/**
@@ -271,45 +299,53 @@ public class RestApiServlet extends HttpServlet {
 	 *            <ol>
 	 *            <li>The filename</li>
 	 *            </ol>
-	 * @throws IOException
-	 *             Thrown if the new file cannot be written
-	 * @throws BadPaddingException
-	 *             Thrown if the output directory cannot be determined
-	 * @throws IllegalBlockSizeException
-	 *             Thrown if the output directory cannot be determined
-	 * @throws InvalidKeyException
-	 *             Thrown if the output directory cannot be determined
 	 */
 	public void fileNew(HttpServletRequest req, RestApiResponse resp,
-			ArrayList<String> args) throws IOException, InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException {
-		resp.setStatusCode(501);
-		resp.addPayload("Not implemented!");
-
-		int bufsize = Math.min(1024, req.getContentLength());
-		String filename = args.get(0);
-
-		BufferedInputStream bis = new BufferedInputStream(req.getInputStream(),
-				bufsize);
-
-		File f = new File(Config.getInstance().getString("split.input.dir",
-				null)
-				+ filename);
-		f.getParentFile().mkdirs();
-
-		BufferedOutputStream bos = new BufferedOutputStream(
-				new FileOutputStream(f), bufsize);
-
-		byte[] inputBytes = new byte[bufsize];
-		int readLength;
-		while ((readLength = bis.read(inputBytes)) >= 0) {
-			bos.write(inputBytes, 0, readLength);
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		String path = args.get(0);
+		HttpSession s = req.getSession();
+		int userid = (Integer) s.getAttribute("userid");
+		ResultSet rs = database.fileGet(path, userid);
+		if (rs != null) {
+			resp.setStatusCode(409);
 		}
 
-		resp.addPayload(f.getAbsolutePath());
+		int bufsize = Math.min(1024, req.getContentLength());
 
+		try {
+			BufferedInputStream bis = new BufferedInputStream(
+					req.getInputStream(), bufsize);
+
+			File f = new File(Config.getInstance().getString("split.input.dir",
+					null)
+					+ File.separator + userid + File.separator + path);
+			f.getParentFile().mkdirs();
+
+			BufferedOutputStream bos = new BufferedOutputStream(
+					new FileOutputStream(f), bufsize);
+
+			byte[] inputBytes = new byte[bufsize];
+			int readLength;
+			while ((readLength = bis.read(inputBytes)) >= 0) {
+				bos.write(inputBytes, 0, readLength);
+			}
+			if (database.fileNew(path, "", 0L, userid)) {
+				resp.setStatusCode(201);
+			}
+		} catch (InvalidKeyException e) {
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		resp.setStatusCode(500);
 	}
-
 	/**
 	 * View to show information about a file. Method must be <code>GET</code>
 	 * and path pattern <code>^/file/([^/]+)/info/$</code>.
@@ -339,8 +375,24 @@ public class RestApiServlet extends HttpServlet {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
-		resp.setStatusCode(501);
-		resp.addPayload("Not implemented!");
+		HttpSession s = req.getSession();
+		ResultSet rs = database.fileGet(args.get(0),
+				(Integer) s.getAttribute("userid"));
+		try {
+			if (rs == null) {
+				resp.setStatusCode(404);
+				return;
+			}
+			resp.addField("path", rs.getString("path_name"));
+			resp.addField("hash", rs.getString("hash_name"));
+			resp.addField("last modification", rs.getString("last_mod"));
+			resp.addField("status", rs.getString("status"));
+		} catch (SQLException e) {
+			resp.setStatusCode(500);
+			e.printStackTrace();
+			return;
+		}
+		resp.setStatusCode(200);
 	}
 
 	/**
@@ -372,8 +424,46 @@ public class RestApiServlet extends HttpServlet {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
-		resp.setStatusCode(501);
-		resp.addPayload("Not implemented!");
+		String path = args.get(0);
+		HttpSession s = req.getSession();
+		int userid = (Integer) s.getAttribute("userid");
+		ResultSet rs = database.fileGet(path, userid);
+		if (rs == null) {
+			resp.setStatusCode(404);
+		}
+
+		int bufsize = Math.min(1024, req.getContentLength());
+
+		try {
+			BufferedInputStream bis = new BufferedInputStream(
+					req.getInputStream(), bufsize);
+
+			File f = new File(Config.getInstance().getString("split.input.dir",
+					null)
+					+ File.separator + userid + File.separator + path);
+			f.getParentFile().mkdirs();
+
+			BufferedOutputStream bos = new BufferedOutputStream(
+					new FileOutputStream(f), bufsize);
+
+			byte[] inputBytes = new byte[bufsize];
+			int readLength;
+			while ((readLength = bis.read(inputBytes)) >= 0) {
+				bos.write(inputBytes, 0, readLength);
+			}
+			if (database.fileNew(path, "", 0L, userid)) {
+				resp.setStatusCode(200);
+			}
+		} catch (InvalidKeyException e) {
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		resp.setStatusCode(500);
 	}
 
 	/**
@@ -499,7 +589,7 @@ public class RestApiServlet extends HttpServlet {
 		if (id > -1) {
 			session.setAttribute("auth", true);
 			session.setAttribute("username", username);
-			session.setAttribute("id", id);
+			session.setAttribute("userid", id);
 		} else {
 			session.invalidate();
 			resp.setStatusCode(403);
