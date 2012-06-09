@@ -35,7 +35,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
-import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
+import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 
 /**
  * @author Markus Holtermann
@@ -153,7 +153,7 @@ public class TestRestApi {
 	 * @param resp
 	 * @param args
 	 */
-	public static void function(HttpServletRequest req, RestApiResponse resp,
+	public static void function(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 
 	}

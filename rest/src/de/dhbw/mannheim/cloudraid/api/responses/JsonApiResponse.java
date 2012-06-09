@@ -33,12 +33,12 @@ import org.json.JSONObject;
  * @author Markus Holtermann
  * 
  */
-public class JsonApiResponse implements RestApiResponse {
+public class JsonApiResponse implements IRestApiResponse {
 
 	/**
 	 * 
 	 */
-	public static String MIMETYPE = "application/json";
+	public static String MIMETYPE = "application/json; charset=utf-8";
 
 	/**
 	 * 

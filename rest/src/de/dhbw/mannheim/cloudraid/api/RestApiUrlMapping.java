@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
+import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 
 /**
  * @author Markus Holtermann
@@ -228,7 +228,7 @@ public class RestApiUrlMapping {
 			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
 		return klass.getMethod(function, HttpServletRequest.class,
-				RestApiResponse.class, ArrayList.class);
+				IRestApiResponse.class, ArrayList.class);
 	}
 
 	/**

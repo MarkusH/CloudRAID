@@ -30,7 +30,7 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
-import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
+import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 
 /**
@@ -53,7 +53,7 @@ public class RestApiComponent {
 	 * @param req
 	 * @param resp
 	 */
-	public static void error404(HttpServletRequest req, RestApiResponse resp) {
+	public static void error404(HttpServletRequest req, IRestApiResponse resp) {
 		resp.setStatusCode(404);
 		resp.addPayload("No page matching " + req.getPathInfo());
 	}
@@ -63,7 +63,7 @@ public class RestApiComponent {
 	 * @param resp
 	 * @param msg
 	 */
-	public static void error500(HttpServletRequest req, RestApiResponse resp,
+	public static void error500(HttpServletRequest req, IRestApiResponse resp,
 			String msg) {
 		resp.setStatusCode(500);
 		resp.addPayload("Servererror for page " + req.getPathInfo());

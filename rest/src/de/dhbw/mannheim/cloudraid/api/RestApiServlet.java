@@ -44,7 +44,7 @@ import javax.servlet.http.HttpSession;
 import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
 import de.dhbw.mannheim.cloudraid.api.responses.JsonApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
-import de.dhbw.mannheim.cloudraid.api.responses.RestApiResponse;
+import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 import de.dhbw.mannheim.cloudraid.util.Config;
 
@@ -123,7 +123,7 @@ public class RestApiServlet extends HttpServlet {
 	protected void doRequest(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
 		String mime = req.getHeader("Accept");
-		RestApiResponse r;
+		IRestApiResponse r;
 		if (JsonApiResponse.MIMETYPE.equals(mime)) {
 			r = new JsonApiResponse();
 		} else if (PlainApiResponse.MIMETYPE.equals(mime)) {
@@ -208,7 +208,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>The filename</li>
 	 *            </ol>
 	 */
-	public void fileDelete(HttpServletRequest req, RestApiResponse resp,
+	public void fileDelete(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -254,7 +254,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>The filename</li>
 	 *            </ol>
 	 */
-	public void fileDownload(HttpServletRequest req, RestApiResponse resp,
+	public void fileDownload(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -300,7 +300,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>The filename</li>
 	 *            </ol>
 	 */
-	public void fileNew(HttpServletRequest req, RestApiResponse resp,
+	public void fileNew(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -372,7 +372,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>The filename</li>
 	 *            </ol>
 	 */
-	public void fileInfo(HttpServletRequest req, RestApiResponse resp,
+	public void fileInfo(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -421,7 +421,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>The filename</li>
 	 *            </ol>
 	 */
-	public void fileUpdate(HttpServletRequest req, RestApiResponse resp,
+	public void fileUpdate(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -488,7 +488,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @param args
 	 *            No arguments
 	 */
-	public void list(HttpServletRequest req, RestApiResponse resp,
+	public void list(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -528,7 +528,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @param args
 	 *            No arguments
 	 */
-	public void userAdd(HttpServletRequest req, RestApiResponse resp,
+	public void userAdd(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (this.validateSession(req, resp)) {
 			resp.setStatusCode(403);
@@ -572,7 +572,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @param args
 	 *            No arguments
 	 */
-	public void userAuth(HttpServletRequest req, RestApiResponse resp,
+	public void userAuth(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		String username = req.getHeader("X-Username");
 		String password = req.getHeader("X-Password");
@@ -622,7 +622,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @param args
 	 *            No arguments
 	 */
-	public void userLogout(HttpServletRequest req, RestApiResponse resp,
+	public void userLogout(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -656,7 +656,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @param args
 	 *            No arguments
 	 */
-	public void userChangePass(HttpServletRequest req, RestApiResponse resp,
+	public void userChangePass(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -688,7 +688,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @param args
 	 *            No arguments
 	 */
-	public void userDelete(HttpServletRequest req, RestApiResponse resp,
+	public void userDelete(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		if (!this.validateSession(req, resp)) {
 			return;
@@ -715,7 +715,7 @@ public class RestApiServlet extends HttpServlet {
 	 *         <code>true</code></li>
 	 *         </ul>
 	 */
-	private boolean validateSession(HttpServletRequest req, RestApiResponse resp) {
+	private boolean validateSession(HttpServletRequest req, IRestApiResponse resp) {
 		HttpSession session = req.getSession(false);
 		if (session == null) {
 			resp.setStatusCode(503);

@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Markus Holtermann
  * 
  */
-public interface RestApiResponse {
+public interface IRestApiResponse {
 
 	/**
 	 * 

@@ -30,12 +30,12 @@ import javax.servlet.http.HttpServletResponse;
  * @author Markus Holtermann
  * 
  */
-public class PlainApiResponse implements RestApiResponse {
+public class PlainApiResponse implements IRestApiResponse {
 
 	/**
 	 * 
 	 */
-	public static String MIMETYPE = "text/plain";
+	public static String MIMETYPE = "text/plain; charset=utf-8";
 
 	/**
 	 * 
