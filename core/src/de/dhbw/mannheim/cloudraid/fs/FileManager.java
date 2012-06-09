@@ -165,10 +165,20 @@ public class FileManager extends Thread {
 		System.err.println(filename);
 		System.err.println(splitInputDir);
 		System.err.println(splitOutputDir);
+
+		// TODO Update file status to SPLITTING
 		String hashedFilename = RaidAccessInterface.splitInterface(
 				splitInputDir, filename.substring(splitInputDir.length()),
 				splitOutputDir, KEY);
 		System.err.println(hashedFilename);
+
+		// TODO Update file status to SPLITTED
+		// TODO Can we add the splitted files to the Queue to handle their
+		// upload??
+		// TODO Update file status to UPLOADING
+		// TODO Upload the files
+		// TODO Update file status to UPLOADED
+
 		// String name = new File(filename).getName();
 		// RaidAccessInterface.mergeInterface(mergeInputDir, hashedFilename,
 		// mergeOutputDir + name, KEY);
@@ -176,12 +186,13 @@ public class FileManager extends Thread {
 		/* Do something fancy. */
 
 		// Delete the split files.
-		// new File(splitOutputDir + hashedFilename + ".0").delete();
-		// new File(splitOutputDir + hashedFilename + ".1").delete();
-		// new File(splitOutputDir + hashedFilename + ".2").delete();
-		// new File(splitOutputDir + hashedFilename + ".m").delete();
+		new File(splitOutputDir + hashedFilename + ".0").delete();
+		new File(splitOutputDir + hashedFilename + ".1").delete();
+		new File(splitOutputDir + hashedFilename + ".2").delete();
+		new File(splitOutputDir + hashedFilename + ".m").delete();
+		new File(filename).delete();
 		// new File(mergeOutputDir + name).delete();
-
+		// TODO Update file status to READY
 	}
 
 }
