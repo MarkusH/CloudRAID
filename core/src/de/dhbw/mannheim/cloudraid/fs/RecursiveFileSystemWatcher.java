@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.naming.directory.InvalidAttributeValueException;
+
 import de.dhbw.mannheim.cloudraid.fs.FileQueue.FileAction;
 
 /**
@@ -54,8 +56,14 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 * 
 	 * @param pathToWatch
 	 *            The path to be watched.
+	 * @throws InvalidAttributeValueException
+	 *             Thrown if the pathToWatch is null
 	 */
-	public RecursiveFileSystemWatcher(String pathToWatch) {
+	public RecursiveFileSystemWatcher(String pathToWatch)
+			throws InvalidAttributeValueException {
+		if (pathToWatch == null) {
+			throw new InvalidAttributeValueException("Invalid path");
+		}
 		dir = new File(pathToWatch);
 		System.out.println("Watching directory " + dir.getAbsolutePath());
 		this.setPriority(MIN_PRIORITY);
@@ -69,8 +77,11 @@ public class RecursiveFileSystemWatcher extends Thread {
 	 *            Specifies the path that will be watched for changes.
 	 * @param sleepTime
 	 *            The sleeping time in ms.
+	 * @throws InvalidAttributeValueException
+	 *             Thrown if the pathToWatch is null
 	 */
-	public RecursiveFileSystemWatcher(String pathToWatch, long sleepTime) {
+	public RecursiveFileSystemWatcher(String pathToWatch, long sleepTime)
+			throws InvalidAttributeValueException {
 		this(pathToWatch);
 		this.sleepTime = sleepTime;
 	}
@@ -195,18 +206,6 @@ public class RecursiveFileSystemWatcher extends Thread {
 			}
 		} catch (IOException e) {
 			return false;
-		}
-	}
-
-	public static void main(String[] args) {
-		new RecursiveFileSystemWatcher(System.getProperty("user.home")
-				+ File.separator + "Dropbox" + File.separator, 60000).start();
-		int proc = Runtime.getRuntime().availableProcessors();
-		System.out.println("Number of available CPUs: " + proc);
-		FileManager[] fma = new FileManager[proc];
-		for (int i = 0; i < proc; i++) {
-			fma[i] = new FileManager(i);
-			fma[i].start();
 		}
 	}
 }

@@ -311,6 +311,7 @@ public class RestApiServlet extends HttpServlet {
 		ResultSet rs = database.fileGet(path, userid);
 		if (rs != null) {
 			resp.setStatusCode(409);
+			return;
 		}
 
 		int bufsize = Math.min(1024, req.getContentLength());
@@ -334,6 +335,7 @@ public class RestApiServlet extends HttpServlet {
 			}
 			if (database.fileNew(path, "", 0L, userid)) {
 				resp.setStatusCode(201);
+				return;
 			}
 		} catch (InvalidKeyException e) {
 			e.printStackTrace();
@@ -430,6 +432,7 @@ public class RestApiServlet extends HttpServlet {
 		ResultSet rs = database.fileGet(path, userid);
 		if (rs == null) {
 			resp.setStatusCode(404);
+			return;
 		}
 
 		int bufsize = Math.min(1024, req.getContentLength());
@@ -453,6 +456,7 @@ public class RestApiServlet extends HttpServlet {
 			}
 			if (database.fileNew(path, "", 0L, userid)) {
 				resp.setStatusCode(200);
+				return;
 			}
 		} catch (InvalidKeyException e) {
 			e.printStackTrace();

@@ -40,12 +40,14 @@ public class FileManager extends Thread {
 	private final static String KEY = "key";
 
 	private int interval = 2000;
+	private static Config config;
 
 	/**
 	 * Creates a FileManager thread with minimal priority.
 	 */
 	public FileManager() {
 		this.setPriority(MIN_PRIORITY);
+		this.config = Config.getInstance();
 	}
 
 	/**
@@ -149,35 +151,36 @@ public class FileManager extends Thread {
 			return;
 		}
 
-		String splitInputDir, splitOutputDir, mergeInputDir, mergeOutputDir;
+		String splitInputDir, splitOutputDir;
+		// String mergeInputDir, mergeOutputDir;
 		try {
-			mergeInputDir = Config.getInstance().getString("merge.input.dir",
-					null);
-			mergeOutputDir = Config.getInstance().getString("merge.output.dir",
-					null);
-			splitInputDir = Config.getInstance().getString("split.input.dir",
-					null);
-			splitOutputDir = Config.getInstance().getString("split.output.dir",
-					null);
+			// mergeInputDir = config.getString("merge.input.dir", null);
+			// mergeOutputDir = config.getString("merge.output.dir", null);
+			splitInputDir = config.getString("split.input.dir", null);
+			splitOutputDir = config.getString("split.output.dir", null);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
+		System.err.println(filename);
+		System.err.println(splitInputDir);
+		System.err.println(splitOutputDir);
 		String hashedFilename = RaidAccessInterface.splitInterface(
 				splitInputDir, filename.substring(splitInputDir.length()),
 				splitOutputDir, KEY);
-		String name = new File(filename).getName();
-		RaidAccessInterface.mergeInterface(mergeInputDir, hashedFilename,
-				mergeOutputDir + name, KEY);
+		System.err.println(hashedFilename);
+		// String name = new File(filename).getName();
+		// RaidAccessInterface.mergeInterface(mergeInputDir, hashedFilename,
+		// mergeOutputDir + name, KEY);
 
 		/* Do something fancy. */
 
 		// Delete the split files.
-		new File(splitOutputDir + hashedFilename + ".0").delete();
-		new File(splitOutputDir + hashedFilename + ".1").delete();
-		new File(splitOutputDir + hashedFilename + ".2").delete();
-		new File(splitOutputDir + hashedFilename + ".m").delete();
-		new File(mergeOutputDir + name).delete();
+		// new File(splitOutputDir + hashedFilename + ".0").delete();
+		// new File(splitOutputDir + hashedFilename + ".1").delete();
+		// new File(splitOutputDir + hashedFilename + ".2").delete();
+		// new File(splitOutputDir + hashedFilename + ".m").delete();
+		// new File(mergeOutputDir + name).delete();
 
 	}
 

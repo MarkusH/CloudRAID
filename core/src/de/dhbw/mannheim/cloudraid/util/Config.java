@@ -97,7 +97,8 @@ public class Config extends HashMap<String, String> {
 	 * The top-level path to the programs config.
 	 */
 	private static String CLOUDRAID_HOME = System.getProperty("os.name")
-			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
+			.contains("windows")
+			? System.getenv("APPDATA") + "\\cloudraid\\"
 			: System.getProperty("user.home") + "/.config/cloudraid/";
 
 	/**
@@ -107,6 +108,10 @@ public class Config extends HashMap<String, String> {
 
 	private static final String DEFAULT_DATABASE_NAME = CLOUDRAID_HOME
 			+ "database";
+
+	private static final int DEFAULT_FILEMANAGEMENT_COUNT = (int) Math.ceil(Runtime
+			.getRuntime().availableProcessors() / 2);
+	private static final int DEFAULT_FILEMANAGEMENT_INTERVALL = 60000;
 
 	/**
 	 * A File object of the configuration file.
@@ -218,8 +223,9 @@ public class Config extends HashMap<String, String> {
 		Config.defaultData.put("split.output.dir", DEFAULT_SPLIT_OUTPUT_DIR);
 		Config.defaultData.put("upload.dir", DEFAULT_UPLOAD_DIR);
 		Config.defaultData.put("database.name", DEFAULT_DATABASE_NAME);
+		Config.defaultData.put("filemanagement.count", "" + DEFAULT_FILEMANAGEMENT_COUNT);
+		Config.defaultData.put("filemanagement.intervall", "" + DEFAULT_FILEMANAGEMENT_INTERVALL);
 	}
-
 	/**
 	 * Reads a setting from the settings list. If there is a salt available for
 	 * the certain key, we use it to decrypt the value.
@@ -898,7 +904,8 @@ public class Config extends HashMap<String, String> {
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("") ? ""
+				String salt = saltString == null || saltString.equals("")
+						? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");

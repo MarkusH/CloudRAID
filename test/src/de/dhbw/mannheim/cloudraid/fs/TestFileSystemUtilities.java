@@ -31,6 +31,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
+import javax.naming.directory.InvalidAttributeValueException;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -40,8 +42,7 @@ import de.dhbw.mannheim.cloudraid.util.Config;
 public class TestFileSystemUtilities {
 
 	private static File file1, file2, file3, file4;
-	private static String splitInputDir, mergeInputDir,
-			mergeOutputDir;
+	private static String splitInputDir, mergeOutputDir;
 
 	@BeforeClass
 	public static void oneTimeSetUp() throws IOException {
@@ -54,8 +55,6 @@ public class TestFileSystemUtilities {
 		Config.getInstance().put("split.output.dir", TMP);
 
 		try {
-			mergeInputDir = Config.getInstance().getString("merge.input.dir",
-					TMP);
 			mergeOutputDir = Config.getInstance().getString("merge.output.dir",
 					TMP + "out" + File.separator);
 			splitInputDir = Config.getInstance().getString("split.input.dir",
@@ -87,9 +86,9 @@ public class TestFileSystemUtilities {
 
 	@Test
 	public void testRecursiveFileSystemWatcher() throws InterruptedException,
-			IOException {
-		RecursiveFileSystemWatcher rfsw = new RecursiveFileSystemWatcher(splitInputDir,
-				500);
+			IOException, InvalidAttributeValueException {
+		RecursiveFileSystemWatcher rfsw = new RecursiveFileSystemWatcher(
+				splitInputDir, 500);
 		rfsw.start();
 		Thread.sleep(1000);
 		FileQueueEntry fqe;
@@ -108,8 +107,8 @@ public class TestFileSystemUtilities {
 			assertTrue(fqe.getFileAction().equals(CREATE));
 		}
 
-		file4 = new File(splitInputDir + File.separator + "subdir" + File.separator
-				+ "file4");
+		file4 = new File(splitInputDir + File.separator + "subdir"
+				+ File.separator + "file4");
 		file4.createNewFile();
 		Thread.sleep(1000);
 

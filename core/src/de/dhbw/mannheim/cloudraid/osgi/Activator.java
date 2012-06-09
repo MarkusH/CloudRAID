@@ -22,10 +22,14 @@
 
 package de.dhbw.mannheim.cloudraid.osgi;
 
+import java.io.File;
+
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
+import de.dhbw.mannheim.cloudraid.fs.FileManager;
+import de.dhbw.mannheim.cloudraid.fs.RecursiveFileSystemWatcher;
 import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 import de.dhbw.mannheim.cloudraid.util.Config;
 import de.dhbw.mannheim.cloudraid.util.IPasswordManager;
@@ -51,30 +55,69 @@ public class Activator implements BundleActivator {
 	 */
 	private Config config;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext
-	 * )
+	private RecursiveFileSystemWatcher recursiveFileSystemWatcher = null;
+
+	private FileManager[] fileManagers = null;
+
+	/**
+	 * During the {@link BundleActivator#start(BundleContext) startup} this
+	 * {@link BundleActivator} starts and initializes the following services and
+	 * components (in order):
+	 * <ul>
+	 * <li>A {@link IPasswordManager} to handle passwords for the configuration</li>
+	 * <li>A {@link Config} storing the I/O paths for RAID, the database name,
+	 * number of threads, etc.</li>
+	 * <li>A {@link IDatabaseConnector} that represents the underlying database
+	 * used to store all file information</li>
+	 * <li>A {@link RecursiveFileSystemWatcher} that permanently watches the
+	 * split input directory for new files</li>
+	 * <li>Multiple {@link FileManager} that handle new files, e.g. split and
+	 * upload them</li>
+	 * </ul>
 	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
+		// Initialize the password manager
 		ServiceReference<IPasswordManager> passwordServiceReference = context
 				.getServiceReference(IPasswordManager.class);
 		pwdmngr = context.getService(passwordServiceReference);
+
+		// Initialize the configuration using the password from the password
+		// manager
 		config = Config.getInstance();
 		config.init(pwdmngr.getCredentials());
 
+		// Connect to the database
 		ServiceReference<IDatabaseConnector> databaseServiceReference = context
 				.getServiceReference(IDatabaseConnector.class);
 		database = context.getService(databaseServiceReference);
-
 		String databasename = config.getString("database.name", null);
 		database.connect(databasename);
 		database.initialize();
-	}
 
+		String mergeInputDir = config.getString("merge.input.dir", null);
+		String mergeOutputDir = config.getString("merge.output.dir", null);
+		String splitInputDir = config.getString("split.input.dir", null);
+		String splitOutputDir = config.getString("split.output.dir", null);
+
+		new File(mergeInputDir).mkdirs();
+		new File(mergeOutputDir).mkdirs();
+		new File(splitInputDir).mkdirs();
+		new File(splitOutputDir).mkdirs();
+
+		recursiveFileSystemWatcher = new RecursiveFileSystemWatcher(
+				config.getString("split.input.dir", null), config.getInt(
+						"filemanagement.intervall", 60000));
+		recursiveFileSystemWatcher.start();
+
+		int proc = config.getInt("filemanagement.count", 1);
+		System.out.println("Number FileManagers: " + proc);
+		fileManagers = new FileManager[proc];
+		for (int i = 0; i < proc; i++) {
+			fileManagers[i] = new FileManager(i);
+			fileManagers[i].start();
+		}
+	}
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -83,7 +126,12 @@ public class Activator implements BundleActivator {
 	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
+		for (int i = 0; i < fileManagers.length; i++) {
+			fileManagers[i].interrupt();
+		}
+		recursiveFileSystemWatcher.interrupt();
 		database.disconnect();
+		config.save();
 	}
 
 }
