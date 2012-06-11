@@ -106,6 +106,13 @@ public class Config extends HashMap<String, String> {
 	 */
 	private static String CONFIG_PATH = CLOUDRAID_HOME + "config.xml";
 
+	private static final String DEFAULT_DATABASE_NAME = CLOUDRAID_HOME
+			+ "database";
+
+	private static final int DEFAULT_FILEMANAGEMENT_COUNT = (int) Math
+			.ceil(Runtime.getRuntime().availableProcessors() / 2);
+	private static final int DEFAULT_FILEMANAGEMENT_INTERVALL = 60000;
+
 	/**
 	 * A File object of the configuration file.
 	 */
@@ -169,6 +176,15 @@ public class Config extends HashMap<String, String> {
 	}
 
 	/**
+	 * Returns the default data for this configuration.
+	 * 
+	 * @return the defaultData
+	 */
+	public static HashMap<String, String> getDefaultData() {
+		return defaultData;
+	}
+
+	/**
 	 * Get the Singleton instance of Config.
 	 * 
 	 * @return The instance of Config
@@ -215,6 +231,11 @@ public class Config extends HashMap<String, String> {
 		Config.defaultData.put("split.input.dir", DEFAULT_SPLIT_INPUT_DIR);
 		Config.defaultData.put("split.output.dir", DEFAULT_SPLIT_OUTPUT_DIR);
 		Config.defaultData.put("upload.dir", DEFAULT_UPLOAD_DIR);
+		Config.defaultData.put("database.name", DEFAULT_DATABASE_NAME);
+		Config.defaultData.put("filemanagement.count", ""
+				+ DEFAULT_FILEMANAGEMENT_COUNT);
+		Config.defaultData.put("filemanagement.intervall", ""
+				+ DEFAULT_FILEMANAGEMENT_INTERVALL);
 	}
 
 	/**
@@ -239,10 +260,13 @@ public class Config extends HashMap<String, String> {
 	 * @throws IOException
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
+	 * @throws NoSuchElementException
+	 *             Thrown if neither the given key nor a default value != null
+	 *             is found
 	 */
 	private synchronized String get(String key) throws NoSuchElementException,
 			InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, NoSuchElementException {
 		if (!this.containsKey(key)) {
 			throw new NoSuchElementException();
 		}
@@ -309,10 +333,13 @@ public class Config extends HashMap<String, String> {
 	 * @throws IOException
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
+	 * @throws NoSuchElementException
+	 *             Thrown if neither the given key nor a default value != null
+	 *             is found
 	 */
 	public synchronized boolean getBoolean(String key, Boolean defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, NoSuchElementException {
 		try {
 			String str = this.get(key);
 			return Boolean.parseBoolean(str);
@@ -350,10 +377,13 @@ public class Config extends HashMap<String, String> {
 	 * @throws IOException
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
+	 * @throws NoSuchElementException
+	 *             Thrown if neither the given key nor a default value != null
+	 *             is found
 	 */
 	public synchronized double getDouble(String key, Double defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, NoSuchElementException {
 		try {
 			String str = this.get(key);
 			return Double.parseDouble(str);
@@ -391,10 +421,13 @@ public class Config extends HashMap<String, String> {
 	 * @throws IOException
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
+	 * @throws NoSuchElementException
+	 *             Thrown if neither the given key nor a default value != null
+	 *             is found
 	 */
 	public synchronized float getFloat(String key, Float defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, NoSuchElementException {
 		try {
 			String str = this.get(key);
 			return Float.parseFloat(str);
@@ -432,10 +465,13 @@ public class Config extends HashMap<String, String> {
 	 * @throws IOException
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
+	 * @throws NoSuchElementException
+	 *             Thrown if neither the given key nor a default value != null
+	 *             is found
 	 */
 	public synchronized int getInt(String key, Integer defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, NoSuchElementException {
 		try {
 			String str = this.get(key);
 			return Integer.parseInt(str);
@@ -473,10 +509,13 @@ public class Config extends HashMap<String, String> {
 	 * @throws IOException
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
+	 * @throws NoSuchElementException
+	 *             Thrown if neither the given key nor a default value != null
+	 *             is found
 	 */
 	public synchronized long getLong(String key, Long defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, NoSuchElementException {
 		try {
 			String str = this.get(key);
 			return Long.parseLong(str);
@@ -513,10 +552,13 @@ public class Config extends HashMap<String, String> {
 	 * @throws IOException
 	 *             Thrown in case of an invalid key. See
 	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
+	 * @throws NoSuchElementException
+	 *             Thrown if neither the given key nor a default value != null
+	 *             is found
 	 */
 	public synchronized String getString(String key, String defaultVal)
 			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException {
+			BadPaddingException, IOException, NoSuchElementException {
 		try {
 			String str = this.get(key);
 			return str;
