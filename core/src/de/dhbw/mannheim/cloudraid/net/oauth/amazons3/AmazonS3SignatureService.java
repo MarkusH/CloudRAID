@@ -25,10 +25,10 @@ package de.dhbw.mannheim.cloudraid.net.oauth.amazons3;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.miginfocom.base64.Base64;
+
 import org.scribe.exceptions.OAuthSignatureException;
 import org.scribe.services.SignatureService;
-
-import sun.misc.BASE64Encoder;
 
 /**
  * HMAC-SHA1 implementation of {@SignatureService}
@@ -65,7 +65,7 @@ public class AmazonS3SignatureService implements SignatureService {
 		Mac mac = Mac.getInstance(HMAC_SHA1);
 		mac.init(key);
 		byte[] bytes = mac.doFinal(toSign.getBytes(UTF8));
-		return new BASE64Encoder().encode(bytes).replace("\r\n", "");
+		return Base64.encodeToString(bytes, false);
 	}
 
 	/**

@@ -22,6 +22,8 @@
 
 package de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone;
 
+import com.miginfocom.base64.Base64;
+
 import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthConfig;
 import org.scribe.model.OAuthConstants;
@@ -194,8 +196,8 @@ public class UbuntuOneService implements OAuthService {
 				.println("[DEBUG] UbuntuOneService.getRequestToken(): tokenRequest = "
 						+ tokenRequest.getUrl());
 
-		String encoding = new sun.misc.BASE64Encoder()
-				.encode((this.email + ":" + this.password).getBytes());
+		String encoding = Base64.encodeToString(
+				(this.email + ":" + this.password).getBytes(), false);
 		System.err
 				.println("[DEBUG] UbuntuOneService.getRequestToken(): encoding = "
 						+ tokenRequest.getQueryStringParams().toString());

@@ -47,6 +47,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.miginfocom.base64.Base64;
+
 import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
 import de.dhbw.mannheim.cloudraid.util.exceptions.MissingConfigValueException;
 
@@ -278,8 +280,7 @@ public class Config extends HashMap<String, String> {
 						Math.min(this.password.length, salt.length));
 				SecretKeySpec skeySpec = new SecretKeySpec(salt, "AES");
 				this.cipher.init(Cipher.DECRYPT_MODE, skeySpec);
-				byte[] value = new sun.misc.BASE64Decoder().decodeBuffer(super
-						.get(key));
+				byte[] value = Base64.decode(super.get(key));
 				String r = new String(this.cipher.doFinal(value));
 				return r;
 			} else {
@@ -296,9 +297,6 @@ public class Config extends HashMap<String, String> {
 			e.printStackTrace();
 			throw new InvalidConfigValueException();
 		} catch (BadPaddingException e) {
-			e.printStackTrace();
-			throw new InvalidConfigValueException();
-		} catch (IOException e) {
 			e.printStackTrace();
 			throw new InvalidConfigValueException();
 		}
@@ -761,14 +759,13 @@ public class Config extends HashMap<String, String> {
 
 			// If we run into a encryption error, we will store the value in
 			// plain text!
-			String v = new sun.misc.BASE64Encoder().encode(value.getBytes());
+			String v = Base64.encodeToString(value.getBytes(), false);
 			try {
 				// All actions after encoding the encrypted byte array are
 				// expected to work. But if something fails after adding the
 				// salt to the global salt list, we will remove that later.
 				this.cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
-				v = new sun.misc.BASE64Encoder().encode(cipher.doFinal(value
-						.getBytes()));
+				v = Base64.encodeToString(cipher.doFinal(value.getBytes()), false);
 				this.salts.put(key, new String(salt));
 				return super.put(key, v);
 			} catch (InvalidKeyException e) {
