@@ -23,17 +23,12 @@
 package de.dhbw.mannheim.cloudraid.cli;
 
 import java.io.Console;
-import java.io.IOException;
-import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-
 import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.util.exceptions.ConfigException;
 
 /**
  * @author Markus Holtermann
@@ -92,6 +87,7 @@ public class Configurator {
 			System.exit(1);
 		}
 	}
+
 	private static void help() {
 		System.out
 				.println("Usage: java de.dhbw.mannheim.cloudraid.cli.Configurator COMMAND");
@@ -104,16 +100,8 @@ public class Configurator {
 	private static void get(String key) {
 		try {
 			System.out.println(config.getString(key, null));
-		} catch (NoSuchElementException e) {
+		} catch (ConfigException e) {
 			System.out.println("Key \"" + key + "\" not found.");
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -125,25 +113,20 @@ public class Configurator {
 		for (String key : list) {
 			try {
 				if (!config.keyExists(key)) {
-					System.out.println("* " + key + " = " + config.getString(key, null));
+					System.out.println("* " + key + " = "
+							+ config.getString(key, null));
 				} else {
-					System.out.println("  " + key + " = " + config.getString(key, null));
+					System.out.println("  " + key + " = "
+							+ config.getString(key, null));
 				}
-			} catch (NoSuchElementException e) {
+			} catch (ConfigException e) {
 				System.out.println("Key \"" + key + "\" not found.");
-			} catch (InvalidKeyException e) {
-				e.printStackTrace();
-			} catch (IllegalBlockSizeException e) {
-				e.printStackTrace();
-			} catch (BadPaddingException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 		System.out.println();
 		System.out.println("Elements marked with a * are default values!");
 	}
+
 	private static void set(boolean encrypted, String key, String value) {
 		config.put(key, value, encrypted);
 	}

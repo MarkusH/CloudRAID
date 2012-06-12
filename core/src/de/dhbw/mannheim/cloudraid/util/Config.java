@@ -47,6 +47,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
+import de.dhbw.mannheim.cloudraid.util.exceptions.MissingConfigValueException;
+
 /**
  * Enables you to handle the program's configuration via a XML file.<br>
  * Singleton
@@ -97,8 +100,7 @@ public class Config extends HashMap<String, String> {
 	 * The top-level path to the programs config.
 	 */
 	private static String CLOUDRAID_HOME = System.getProperty("os.name")
-			.contains("windows")
-			? System.getenv("APPDATA") + "\\cloudraid\\"
+			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
 			: System.getProperty("user.home") + "/.config/cloudraid/";
 
 	/**
@@ -240,7 +242,10 @@ public class Config extends HashMap<String, String> {
 
 	/**
 	 * Reads a setting from the settings list. If there is a salt available for
-	 * the certain key, we use it to decrypt the value.
+	 * the certain key, we use it to decrypt the value. If any exception of the
+	 * kinds InvalidKeyException, IllegalBlockSizeException, BadPaddingException
+	 * or IOException is thrown during decryption, this function throws a
+	 * {@link InvalidConfigValueException}.
 	 * 
 	 * @param key
 	 *            The specific key of the configuration value
@@ -248,25 +253,14 @@ public class Config extends HashMap<String, String> {
 	 *         <code>null</code> is returned
 	 * @throws NoSuchElementException
 	 *             Thrown in case the key does not exists.
-	 * @throws InvalidKeyException
-	 *             Thrown if the key does not match the requirements. See
-	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
-	 * @throws IllegalBlockSizeException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws BadPaddingException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws IOException
-	 *             Thrown in case of an invalid key. See
-	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 * @throws NoSuchElementException
 	 *             Thrown if neither the given key nor a default value != null
 	 *             is found
+	 * @throws InvalidConfigValueException
+	 *             Thrown if the decryption process fails
 	 */
 	private synchronized String get(String key) throws NoSuchElementException,
-			InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException, NoSuchElementException {
+			InvalidConfigValueException {
 		if (!this.containsKey(key)) {
 			throw new NoSuchElementException();
 		}
@@ -297,16 +291,16 @@ public class Config extends HashMap<String, String> {
 			}
 		} catch (InvalidKeyException e) {
 			e.printStackTrace();
-			throw e; // TODO: remove in case of proper frontend handling
+			throw new InvalidConfigValueException();
 		} catch (IllegalBlockSizeException e) {
 			e.printStackTrace();
-			throw e; // TODO: remove in case of proper frontend handling
+			throw new InvalidConfigValueException();
 		} catch (BadPaddingException e) {
 			e.printStackTrace();
-			throw e; // TODO: remove in case of proper frontend handling
+			throw new InvalidConfigValueException();
 		} catch (IOException e) {
 			e.printStackTrace();
-			throw e; // TODO: remove in case of proper frontend handling
+			throw new InvalidConfigValueException();
 		}
 	}
 
@@ -321,35 +315,23 @@ public class Config extends HashMap<String, String> {
 	 *            The fall back value.
 	 * @return The boolean representation of the value or
 	 *         <code>defaultVal</code>
-	 * @throws InvalidKeyException
-	 *             Thrown if the key does not match the requirements. See
-	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
-	 * @throws IllegalBlockSizeException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws BadPaddingException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws IOException
-	 *             Thrown in case of an invalid key. See
-	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
-	 * @throws NoSuchElementException
-	 *             Thrown if neither the given key nor a default value != null
-	 *             is found
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found nor the given
+	 *             default value is != null
+	 * @throws InvalidConfigValueException
+	 *             Thrown if the decryption process fails
 	 */
 	public synchronized boolean getBoolean(String key, Boolean defaultVal)
-			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException, NoSuchElementException {
+			throws MissingConfigValueException, InvalidConfigValueException {
 		try {
 			String str = this.get(key);
 			return Boolean.parseBoolean(str);
 		} catch (NoSuchElementException e) {
 			if (defaultVal == null) {
 				if (!Config.defaultData.containsKey(key)) {
-					throw new NoSuchElementException();
+					throw new MissingConfigValueException();
 				}
 				return Boolean.parseBoolean(Config.defaultData.get(key));
-
 			}
 			return defaultVal;
 		}
@@ -365,25 +347,14 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The float representation of the value or <code>defaultVal</code>
-	 * @throws InvalidKeyException
-	 *             Thrown if the key does not match the requirements. See
-	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
-	 * @throws IllegalBlockSizeException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws BadPaddingException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws IOException
-	 *             Thrown in case of an invalid key. See
-	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
-	 * @throws NoSuchElementException
-	 *             Thrown if neither the given key nor a default value != null
-	 *             is found
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found nor the given
+	 *             default value is != null
+	 * @throws InvalidConfigValueException
+	 *             Thrown if the decryption process fails
 	 */
 	public synchronized double getDouble(String key, Double defaultVal)
-			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException, NoSuchElementException {
+			throws MissingConfigValueException, InvalidConfigValueException {
 		try {
 			String str = this.get(key);
 			return Double.parseDouble(str);
@@ -393,7 +364,6 @@ public class Config extends HashMap<String, String> {
 					throw new NoSuchElementException();
 				}
 				return Double.parseDouble(Config.defaultData.get(key));
-
 			}
 			return defaultVal;
 		}
@@ -409,25 +379,15 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The float representation of the value or <code>defaultVal</code>
-	 * @throws InvalidKeyException
-	 *             Thrown if the key does not match the requirements. See
-	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
-	 * @throws IllegalBlockSizeException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws BadPaddingException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws IOException
-	 *             Thrown in case of an invalid key. See
-	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
-	 * @throws NoSuchElementException
-	 *             Thrown if neither the given key nor a default value != null
-	 *             is found
+	 * 
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found nor the given
+	 *             default value is != null
+	 * @throws InvalidConfigValueException
+	 *             Thrown if the decryption process fails
 	 */
 	public synchronized float getFloat(String key, Float defaultVal)
-			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException, NoSuchElementException {
+			throws MissingConfigValueException, InvalidConfigValueException {
 		try {
 			String str = this.get(key);
 			return Float.parseFloat(str);
@@ -437,7 +397,6 @@ public class Config extends HashMap<String, String> {
 					throw new NoSuchElementException();
 				}
 				return Float.parseFloat(Config.defaultData.get(key));
-
 			}
 			return defaultVal;
 		}
@@ -453,25 +412,14 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The int representation of the value or <code>defaultVal</code>
-	 * @throws InvalidKeyException
-	 *             Thrown if the key does not match the requirements. See
-	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
-	 * @throws IllegalBlockSizeException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws BadPaddingException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws IOException
-	 *             Thrown in case of an invalid key. See
-	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
-	 * @throws NoSuchElementException
-	 *             Thrown if neither the given key nor a default value != null
-	 *             is found
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found nor the given
+	 *             default value is != null
+	 * @throws InvalidConfigValueException
+	 *             Thrown if the decryption process fails
 	 */
 	public synchronized int getInt(String key, Integer defaultVal)
-			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException, NoSuchElementException {
+			throws MissingConfigValueException, InvalidConfigValueException {
 		try {
 			String str = this.get(key);
 			return Integer.parseInt(str);
@@ -481,7 +429,6 @@ public class Config extends HashMap<String, String> {
 					throw new NoSuchElementException();
 				}
 				return Integer.parseInt(Config.defaultData.get(key));
-
 			}
 			return defaultVal;
 		}
@@ -497,25 +444,14 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The int representation of the value or <code>defaultVal</code>
-	 * @throws InvalidKeyException
-	 *             Thrown if the key does not match the requirements. See
-	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
-	 * @throws IllegalBlockSizeException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws BadPaddingException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws IOException
-	 *             Thrown in case of an invalid key. See
-	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 * @throws NoSuchElementException
-	 *             Thrown if neither the given key nor a default value != null
-	 *             is found
+	 *             Thrown if neither the given key can be found nor the given
+	 *             default value is != null
+	 * @throws InvalidConfigValueException
+	 *             Thrown if the decryption process fails
 	 */
 	public synchronized long getLong(String key, Long defaultVal)
-			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException, NoSuchElementException {
+			throws NoSuchElementException, InvalidConfigValueException {
 		try {
 			String str = this.get(key);
 			return Long.parseLong(str);
@@ -540,25 +476,14 @@ public class Config extends HashMap<String, String> {
 	 * @param defaultVal
 	 *            The fall back value.
 	 * @return The String representation of the value or <code>defaultVal</code>
-	 * @throws InvalidKeyException
-	 *             Thrown if the key does not match the requirements. See
-	 *             {@link javax.crypto.Cipher#init(int, java.security.Key)}
-	 * @throws IllegalBlockSizeException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws BadPaddingException
-	 *             Thrown if the input is invalid. See
-	 *             {@link javax.crypto.Cipher#doFinal(byte[])}
-	 * @throws IOException
-	 *             Thrown in case of an invalid key. See
-	 *             {@link sun.misc.BASE64Decoder#decodeBuffer(String)}
 	 * @throws NoSuchElementException
-	 *             Thrown if neither the given key nor a default value != null
-	 *             is found
+	 *             Thrown if neither the given key can be found nor the given
+	 *             default value is != null
+	 * @throws InvalidConfigValueException
+	 *             Thrown if the decryption process fails
 	 */
 	public synchronized String getString(String key, String defaultVal)
-			throws InvalidKeyException, IllegalBlockSizeException,
-			BadPaddingException, IOException, NoSuchElementException {
+			throws NoSuchElementException, InvalidConfigValueException {
 		try {
 			String str = this.get(key);
 			return str;
@@ -943,8 +868,7 @@ public class Config extends HashMap<String, String> {
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("")
-						? ""
+				String salt = saltString == null || saltString.equals("") ? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");

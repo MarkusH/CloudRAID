@@ -23,17 +23,12 @@
 package de.dhbw.mannheim.cloudraid.api;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-
-import com.sun.jersey.api.container.httpserver.HttpServerFactory;
-import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.net.httpserver.HttpServer;
 
 import de.dhbw.mannheim.cloudraid.util.Config;
 import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
+import de.dhbw.mannheim.cloudraid.util.exceptions.MissingConfigValueException;
 
 /**
  * @author Markus Holtermann
@@ -54,21 +49,9 @@ public class Server {
 			}
 			Server server = new Server(host, port);
 			server.start();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			// TODO Auto-generated catch block
+		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
 		} catch (InvalidConfigValueException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
