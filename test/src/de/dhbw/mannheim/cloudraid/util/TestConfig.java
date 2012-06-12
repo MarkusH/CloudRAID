@@ -27,15 +27,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
+import java.util.NoSuchElementException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
+import de.dhbw.mannheim.cloudraid.util.exceptions.MissingConfigValueException;
 
 /**
  * @author Markus Holtermann
@@ -95,8 +94,8 @@ public class TestConfig {
 	}
 
 	@Test
-	public void testBoolean() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+	public void testBoolean() throws MissingConfigValueException,
+			InvalidConfigValueException {
 		config.put("plain.boolean.correct", true);
 
 		assertTrue(config.keyExists("plain.boolean.correct"));
@@ -113,8 +112,8 @@ public class TestConfig {
 	}
 
 	@Test
-	public void testInt() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+	public void testInt() throws MissingConfigValueException,
+			InvalidConfigValueException {
 		config.put("plain.int.correct", 42);
 
 		assertTrue(config.keyExists("plain.int.correct"));
@@ -131,8 +130,8 @@ public class TestConfig {
 	}
 
 	@Test
-	public void testLong() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+	public void testLong() throws NoSuchElementException,
+			InvalidConfigValueException {
 		config.put("plain.long.correct", 9876543210l);
 
 		assertTrue(config.keyExists("plain.long.correct"));
@@ -149,8 +148,8 @@ public class TestConfig {
 	}
 
 	@Test
-	public void testFloat() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+	public void testFloat() throws MissingConfigValueException,
+			InvalidConfigValueException {
 		config.put("plain.float.correct", 1.0f / 11.0f);
 
 		assertTrue(config.keyExists("plain.float.correct"));
@@ -170,8 +169,8 @@ public class TestConfig {
 	}
 
 	@Test
-	public void testDouble() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+	public void testDouble() throws MissingConfigValueException,
+			InvalidConfigValueException {
 		config.put("plain.double.correct", 1.0 / 7.0);
 
 		assertTrue(config.keyExists("plain.double.correct"));
@@ -192,8 +191,8 @@ public class TestConfig {
 	}
 
 	@Test
-	public void testString() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+	public void testString() throws NoSuchElementException,
+			InvalidConfigValueException {
 		config.put("plain.string.correct", "Correct");
 
 		assertTrue(config.keyExists("plain.string.correct"));
@@ -211,8 +210,8 @@ public class TestConfig {
 	}
 
 	@Test
-	public void testSave() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+	public void testSave() throws MissingConfigValueException,
+			InvalidConfigValueException {
 		config.save();
 		config.reload();
 		testBoolean();
@@ -286,8 +285,8 @@ public class TestConfig {
 	}
 
 	@Test
-	public void testEncryptionStatusChange() throws InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException, IOException {
+	public void testEncryptionStatusChange() throws NoSuchElementException,
+			InvalidConfigValueException {
 		config.put("key1", "Test1", false);
 		assertEquals("Test1", config.getString("key1", "Default1"));
 		config.put("key1", "Test2", true);
