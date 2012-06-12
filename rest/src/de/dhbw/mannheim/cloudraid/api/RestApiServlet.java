@@ -32,6 +32,7 @@ import java.security.InvalidKeyException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -47,6 +48,7 @@ import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
 
 /**
  * @author Markus Holtermann
@@ -337,17 +339,16 @@ public class RestApiServlet extends HttpServlet {
 				resp.setStatusCode(201);
 				return;
 			}
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NoSuchElementException e) {
+			e.printStackTrace();
+		} catch (InvalidConfigValueException e) {
 			e.printStackTrace();
 		}
 		resp.setStatusCode(500);
 	}
+
 	/**
 	 * View to show information about a file. Method must be <code>GET</code>
 	 * and path pattern <code>^/file/([^/]+)/info/$</code>.
@@ -458,13 +459,13 @@ public class RestApiServlet extends HttpServlet {
 				resp.setStatusCode(200);
 				return;
 			}
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NoSuchElementException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidConfigValueException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		resp.setStatusCode(500);
@@ -715,7 +716,8 @@ public class RestApiServlet extends HttpServlet {
 	 *         <code>true</code></li>
 	 *         </ul>
 	 */
-	private boolean validateSession(HttpServletRequest req, IRestApiResponse resp) {
+	private boolean validateSession(HttpServletRequest req,
+			IRestApiResponse resp) {
 		HttpSession session = req.getSession(false);
 		if (session == null) {
 			resp.setStatusCode(503);

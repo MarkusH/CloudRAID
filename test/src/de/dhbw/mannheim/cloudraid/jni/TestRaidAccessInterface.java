@@ -29,12 +29,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
+import java.util.NoSuchElementException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -42,6 +39,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
 
 /**
  * @author Markus Holtermann
@@ -61,15 +59,15 @@ public class TestRaidAccessInterface {
 	private static String splitOutPath;
 
 	@BeforeClass
-	public static void oneTimeSetUp() throws IOException, InvalidKeyException,
-			IllegalBlockSizeException, BadPaddingException {
+	public static void oneTimeSetUp() throws NoSuchElementException,
+			InvalidConfigValueException, IOException {
 		int i;
+		Config c = Config.getInstance();
+		mergeInPath = c.getString("split.input.dir", null);
+		mergeOutPath = c.getString("split.output.dir", null);
 
-		mergeInPath = Config.getInstance().getString("split.input.dir", null);
-		mergeOutPath = Config.getInstance().getString("split.output.dir", null);
-
-		splitInPath = Config.getInstance().getString("split.input.dir", null);
-		splitOutPath = Config.getInstance().getString("split.output.dir", null);
+		splitInPath = c.getString("split.input.dir", null);
+		splitOutPath = c.getString("split.output.dir", null);
 
 		new File(mergeInPath).mkdirs();
 		new File(mergeOutPath).mkdirs();
@@ -91,6 +89,7 @@ public class TestRaidAccessInterface {
 		fw.write(content);
 		fw.close();
 	}
+
 	@AfterClass
 	public static void oneTimeTearDown() {
 		in.delete();
@@ -120,6 +119,7 @@ public class TestRaidAccessInterface {
 		}
 		assertEquals(sb.toString(), hash);
 	}
+
 	@Test
 	public void testMerge() {
 
