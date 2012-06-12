@@ -663,6 +663,12 @@ public class Config extends HashMap<String, String> {
 		return super.keySet().contains(key);
 	}
 
+	@Override
+	public synchronized String remove(Object key) {
+		this.salts.remove(key);
+		return super.remove(key);
+	}
+
 	/**
 	 * @param key
 	 *            The configuration key
