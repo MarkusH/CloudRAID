@@ -49,9 +49,10 @@ import java.util.Arrays;
  * 
  * If you find the code useful or you find a bug, please send me a note at
  * base64 @ miginfocom . com.
+ * <br>
  * 
+ * <pre>
  * Licence (BSD):
- * 
  * ==============
  * 
  * Copyright (c) 2004, Mikael Grev, MiG InfoCom AB. (base64 @ miginfocom . com)
@@ -78,6 +79,7 @@ import java.util.Arrays;
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ * </pre>
  * 
  * @version 2.2
  * @author Mikael Grev Date: 2004-aug-02 Time: 11:31:11
