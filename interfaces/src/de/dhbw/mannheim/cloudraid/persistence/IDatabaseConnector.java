@@ -72,6 +72,29 @@ public interface IDatabaseConnector {
 	}
 
 	/**
+	 * @param username
+	 *            The username of the new user. Max length is 32 characters
+	 * @param password
+	 *            The password
+	 * @return true, if and only if the new user has been created, otherwise
+	 *         false;
+	 */
+	public boolean addUser(String username, String password);
+
+	/**
+	 * This function must return the user id on success. Otherwise this function
+	 * <b>must</b> return -1
+	 * 
+	 * @param username
+	 *            The username
+	 * @param password
+	 *            The password (UTF-8 encoded)
+	 * @return -1, if either the username does not exist or the password does
+	 *         not match the record in the database
+	 */
+	public int authUser(String username, String password);
+
+	/**
 	 * Creates a connection to a specific database.
 	 * 
 	 * @param database
@@ -89,16 +112,38 @@ public interface IDatabaseConnector {
 	public boolean disconnect();
 
 	/**
-	 * Creates the database schemas.
+	 * Deletes a data set in the database defined by the path.
 	 * 
-	 * @return true, if the initialization could be executed.
+	 * @param path
+	 *            The path of the file.
+	 * @param userId
+	 *            The user id this file belongs to
+	 * @return The number of deleted records or -1
 	 */
-	public boolean initialize();
+	public int fileDelete(String path, int userId);
+
+	/**
+	 * Checks, if the given file is available for the certain user
+	 * 
+	 * @param path
+	 *            The path of the file.
+	 * @param userId
+	 *            The user id this file belongs to
+	 * @return The SQL ResultSet of the file
+	 */
+	public ResultSet fileGet(String path, int userId);
+
+	/**
+	 * Returns a ResultSet that contains all files of a user.
+	 * 
+	 * @param userId
+	 *            The user id this file belongs to
+	 * @return The SQL ResultSet of all file belonging to the given user.
+	 */
+	public ResultSet fileList(int userId);
 
 	/**
 	 * Inserts a data set into the database.
-	 * 
-	 * @deprecated Will be replaced by fileNew() and fileUpdate()
 	 * 
 	 * @param path
 	 *            The path of a file.
@@ -110,7 +155,33 @@ public interface IDatabaseConnector {
 	 *            The user id this file belongs to
 	 * @return true, if the data set could be inserted into the database.
 	 */
-	public boolean insert(String path, String hash, long lastMod, int userId);
+	public boolean fileNew(String path, String hash, long lastMod, int userId);
+
+	/**
+	 * Inserts a data set into the database.
+	 * 
+	 * @param path
+	 *            The path of a file.
+	 * @param hash
+	 *            The hash of the file name.
+	 * @param lastMod
+	 *            The last modification date.
+	 * @param userId
+	 *            The user id this file belongs to
+	 * @return true, if the data set could be inserted into the database.
+	 */
+	public boolean fileUpdate(String path, String hash, long lastMod, int userId);
+
+	/**
+	 * Update the state of a file.
+	 * 
+	 * @param id
+	 *            The id of the regarding file
+	 * @param state
+	 *            The new state
+	 * @return True if the status has been updated
+	 */
+	public boolean fileUpdateState(int id, FILE_STATUS state);
 
 	/**
 	 * Looks up the hash value of an entry in the database.
@@ -155,29 +226,16 @@ public interface IDatabaseConnector {
 	public String getName(String hash, int userId);
 
 	/**
-	 * Deletes a data set in the database defined by the path.
+	 * Creates the database schemas.
 	 * 
-	 * @param path
-	 *            The path of the file.
-	 * @param userId
-	 *            The user id this file belongs to
-	 * @return The number of deleted records or -1
+	 * @return true, if the initialization could be executed.
 	 */
-	public int fileDelete(String path, int userId);
-
-	/**
-	 * Checks, if the given file is available for the certain user
-	 * 
-	 * @param path
-	 *            The path of the file.
-	 * @param userId
-	 *            The user id this file belongs to
-	 * @return The SQL ResultSet of the file
-	 */
-	public ResultSet fileGet(String path, int userId);
+	public boolean initialize();
 
 	/**
 	 * Inserts a data set into the database.
+	 * 
+	 * @deprecated Will be replaced by fileNew() and fileUpdate()
 	 * 
 	 * @param path
 	 *            The path of a file.
@@ -189,63 +247,5 @@ public interface IDatabaseConnector {
 	 *            The user id this file belongs to
 	 * @return true, if the data set could be inserted into the database.
 	 */
-	public boolean fileNew(String path, String hash, long lastMod, int userId);
-
-	/**
-	 * Inserts a data set into the database.
-	 * 
-	 * @param path
-	 *            The path of a file.
-	 * @param hash
-	 *            The hash of the file name.
-	 * @param lastMod
-	 *            The last modification date.
-	 * @param userId
-	 *            The user id this file belongs to
-	 * @return true, if the data set could be inserted into the database.
-	 */
-	public boolean fileUpdate(String path, String hash, long lastMod, int userId);
-
-	/**
-	 * Update the state of a file.
-	 * 
-	 * @param id
-	 *            The id of the regarding file
-	 * @param state
-	 *            The new state
-	 * @return True if the status has been updated
-	 */
-	public boolean fileUpdateState(int id, FILE_STATUS state);
-
-	/**
-	 * @param username
-	 *            The username of the new user. Max length is 32 characters
-	 * @param password
-	 *            The password
-	 * @return true, if and only if the new user has been created, otherwise
-	 *         false;
-	 */
-	public boolean addUser(String username, String password);
-
-	/**
-	 * This function must return the user id on success. Otherwise this function
-	 * <b>must</b> return -1
-	 * 
-	 * @param username
-	 *            The username
-	 * @param password
-	 *            The password (UTF-8 encoded)
-	 * @return -1, if either the username does not exist or the password does
-	 *         not match the record in the database
-	 */
-	public int authUser(String username, String password);
-
-	/**
-	 * Returns a ResultSet that contains all files of a user.
-	 * 
-	 * @param userId
-	 *            The user id this file belongs to
-	 * @return The SQL ResultSet of all file belonging to the given user.
-	 */
-	public ResultSet fileList(int userId);
+	public boolean insert(String path, String hash, long lastMod, int userId);
 }
