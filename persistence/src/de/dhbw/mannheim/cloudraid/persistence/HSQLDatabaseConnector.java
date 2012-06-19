@@ -68,6 +68,8 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	 */
 	private PreparedStatement fileDeleteStmnt = null;
 
+	private PreparedStatement fileUpdateStatusStmnt = null;
+
 	/**
 	 * 
 	 */
@@ -131,6 +133,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 		fileAddStmnt = null;
 		fileDeleteStmnt = null;
 		fileUpdateStmnt = null;
+		fileUpdateStatusStmnt = null;
 		findNameStatement = null;
 		listFiles = null;
 		addUserStatement = null;
@@ -176,11 +179,13 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 			fileAddStmnt = con
 					.prepareStatement("INSERT INTO cloudraid_files VALUES (NULL, ?, ?, ?, ?, ? );");
 			fileUpdateStmnt = con
-					.prepareStatement("UPDATE cloudraid_files SET last_mod = ? WHERE path_name = ? AND user_id = ? ;");
+					.prepareStatement("UPDATE cloudraid_files SET hash_name = ? , last_mod = ? , status = ? WHERE path_name = ? AND user_id = ? ;");
 			fileGetStmnt = con
-					.prepareStatement("SELECT * FROM cloudraid_files WHERE path_name = ? AND user_id = ?;");
+					.prepareStatement("SELECT * FROM cloudraid_files WHERE path_name = ? AND user_id = ? ;");
 			fileDeleteStmnt = con
 					.prepareStatement("DELETE FROM cloudraid_files WHERE path_name = ? AND user_id = ? ;");
+			fileUpdateStatusStmnt = con
+					.prepareStatement("UPDATE cloudraid_files SET status = ? WHERE id = ? ;");
 			findNameStatement = con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE hash_name = ? AND user_id = ?;");
 
@@ -351,9 +356,12 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	@Override
 	public boolean fileUpdate(String path, String hash, long lastMod, int userId) {
 		try {
-			fileUpdateStmnt.setTimestamp(1, new Timestamp(lastMod));
-			fileUpdateStmnt.setString(2, path);
-			fileUpdateStmnt.setInt(3, userId);
+			fileUpdateStmnt.setString(1, hash);
+			fileUpdateStmnt.setString(2,
+					IDatabaseConnector.FILE_STATUS.UPLOADED.toString());
+			fileUpdateStmnt.setTimestamp(3, new Timestamp(lastMod));
+			fileUpdateStmnt.setString(4, path);
+			fileUpdateStmnt.setInt(5, userId);
 			fileUpdateStmnt.execute();
 			con.commit();
 			return true;
@@ -365,6 +373,19 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 				e1.printStackTrace();
 			}
 		} catch (NullPointerException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	@Override
+	public boolean fileUpdateState(int id, FILE_STATUS state) {
+		try {
+			fileUpdateStatusStmnt.setString(1, state.toString());
+			fileUpdateStatusStmnt.setInt(2, id);
+			fileUpdateStatusStmnt.execute();
+			return true;
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return false;

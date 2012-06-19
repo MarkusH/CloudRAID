@@ -30,9 +30,46 @@ import java.sql.ResultSet;
  */
 public interface IDatabaseConnector {
 
+	/**
+	 * Defines various states a file enters during
+	 */
 	public enum FILE_STATUS {
-		UPLOADED, SPLITTING, SPLITTED, DISTRIBUTING, DISTRIBUTED, READY
-	};
+		/**
+		 * File has been uploaded. Next state will be SPLITTING
+		 */
+		UPLOADED,
+		/**
+		 * File is going to be splitted now. Next state will be SPLITTED
+		 */
+		SPLITTING,
+		/**
+		 * File has been splitted. Next state will be DISTRIBUTING
+		 */
+		SPLITTED,
+		/**
+		 * File is going to be distributed to the cloud storages. Next state
+		 * will be DISTRIBUTED
+		 */
+		DISTRIBUTING,
+		/**
+		 * File has been distributed. Next state will be READY.
+		 */
+		DISTRIBUTED,
+		/**
+		 * File has successfully been stored in the cloud.
+		 */
+		READY,
+		/**
+		 * File is going to be removed from the cloud. Next step will be
+		 * DELETED. This state cannot be interrupted!
+		 */
+		DELETING,
+		/**
+		 * File has been removed from the cloud storages. Next action will
+		 * remove the item from the database!
+		 */
+		DELETED
+	}
 
 	/**
 	 * Creates a connection to a specific database.
@@ -168,6 +205,17 @@ public interface IDatabaseConnector {
 	 * @return true, if the data set could be inserted into the database.
 	 */
 	public boolean fileUpdate(String path, String hash, long lastMod, int userId);
+
+	/**
+	 * Update the state of a file.
+	 * 
+	 * @param id
+	 *            The id of the regarding file
+	 * @param state
+	 *            The new state
+	 * @return True if the status has been updated
+	 */
+	public boolean fileUpdateState(int id, FILE_STATUS state);
 
 	/**
 	 * @param username

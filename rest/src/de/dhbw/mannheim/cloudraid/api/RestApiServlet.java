@@ -45,6 +45,7 @@ import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.JsonApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
 import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
+import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector.FILE_STATUS;
 import de.dhbw.mannheim.cloudraid.util.Config;
 import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
 
@@ -224,13 +225,16 @@ public class RestApiServlet extends HttpServlet {
 		ResultSet rs = database.fileGet(path, userid);
 		if (rs != null) {
 			try {
-				String hash = rs.getString("hash_name");
-				File f = new File(config.getString("split.input.dir", null)
-						+ File.separator + userid + "_" + hash);
-				f.getParentFile().mkdirs();
-				if (f.createNewFile()) {
-					resp.setStatusCode(200);
-					return;
+				int id = rs.getInt("id");
+				if (database.fileUpdateState(id, FILE_STATUS.DELETING)) {
+					String hash = rs.getString("hash_name");
+					File f = new File(config.getString("split.input.dir", null)
+							+ File.separator + ".del_" + id + "_" + hash);
+					f.getParentFile().mkdirs();
+					if (f.createNewFile()) {
+						resp.setStatusCode(200);
+						return;
+					}
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -479,7 +483,7 @@ public class RestApiServlet extends HttpServlet {
 			while ((readLength = bis.read(inputBytes)) >= 0) {
 				bos.write(inputBytes, 0, readLength);
 			}
-			if (database.fileNew(path, "", 0L, userid)) {
+			if (database.fileUpdate(path, "", 0L, userid)) {
 				resp.setStatusCode(200);
 				return;
 			}
