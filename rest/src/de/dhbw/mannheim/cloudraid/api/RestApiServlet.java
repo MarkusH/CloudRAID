@@ -69,6 +69,8 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	private IDatabaseConnector database = null;
 
+	private Config config;
+
 	/**
 	 * Initializes all URL mappings and stores a reference to the
 	 * {@link IDatabaseConnector}
@@ -108,7 +110,10 @@ public class RestApiServlet extends HttpServlet {
 				RestApiServlet.class, "userChangePass"));
 		mappings.add(new RestApiUrlMapping("^/user/del/$", "DELETE",
 				RestApiServlet.class, "userDelete"));
+
 		this.database = database;
+
+		this.config = Config.getInstance();
 	}
 
 	/**
@@ -213,21 +218,34 @@ public class RestApiServlet extends HttpServlet {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
+		String path = args.get(0);
 		HttpSession s = req.getSession();
-		ResultSet rs = database.fileGet(args.get(0),
-				(Integer) s.getAttribute("userid"));
-		try {
-			if (rs == null) {
-				resp.setStatusCode(404);
-				return;
+		int userid = (Integer) s.getAttribute("userid");
+		ResultSet rs = database.fileGet(path, userid);
+		if (rs != null) {
+			try {
+				String hash = rs.getString("hash_name");
+				File f = new File(config.getString("split.input.dir", null)
+						+ File.separator + userid + "_" + hash);
+				f.getParentFile().mkdirs();
+				if (f.createNewFile()) {
+					resp.setStatusCode(200);
+					return;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} catch (NoSuchElementException e) {
+				e.printStackTrace();
+			} catch (InvalidConfigValueException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			rs.deleteRow();
-		} catch (SQLException e) {
-			resp.setStatusCode(500);
-			e.printStackTrace();
+		} else {
+			resp.setStatusCode(404);
 			return;
 		}
-		resp.setStatusCode(200);
+		resp.setStatusCode(500);
 	}
 
 	/**
@@ -325,8 +343,7 @@ public class RestApiServlet extends HttpServlet {
 			BufferedInputStream bis = new BufferedInputStream(
 					req.getInputStream(), bufsize);
 
-			File f = new File(Config.getInstance().getString("split.input.dir",
-					null)
+			File f = new File(config.getString("split.input.dir", null)
 					+ File.separator + userid + File.separator + path);
 			f.getParentFile().mkdirs();
 
@@ -450,8 +467,7 @@ public class RestApiServlet extends HttpServlet {
 			BufferedInputStream bis = new BufferedInputStream(
 					req.getInputStream(), bufsize);
 
-			File f = new File(Config.getInstance().getString("split.input.dir",
-					null)
+			File f = new File(config.getString("split.input.dir", null)
 					+ File.separator + userid + File.separator + path);
 			f.getParentFile().mkdirs();
 
