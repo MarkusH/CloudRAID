@@ -23,6 +23,8 @@
 package de.dhbw.mannheim.cloudraid.api.responses;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -47,33 +49,29 @@ public class PlainApiResponse implements IRestApiResponse {
 	 */
 	private StringBuffer sb = new StringBuffer();
 
-	/*
-	 * @see
-	 * de.dhbw.mannheim.cloudraid.api.IRestApiResponse#addField(java.lang.String
-	 * , java.lang.String)
+	/**
+	 * 
 	 */
+	private StringBuffer table = new StringBuffer();
+
 	@Override
 	public void addField(String name, String payload) {
 		this.sb.append(name).append(": ").append(payload).append("\n");
 	}
 
-	/*
-	 * @see
-	 * de.dhbw.mannheim.cloudraid.api.IRestApiResponse#addPayload(java.lang.
-	 * String)
-	 */
 	@Override
 	public void addPayload(String payload) {
-		this.addField("payload", payload);
+		this.sb.append(payload).append("\n");
 	}
 
-	/*
-	 * @see de.dhbw.mannheim.cloudraid.api.IRestApiResponse#send()
-	 */
 	@Override
 	public void send() throws IOException {
 		if (this.resp != null) {
 			resp.setContentType(MIMETYPE);
+
+			// Add the table to the payload
+			this.addPayload(this.table.toString());
+
 			resp.getWriter().write(this.sb.toString());
 		}
 	}
@@ -85,11 +83,6 @@ public class PlainApiResponse implements IRestApiResponse {
 		}
 	}
 
-	/*
-	 * @see
-	 * de.dhbw.mannheim.cloudraid.api.IRestApiResponse#setResponseObject(javax
-	 * .servlet.http.HttpServletResponse)
-	 */
 	@Override
 	public void setResponseObject(HttpServletResponse resp) {
 		this.resp = resp;
@@ -102,4 +95,14 @@ public class PlainApiResponse implements IRestApiResponse {
 		}
 	}
 
+	@Override
+	public void addRow(HashMap<String, Object> map) {
+		for (Map.Entry<String, Object> e : map.entrySet()) {
+			this.table.append("\""
+					+ e.getValue().toString().replace("\\", "\\\\")
+							.replace("\"", "\\\"") + "\",");
+		}
+		this.table.setLength(this.table.length() - 1);
+		this.table.append("\n");
+	}
 }

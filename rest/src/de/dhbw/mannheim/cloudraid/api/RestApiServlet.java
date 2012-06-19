@@ -28,14 +28,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.security.InvalidKeyException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.NoSuchElementException;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -43,9 +41,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
+import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.JsonApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
-import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
 import de.dhbw.mannheim.cloudraid.util.Config;
 import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
@@ -96,7 +94,7 @@ public class RestApiServlet extends HttpServlet {
 				RestApiServlet.class, "fileNew"));
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/info/$", "GET",
 				RestApiServlet.class, "fileInfo"));
-		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/update/$", "GET",
+		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/update/$", "PUT",
 				RestApiServlet.class, "fileUpdate"));
 		mappings.add(new RestApiUrlMapping("^/list/$", "GET",
 				RestApiServlet.class, "list"));
@@ -126,9 +124,9 @@ public class RestApiServlet extends HttpServlet {
 			throws IOException {
 		String mime = req.getHeader("Accept");
 		IRestApiResponse r;
-		if (JsonApiResponse.MIMETYPE.equals(mime)) {
+		if (JsonApiResponse.MIMETYPE.startsWith(mime)) {
 			r = new JsonApiResponse();
-		} else if (PlainApiResponse.MIMETYPE.equals(mime)) {
+		} else if (PlainApiResponse.MIMETYPE.startsWith(mime)) {
 			r = new PlainApiResponse();
 		} else {
 			r = new PlainApiResponse();
@@ -294,6 +292,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>401 - Not logged in</li>
 	 *            <li>405 - Session id not submitted via cookie</li>
 	 *            <li>409 - File already exists</li>
+	 *            <li>411 - Length Required</li>
 	 *            <li>500 - Error adding the file</li>
 	 *            <li>503 - Session does not exist</li>
 	 *            </ul>
@@ -317,6 +316,10 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		int bufsize = Math.min(1024, req.getContentLength());
+		if (bufsize < 0) {
+			resp.setStatusCode(411);
+			return;
+		}
 
 		try {
 			BufferedInputStream bis = new BufferedInputStream(
@@ -414,6 +417,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>401 - Not logged in</li>
 	 *            <li>404 - File not found</li>
 	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>411 - Length Required</li>
 	 *            <li>500 - Error deleting the file</li>
 	 *            <li>503 - Session does not exist</li>
 	 *            </ul>
@@ -437,6 +441,10 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		int bufsize = Math.min(1024, req.getContentLength());
+		if (bufsize < 0) {
+			resp.setStatusCode(411);
+			return;
+		}
 
 		try {
 			BufferedInputStream bis = new BufferedInputStream(
@@ -482,9 +490,9 @@ public class RestApiServlet extends HttpServlet {
 	 *            <ul>
 	 *            <li>200 - Success</li>
 	 *            <li>401 - Not logged in</li>
-	 *            <li>405 - Session id not submitted viaia cookie</li>
-	 *            <li>500 - Error getting the file information</li>
-	 *            <li>503 - Session does not existsxist</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>500 - Error getting the list</li>
+	 *            <li>503 - Session does not exists</li>
 	 *            </ul>
 	 * @param args
 	 *            No arguments
@@ -494,16 +502,28 @@ public class RestApiServlet extends HttpServlet {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
-		resp.setStatusCode(501);
-		resp.addPayload("Not implemented!");
-		/*
-		 * HttpSession session = req.getSession(); Enumeration<String> e =
-		 * session.getAttributeNames(); while (e.hasMoreElements()) { String
-		 * attr = e.nextElement(); resp.addField(attr,
-		 * session.getAttribute(attr).toString()); } resp.addPayload("X" +
-		 * session.getCreationTime() + "Y" + session.getLastAccessedTime() +
-		 * "Z");
-		 */
+		HttpSession s = req.getSession();
+		int userid = (Integer) s.getAttribute("userid");
+		ResultSet rs = database.fileList(userid);
+		if (rs == null) {
+			resp.addPayload("No files uploaded yet.");
+		} else {
+			try {
+				HashMap<String, Object> map = new HashMap<String, Object>();
+				while (rs.next()) {
+					map.put("path_name", rs.getString("path_name"));
+					map.put("hash_name", rs.getString("hash_name"));
+					map.put("last_mod", rs.getTimestamp("last_mod").toString());
+					map.put("status", rs.getString("status"));
+					resp.addRow(map);
+				}
+			} catch (SQLException e) {
+				resp.setStatusCode(500);
+				e.printStackTrace();
+				return;
+			}
+		}
+		resp.setStatusCode(200);
 	}
 
 	/**

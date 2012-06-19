@@ -23,9 +23,11 @@
 package de.dhbw.mannheim.cloudraid.api.responses;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,13 +50,13 @@ public class JsonApiResponse implements IRestApiResponse {
 	/**
 	 * 
 	 */
+	private JSONArray table = new JSONArray();
+
+	/**
+	 * 
+	 */
 	private JSONObject jo = new JSONObject();
 
-	/*
-	 * @see
-	 * de.dhbw.mannheim.cloudraid.api.IRestApiResponse#addField(java.lang.String
-	 * , java.lang.String)
-	 */
 	@Override
 	public void addField(String name, String payload) {
 		try {
@@ -64,24 +66,23 @@ public class JsonApiResponse implements IRestApiResponse {
 		}
 	}
 
-	/*
-	 * @see
-	 * de.dhbw.mannheim.cloudraid.api.IRestApiResponse#addPayload(java.lang.
-	 * String)
-	 */
 	@Override
 	public void addPayload(String payload) {
 		this.addField("payload", payload);
 	}
 
-	/*
-	 * @see de.dhbw.mannheim.cloudraid.api.IRestApiResponse#send()
-	 */
 	@Override
 	public void send() throws IOException {
 		if (this.resp != null) {
-			resp.setContentType(MIMETYPE);
-			resp.getWriter().write(this.jo.toString());
+			this.resp.setContentType(MIMETYPE);
+
+			try {
+				this.jo.append("payload", this.table);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+
+			this.resp.getWriter().write(this.jo.toString());
 		}
 	}
 
@@ -92,11 +93,6 @@ public class JsonApiResponse implements IRestApiResponse {
 		}
 	}
 
-	/*
-	 * @see
-	 * de.dhbw.mannheim.cloudraid.api.IRestApiResponse#setResponseObject(javax
-	 * .servlet.http.HttpServletResponse)
-	 */
 	@Override
 	public void setResponseObject(HttpServletResponse resp) {
 		this.resp = resp;
@@ -107,6 +103,11 @@ public class JsonApiResponse implements IRestApiResponse {
 		if (this.resp != null) {
 			this.resp.setStatus(sc);
 		}
+	}
+
+	@Override
+	public void addRow(HashMap<String, Object> map) {
+		this.table.put(map);
 	}
 
 }

@@ -191,4 +191,13 @@ public interface IDatabaseConnector {
 	 *         not match the record in the database
 	 */
 	public int authUser(String username, String password);
+
+	/**
+	 * Returns a ResultSet that contains all files of a user.
+	 * 
+	 * @param userId
+	 *            The user id this file belongs to
+	 * @return The SQL ResultSet of all file belonging to the given user.
+	 */
+	public ResultSet fileList(int userId);
 }

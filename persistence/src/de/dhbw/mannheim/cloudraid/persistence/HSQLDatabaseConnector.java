@@ -76,6 +76,11 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 	/**
 	 * 
 	 */
+	private PreparedStatement listFiles = null;
+
+	/**
+	 * 
+	 */
 	private PreparedStatement addUserStatement = null;
 
 	/**
@@ -127,6 +132,7 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 		fileDeleteStmnt = null;
 		fileUpdateStmnt = null;
 		findNameStatement = null;
+		listFiles = null;
 		addUserStatement = null;
 		authUserStatement = null;
 		getUserSaltStatement = null;
@@ -177,6 +183,9 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 					.prepareStatement("DELETE FROM cloudraid_files WHERE path_name = ? AND user_id = ? ;");
 			findNameStatement = con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE hash_name = ? AND user_id = ?;");
+
+			listFiles = con
+					.prepareStatement("SELECT * FROM cloudraid_files WHERE user_id = ?;");
 
 			addUserStatement = con
 					.prepareStatement("INSERT INTO cloudraid_users VALUES (NULL, ?, ?, ? );");
@@ -371,6 +380,20 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 			if (rs.next()) {
 				return rs;
 			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@Override
+	public synchronized ResultSet fileList(int userId) {
+		try {
+			listFiles.setInt(1, userId);
+			listFiles.execute();
+			return listFiles.getResultSet();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
