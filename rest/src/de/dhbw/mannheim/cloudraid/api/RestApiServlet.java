@@ -56,21 +56,21 @@ import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
 public class RestApiServlet extends HttpServlet {
 
 	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1967811240645738359L;
-
-	/**
 	 * Stores all URL mappings.
 	 */
 	private static ArrayList<RestApiUrlMapping> mappings = new ArrayList<RestApiUrlMapping>();
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1967811240645738359L;
+
+	private Config config;
+
+	/**
 	 * A reference to the database that is used
 	 */
 	private IDatabaseConnector database = null;
-
-	private Config config;
 
 	/**
 	 * Initializes all URL mappings and stores a reference to the
@@ -115,6 +115,30 @@ public class RestApiServlet extends HttpServlet {
 		this.database = database;
 
 		this.config = Config.getInstance();
+	}
+
+	@Override
+	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		this.doRequest(req, resp);
+	}
+
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		this.doRequest(req, resp);
+	}
+
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		this.doRequest(req, resp);
+	}
+
+	@Override
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		this.doRequest(req, resp);
 	}
 
 	/**
@@ -164,30 +188,6 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		r.send();
-	}
-
-	@Override
-	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		this.doRequest(req, resp);
-	}
-
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		this.doRequest(req, resp);
-	}
-
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		this.doRequest(req, resp);
-	}
-
-	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		this.doRequest(req, resp);
 	}
 
 	/**
@@ -299,6 +299,55 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
+	 * View to show information about a file. Method must be <code>GET</code>
+	 * and path pattern <code>^/file/([^/]+)/info/$</code>.
+	 * 
+	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>404 - File not found</li>
+	 *            <li>405 - Session id not submitteded via cookie</li>
+	 *            <li>500 - Error getting the file information</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
+	 * @param args
+	 *            <ol>
+	 *            <li>The filename</li>
+	 *            </ol>
+	 */
+	public void fileInfo(HttpServletRequest req, IRestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		HttpSession s = req.getSession();
+		ResultSet rs = database.fileGet(args.get(0),
+				(Integer) s.getAttribute("userid"));
+		try {
+			if (rs == null) {
+				resp.setStatusCode(404);
+				return;
+			}
+			resp.addField("path", rs.getString("path_name"));
+			resp.addField("hash", rs.getString("hash_name"));
+			resp.addField("last modification", rs.getString("last_mod"));
+			resp.addField("status", rs.getString("status"));
+		} catch (SQLException e) {
+			resp.setStatusCode(500);
+			e.printStackTrace();
+			return;
+		}
+		resp.setStatusCode(200);
+	}
+
+	/**
 	 * View to upload a new file. Method must be <code>PUT</code> and path
 	 * pattern <code>^/file/([^/]+)/$</code>.
 	 * 
@@ -374,55 +423,6 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
-	 * View to show information about a file. Method must be <code>GET</code>
-	 * and path pattern <code>^/file/([^/]+)/info/$</code>.
-	 * 
-	 * @param req
-	 *            The request. Needs following HTTP header attributes:
-	 *            <ul>
-	 *            <li><code>Cookie: NAME=VALUE</code></li>
-	 *            </ul>
-	 * @param resp
-	 *            Status codes:
-	 *            <ul>
-	 *            <li>200 - Success</li>
-	 *            <li>401 - Not logged in</li>
-	 *            <li>404 - File not found</li>
-	 *            <li>405 - Session id not submitteded via cookie</li>
-	 *            <li>500 - Error getting the file information</li>
-	 *            <li>503 - Session does not exist</li>
-	 *            </ul>
-	 * @param args
-	 *            <ol>
-	 *            <li>The filename</li>
-	 *            </ol>
-	 */
-	public void fileInfo(HttpServletRequest req, IRestApiResponse resp,
-			ArrayList<String> args) {
-		if (!this.validateSession(req, resp)) {
-			return;
-		}
-		HttpSession s = req.getSession();
-		ResultSet rs = database.fileGet(args.get(0),
-				(Integer) s.getAttribute("userid"));
-		try {
-			if (rs == null) {
-				resp.setStatusCode(404);
-				return;
-			}
-			resp.addField("path", rs.getString("path_name"));
-			resp.addField("hash", rs.getString("hash_name"));
-			resp.addField("last modification", rs.getString("last_mod"));
-			resp.addField("status", rs.getString("status"));
-		} catch (SQLException e) {
-			resp.setStatusCode(500);
-			e.printStackTrace();
-			return;
-		}
-		resp.setStatusCode(200);
-	}
-
-	/**
 	 * View to update a file. Method must be <code>PUT</code> and path pattern
 	 * <code>^/file/([^/]+)/update/$</code>.
 	 * 
@@ -490,10 +490,8 @@ public class RestApiServlet extends HttpServlet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NoSuchElementException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvalidConfigValueException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		resp.setStatusCode(500);
@@ -644,36 +642,6 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
-	 * View to logout a user. Method must be <code>GET</code> and path pattern
-	 * <code>^/user/auth/logout/$</code>.
-	 * 
-	 * @param req
-	 *            The request. Needs following HTTP header attributes:
-	 *            <ul>
-	 *            <li><code>Cookie: NAME=VALUE</code></li>
-	 *            </ul>
-	 * @param resp
-	 *            Status codes:
-	 *            <ul>
-	 *            <li>200 - Success</li>
-	 *            <li>401 - Not logged in</li>
-	 *            <li>405 - Session id not submitted via cookie</li>
-	 *            <li>503 - Session does not exist</li>
-	 *            </ul>
-	 * @param args
-	 *            No arguments
-	 */
-	public void userLogout(HttpServletRequest req, IRestApiResponse resp,
-			ArrayList<String> args) {
-		if (!this.validateSession(req, resp)) {
-			return;
-		}
-		req.getSession().invalidate();
-		resp.setStatusCode(200);
-		return;
-	}
-
-	/**
 	 * View to change the password of a user. Method must be <code>POST</code>
 	 * and path pattern <code>^/user/chgpw/$</code>.
 	 * 
@@ -738,6 +706,36 @@ public class RestApiServlet extends HttpServlet {
 		}
 		resp.setStatusCode(501);
 		resp.addPayload("Not implemented!");
+	}
+
+	/**
+	 * View to logout a user. Method must be <code>GET</code> and path pattern
+	 * <code>^/user/auth/logout/$</code>.
+	 * 
+	 * @param req
+	 *            The request. Needs following HTTP header attributes:
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            <li>401 - Not logged in</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
+	 *            <li>503 - Session does not exist</li>
+	 *            </ul>
+	 * @param args
+	 *            No arguments
+	 */
+	public void userLogout(HttpServletRequest req, IRestApiResponse resp,
+			ArrayList<String> args) {
+		if (!this.validateSession(req, resp)) {
+			return;
+		}
+		req.getSession().invalidate();
+		resp.setStatusCode(200);
+		return;
 	}
 
 	/**

@@ -45,11 +45,6 @@ public class RestApiComponent {
 	private static final String SERVLET_ALIAS = "/";
 
 	/**
-	 * 
-	 */
-	private IDatabaseConnector database = null;
-
-	/**
 	 * @param req
 	 * @param resp
 	 */
@@ -69,6 +64,11 @@ public class RestApiComponent {
 		resp.addPayload("Servererror for page " + req.getPathInfo());
 		resp.addField("msg", msg);
 	}
+
+	/**
+	 * 
+	 */
+	private IDatabaseConnector database = null;
 
 	/**
 	 * Service that handles all the request. Injected by the component.xml

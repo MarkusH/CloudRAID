@@ -45,11 +45,11 @@ public class RestApiUrlMapping {
 		/**
 		 * 
 		 */
-		private Method function;
+		private ArrayList<String> args = null;
 		/**
 		 * 
 		 */
-		private ArrayList<String> args = null;
+		private Method function;
 
 		/**
 		 * @param function
@@ -92,9 +92,25 @@ public class RestApiUrlMapping {
 	}
 
 	/**
+	 * @param klass
+	 * @param function
+	 * @return Return the Method object described by <code>klass</code> and
+	 *         <code>function</code>.
+	 * @throws IllegalArgumentException
+	 * @throws NoSuchMethodException
+	 * @throws SecurityException
+	 */
+	static Method findFunction(Class<?> klass, String function)
+			throws IllegalArgumentException, SecurityException,
+			NoSuchMethodException {
+		return klass.getMethod(function, HttpServletRequest.class,
+				IRestApiResponse.class, ArrayList.class);
+	}
+	/**
 	 * 
 	 */
-	private Pattern pattern = null;
+	private Method function = null;
+
 	/**
 	 * 
 	 */
@@ -103,27 +119,7 @@ public class RestApiUrlMapping {
 	/**
 	 * 
 	 */
-	private Method function = null;
-
-	/**
-	 * @param pattern
-	 * @param function
-	 * @throws IllegalArgumentException
-	 */
-	public RestApiUrlMapping(Pattern pattern, Method function)
-			throws IllegalArgumentException {
-		this(pattern, null, function);
-	}
-
-	/**
-	 * @param pattern
-	 * @param function
-	 * @throws IllegalArgumentException
-	 */
-	public RestApiUrlMapping(String pattern, Method function)
-			throws IllegalArgumentException {
-		this(Pattern.compile(pattern), null, function);
-	}
+	private Pattern pattern = null;
 
 	/**
 	 * @param pattern
@@ -141,17 +137,27 @@ public class RestApiUrlMapping {
 
 	/**
 	 * @param pattern
+	 * @param function
+	 * @throws IllegalArgumentException
+	 */
+	public RestApiUrlMapping(Pattern pattern, Method function)
+			throws IllegalArgumentException {
+		this(pattern, null, function);
+	}
+
+	/**
+	 * @param pattern
+	 * @param method
 	 * @param klass
 	 * @param function
 	 * @throws IllegalArgumentException
-	 * @throws SecurityException
 	 * @throws NoSuchMethodException
+	 * @throws SecurityException
 	 */
-	public RestApiUrlMapping(String pattern, Class<?> klass, String function)
-			throws IllegalArgumentException, SecurityException,
-			NoSuchMethodException {
-		this(Pattern.compile(pattern), null, RestApiUrlMapping.findFunction(
-				klass, function));
+	public RestApiUrlMapping(Pattern pattern, String method, Class<?> klass,
+			String function) throws IllegalArgumentException,
+			SecurityException, NoSuchMethodException {
+		this(pattern, method, RestApiUrlMapping.findFunction(klass, function));
 	}
 
 	/**
@@ -174,29 +180,27 @@ public class RestApiUrlMapping {
 
 	/**
 	 * @param pattern
-	 * @param method
+	 * @param klass
 	 * @param function
 	 * @throws IllegalArgumentException
-	 * 
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
 	 */
-	public RestApiUrlMapping(String pattern, String method, Method function)
-			throws IllegalArgumentException {
-		this(Pattern.compile(pattern), method, function);
+	public RestApiUrlMapping(String pattern, Class<?> klass, String function)
+			throws IllegalArgumentException, SecurityException,
+			NoSuchMethodException {
+		this(Pattern.compile(pattern), null, RestApiUrlMapping.findFunction(
+				klass, function));
 	}
 
 	/**
 	 * @param pattern
-	 * @param method
-	 * @param klass
 	 * @param function
 	 * @throws IllegalArgumentException
-	 * @throws NoSuchMethodException
-	 * @throws SecurityException
 	 */
-	public RestApiUrlMapping(Pattern pattern, String method, Class<?> klass,
-			String function) throws IllegalArgumentException,
-			SecurityException, NoSuchMethodException {
-		this(pattern, method, RestApiUrlMapping.findFunction(klass, function));
+	public RestApiUrlMapping(String pattern, Method function)
+			throws IllegalArgumentException {
+		this(Pattern.compile(pattern), null, function);
 	}
 
 	/**
@@ -216,19 +220,15 @@ public class RestApiUrlMapping {
 	}
 
 	/**
-	 * @param klass
+	 * @param pattern
+	 * @param method
 	 * @param function
-	 * @return Return the Method object described by <code>klass</code> and
-	 *         <code>function</code>.
 	 * @throws IllegalArgumentException
-	 * @throws NoSuchMethodException
-	 * @throws SecurityException
+	 * 
 	 */
-	static Method findFunction(Class<?> klass, String function)
-			throws IllegalArgumentException, SecurityException,
-			NoSuchMethodException {
-		return klass.getMethod(function, HttpServletRequest.class,
-				IRestApiResponse.class, ArrayList.class);
+	public RestApiUrlMapping(String pattern, String method, Method function)
+			throws IllegalArgumentException {
+		this(Pattern.compile(pattern), method, function);
 	}
 
 	/**
