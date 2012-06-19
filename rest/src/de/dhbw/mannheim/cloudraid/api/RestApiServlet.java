@@ -587,7 +587,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <ul>
 	 *            <li>202 - Success</li>
 	 *            <li>400 - User name and/or password missing/wrong.</li>
-	 *            <li>406 - AlreadyAlready logged in</li>
+	 *            <li>406 - Already logged in / Session exists</li>
 	 *            <li>503 - Session could not be created.</li>
 	 *            </ul>
 	 * @param args
@@ -600,14 +600,12 @@ public class RestApiServlet extends HttpServlet {
 		password = password + "";
 		HttpSession session = req.getSession(false);
 		if (session != null) {
-			resp.setStatusCode(301);
-			resp.addPayload("Session already exists!");
+			resp.setStatusCode(406);
 			return;
 		}
 		session = req.getSession(true);
 		if (session == null) {
-			resp.setStatusCode(500);
-			resp.addPayload("Session could ne be created!");
+			resp.setStatusCode(503);
 			return;
 		}
 		int id = database.authUser(username, password);
@@ -615,6 +613,8 @@ public class RestApiServlet extends HttpServlet {
 			session.setAttribute("auth", true);
 			session.setAttribute("username", username);
 			session.setAttribute("userid", id);
+			resp.setStatusCode(202);
+			return;
 		} else {
 			session.invalidate();
 			resp.setStatusCode(403);
