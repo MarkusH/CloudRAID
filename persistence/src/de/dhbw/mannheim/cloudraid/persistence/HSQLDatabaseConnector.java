@@ -478,9 +478,12 @@ public class HSQLDatabaseConnector implements IDatabaseConnector {
 			ResultSet resSet = fileGetStmnt.executeQuery();
 
 			if (resSet.next()) {
-				fileUpdateStmnt.setTimestamp(1, new Timestamp(lastMod));
-				fileUpdateStmnt.setString(2, path);
-				fileUpdateStmnt.setInt(3, userId);
+				fileUpdateStmnt.setString(1, hash);
+				fileUpdateStmnt.setTimestamp(2, new Timestamp(lastMod));
+				fileUpdateStmnt.setString(3,
+						IDatabaseConnector.FILE_STATUS.UPLOADED.toString());
+				fileUpdateStmnt.setString(4, path);
+				fileUpdateStmnt.setInt(5, userId);
 				fileUpdateStmnt.execute();
 			} else {
 				fileAddStmnt.setString(1, path);
