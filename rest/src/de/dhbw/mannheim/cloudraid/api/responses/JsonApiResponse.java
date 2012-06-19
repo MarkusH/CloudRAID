@@ -23,7 +23,7 @@
 package de.dhbw.mannheim.cloudraid.api.responses;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -106,7 +106,7 @@ public class JsonApiResponse implements IRestApiResponse {
 	}
 
 	@Override
-	public void addRow(HashMap<String, Object> map) {
+	public void addRow(Map<String, Object> map) {
 		this.table.put(map);
 	}
 

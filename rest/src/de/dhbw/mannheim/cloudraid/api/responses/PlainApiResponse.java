@@ -23,7 +23,6 @@
 package de.dhbw.mannheim.cloudraid.api.responses;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -96,7 +95,7 @@ public class PlainApiResponse implements IRestApiResponse {
 	}
 
 	@Override
-	public void addRow(HashMap<String, Object> map) {
+	public void addRow(Map<String, Object> map) {
 		for (Map.Entry<String, Object> e : map.entrySet()) {
 			this.table.append("\""
 					+ e.getValue().toString().replace("\\", "\\\\")

@@ -31,7 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 
 import javax.servlet.ServletException;
@@ -509,7 +509,7 @@ public class RestApiServlet extends HttpServlet {
 			resp.addPayload("No files uploaded yet.");
 		} else {
 			try {
-				HashMap<String, Object> map = new HashMap<String, Object>();
+				LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
 				while (rs.next()) {
 					map.put("path_name", rs.getString("path_name"));
 					map.put("hash_name", rs.getString("hash_name"));
@@ -649,6 +649,8 @@ public class RestApiServlet extends HttpServlet {
 			return;
 		}
 		req.getSession().invalidate();
+		resp.setStatusCode(200);
+		return;
 	}
 
 	/**
