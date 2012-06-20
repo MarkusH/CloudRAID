@@ -597,7 +597,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration key
 	 * @param value
 	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
 	 */
 	public synchronized void put(String key, boolean value) {
 		this.put(key, String.valueOf(value), false);
@@ -610,7 +610,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration value
 	 * @param encrypted
 	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, boolean value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
@@ -621,7 +621,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration key
 	 * @param value
 	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
 	 */
 	public synchronized void put(String key, double value) {
 		this.put(key, String.valueOf(value), false);
@@ -634,7 +634,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration value
 	 * @param encrypted
 	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, double value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
@@ -645,7 +645,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration key
 	 * @param value
 	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
 	 */
 	public synchronized void put(String key, float value) {
 		this.put(key, String.valueOf(value), false);
@@ -658,7 +658,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration value
 	 * @param encrypted
 	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, float value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
@@ -669,7 +669,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration key
 	 * @param value
 	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
 	 */
 	public synchronized void put(String key, int value) {
 		this.put(key, String.valueOf(value), false);
@@ -682,7 +682,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration value
 	 * @param encrypted
 	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, int value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
@@ -693,7 +693,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration key
 	 * @param value
 	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
 	 */
 	public synchronized void put(String key, long value) {
 		this.put(key, String.valueOf(value), false);
@@ -706,7 +706,7 @@ public class Config extends HashMap<String, String> {
 	 *            The configuration value
 	 * @param encrypted
 	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.util.Config#put(String, String, boolean)
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
 	 */
 	public synchronized void put(String key, long value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);

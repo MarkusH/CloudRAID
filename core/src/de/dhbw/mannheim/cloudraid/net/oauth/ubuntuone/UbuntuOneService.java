@@ -22,8 +22,6 @@
 
 package de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone;
 
-import com.miginfocom.base64.Base64;
-
 import org.scribe.builder.api.Api;
 import org.scribe.model.OAuthConfig;
 import org.scribe.model.OAuthConstants;
@@ -34,6 +32,8 @@ import org.scribe.model.Verb;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 import org.scribe.utils.OAuthEncoder;
+
+import com.miginfocom.base64.Base64;
 
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 

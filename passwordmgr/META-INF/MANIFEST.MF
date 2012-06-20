@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CloudRAID-pwdmngr
+Bundle-SymbolicName: CloudRAID-Password
+Bundle-Version: 0.0.1.prealpha
+Bundle-Vendor: cloudraid
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: org.osgi.framework;version="1.6.0"
+Require-Bundle: CloudRAID-interfaces;bundle-version="0.0.1"
+Service-Component: OSGI-INF/component.xml

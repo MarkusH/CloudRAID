@@ -22,10 +22,7 @@ Export-Package: de.dhbw.mannheim.cloudraid.fs,
    org.scribe.extractors,
    org.scribe.model,
    org.scribe.oauth",
- de.dhbw.mannheim.cloudraid.net.util,
- de.dhbw.mannheim.cloudraid.osgi;uses:="org.osgi.framework,de.dhbw.mannheim.cloudraid.util",
- de.dhbw.mannheim.cloudraid.util,
- de.dhbw.mannheim.cloudraid.util.exceptions
+ de.dhbw.mannheim.cloudraid.net.util
 Import-Package: javax.activation,
  javax.crypto,
  javax.crypto.spec,
@@ -37,6 +34,6 @@ Import-Package: javax.activation,
 Require-Bundle: scribe-java;bundle-version="1.3.0.1-osgi",
  JSON-java;bundle-version="1.0.0.1-osgi",
  CloudRAID-interfaces;bundle-version="0.0.1",
- CloudRAID-pwdmngr;bundle-version="0.0.1",
- CloudRAID-persistence;bundle-version="0.0.1"
+ CloudRAID-Password;bundle-version="0.0.1",
+ CloudRAID-Metadata;bundle-version="0.0.1"
 Bundle-Activator: de.dhbw.mannheim.cloudraid.osgi.Activator

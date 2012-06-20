@@ -20,28 +20,14 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
-
-import de.dhbw.mannheim.cloudraid.util.Config;
+package de.dhbw.mannheim.cloudraid.passwordmgr;
 
 /**
  * @author Markus Holtermann
+ * 
  */
-@RunWith(Suite.class)
-@SuiteClasses({de.dhbw.mannheim.cloudraid.util.TestConfig.class,
-		de.dhbw.mannheim.cloudraid.jni.TestRaidAccessInterface.class,
-		de.dhbw.mannheim.cloudraid.fs.TestFileSystemUtilities.class,
-		de.dhbw.mannheim.cloudraid.fs.TestFileLock.class,
-		de.dhbw.mannheim.cloudraid.metadatamgr.TestHSQLDatabaseConnector.class,
-		de.dhbw.mannheim.cloudraid.api.TestRestApi.class})
-public class AllTests {
+public interface IPasswordManager {
 
-	static {
-		Config.getInstance().init("CloudRAID-unitTests");
-	}
+	public String getCredentials();
 
 }

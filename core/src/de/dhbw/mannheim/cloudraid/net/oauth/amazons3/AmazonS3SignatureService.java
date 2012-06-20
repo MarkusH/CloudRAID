@@ -25,10 +25,10 @@ package de.dhbw.mannheim.cloudraid.net.oauth.amazons3;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.miginfocom.base64.Base64;
-
 import org.scribe.exceptions.OAuthSignatureException;
 import org.scribe.services.SignatureService;
+
+import com.miginfocom.base64.Base64;
 
 /**
  * HMAC-SHA1 implementation of {@SignatureService}

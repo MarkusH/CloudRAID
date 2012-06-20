@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CloudRAID-persistence
+Bundle-SymbolicName: CloudRAID-Metadata
+Bundle-Version: 0.0.1.prealpha
+Bundle-Vendor: cloudraid
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Service-Component: OSGI-INF/component.xml
+Require-Bundle: org.hsqldb.hsqldb;bundle-version="2.2.8",
+ CloudRAID-interfaces;bundle-version="0.0.1"
+Import-Package: org.osgi.framework;version="1.6.0"

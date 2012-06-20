@@ -31,7 +31,7 @@ import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
 import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
-import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
+import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
 
 /**
  * @author Markus Holtermann
@@ -68,7 +68,7 @@ public class RestApiComponent {
 	/**
 	 * 
 	 */
-	private IDatabaseConnector database = null;
+	private IMetadataManager database = null;
 
 	/**
 	 * Service that handles all the request. Injected by the component.xml
@@ -102,8 +102,8 @@ public class RestApiComponent {
 			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
 		try {
-			ServiceReference<IDatabaseConnector> databaseServiceReference = context
-					.getServiceReference(IDatabaseConnector.class);
+			ServiceReference<IMetadataManager> databaseServiceReference = context
+					.getServiceReference(IMetadataManager.class);
 			database = context.getService(databaseServiceReference);
 			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
 			RestApiServlet servlet = new RestApiServlet(database);

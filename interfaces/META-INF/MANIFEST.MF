@@ -5,5 +5,5 @@ Bundle-SymbolicName: CloudRAID-interfaces
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.dhbw.mannheim.cloudraid.persistence,
- de.dhbw.mannheim.cloudraid.util
+Export-Package: de.dhbw.mannheim.cloudraid.metadatamgr,
+ de.dhbw.mannheim.cloudraid.passwordmgr

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="CloudRAID-persistence">
+   <implementation class="de.dhbw.mannheim.cloudraid.metadatamgr.HSQLMetadataManager"/>
+   <service>
+      <provide interface="de.dhbw.mannheim.cloudraid.metadatamgr.HSQLMetadataManager"/>
+   </service>
+</scr:component>

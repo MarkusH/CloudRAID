@@ -44,8 +44,8 @@ import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
 import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.JsonApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
-import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
-import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector.FILE_STATUS;
+import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
+import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager.FILE_STATUS;
 import de.dhbw.mannheim.cloudraid.util.Config;
 import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
 
@@ -70,14 +70,14 @@ public class RestApiServlet extends HttpServlet {
 	/**
 	 * A reference to the database that is used
 	 */
-	private IDatabaseConnector database = null;
+	private IMetadataManager database = null;
 
 	/**
 	 * Initializes all URL mappings and stores a reference to the
-	 * {@link IDatabaseConnector}
+	 * {@link IMetadataManager}
 	 * 
 	 * @param database
-	 *            The {@link IDatabaseConnector} that will be used for all
+	 *            The {@link IMetadataManager} that will be used for all
 	 *            database requests
 	 * @throws IllegalArgumentException
 	 *             Thrown if the pattern or the function is invalid.
@@ -86,7 +86,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @throws NoSuchMethodException
 	 *             Thrown if no such function can be found
 	 */
-	public RestApiServlet(IDatabaseConnector database)
+	public RestApiServlet(IMetadataManager database)
 			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "DELETE",

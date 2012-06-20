@@ -30,9 +30,9 @@ import org.osgi.framework.ServiceReference;
 
 import de.dhbw.mannheim.cloudraid.fs.FileManager;
 import de.dhbw.mannheim.cloudraid.fs.RecursiveFileSystemWatcher;
-import de.dhbw.mannheim.cloudraid.persistence.IDatabaseConnector;
+import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
+import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
 import de.dhbw.mannheim.cloudraid.util.Config;
-import de.dhbw.mannheim.cloudraid.util.IPasswordManager;
 
 /**
  * @author Markus Holtermann
@@ -48,7 +48,7 @@ public class Activator implements BundleActivator {
 	/**
 	 * 
 	 */
-	private IDatabaseConnector database = null;
+	private IMetadataManager database = null;
 
 	/**
 	 * 
@@ -67,7 +67,7 @@ public class Activator implements BundleActivator {
 	 * <li>A {@link IPasswordManager} to handle passwords for the configuration</li>
 	 * <li>A {@link Config} storing the I/O paths for RAID, the database name,
 	 * number of threads, etc.</li>
-	 * <li>A {@link IDatabaseConnector} that represents the underlying database
+	 * <li>A {@link IMetadataManager} that represents the underlying database
 	 * used to store all file information</li>
 	 * <li>A {@link RecursiveFileSystemWatcher} that permanently watches the
 	 * split input directory for new files</li>
@@ -88,8 +88,8 @@ public class Activator implements BundleActivator {
 		config.init(pwdmngr.getCredentials());
 
 		// Connect to the database
-		ServiceReference<IDatabaseConnector> databaseServiceReference = context
-				.getServiceReference(IDatabaseConnector.class);
+		ServiceReference<IMetadataManager> databaseServiceReference = context
+				.getServiceReference(IMetadataManager.class);
 		database = context.getService(databaseServiceReference);
 		String databasename = config.getString("database.name", null);
 		database.connect(databasename);

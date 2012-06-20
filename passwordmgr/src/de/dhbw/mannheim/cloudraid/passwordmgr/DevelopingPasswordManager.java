@@ -1,6 +1,6 @@
 /*
  * Copyright 2011 - 2012 by the CloudRAID Team
- * see AUTHORS for more details
+ * see AUTHORS for more details.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -20,28 +20,24 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid;
+package de.dhbw.mannheim.cloudraid.passwordmgr;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
-
-import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
 
 /**
  * @author Markus Holtermann
+ * 
  */
-@RunWith(Suite.class)
-@SuiteClasses({de.dhbw.mannheim.cloudraid.util.TestConfig.class,
-		de.dhbw.mannheim.cloudraid.jni.TestRaidAccessInterface.class,
-		de.dhbw.mannheim.cloudraid.fs.TestFileSystemUtilities.class,
-		de.dhbw.mannheim.cloudraid.fs.TestFileLock.class,
-		de.dhbw.mannheim.cloudraid.metadatamgr.TestHSQLDatabaseConnector.class,
-		de.dhbw.mannheim.cloudraid.api.TestRestApi.class})
-public class AllTests {
+public class DevelopingPasswordManager implements IPasswordManager {
 
-	static {
-		Config.getInstance().init("CloudRAID-unitTests");
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager#getCredentials()
+	 */
+	@Override
+	public String getCredentials() {
+		return "Test!P4ssw0rd";
 	}
 
 }
