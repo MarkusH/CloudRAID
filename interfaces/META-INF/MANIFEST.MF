@@ -1,9 +1,11 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CloudRAID-interfaces
-Bundle-SymbolicName: CloudRAID-interfaces
+Bundle-SymbolicName: CloudRAID-Interfaces
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.dhbw.mannheim.cloudraid.metadatamgr,
+Export-Package: de.dhbw.mannheim.cloudraid.config,
+ de.dhbw.mannheim.cloudraid.config.exceptions,
+ de.dhbw.mannheim.cloudraid.metadatamgr,
  de.dhbw.mannheim.cloudraid.passwordmgr

@@ -20,13 +20,13 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.fs;
+package de.dhbw.mannheim.cloudraid.core.impl.fs;
 
 import java.io.File;
 import java.util.NoSuchElementException;
 
 import de.dhbw.mannheim.cloudraid.jni.RaidAccessInterface;
-import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 
 /**
  * Reads as a thread the {@link FileQueue} and handles the files according to
@@ -40,14 +40,17 @@ public class FileManager extends Thread {
 	private final static String KEY = "key";
 
 	private int interval = 2000;
-	private static Config config;
+	private ICloudRAIDConfig config;
 
 	/**
 	 * Creates a FileManager thread with minimal priority.
+	 * 
+	 * @param config
+	 *            An instance of a {@link ICloudRAIDConfig}
 	 */
-	public FileManager() {
+	public FileManager(ICloudRAIDConfig config) {
 		this.setPriority(MIN_PRIORITY);
-		this.config = Config.getInstance();
+		this.config = config;
 	}
 
 	/**
@@ -55,11 +58,13 @@ public class FileManager extends Thread {
 	 * Thread to "FileManager-" + i and sets the interval of scanning the
 	 * {@link FileQueue} to (i+1)*2s.
 	 * 
+	 * @param config
+	 *            An instance of a {@link ICloudRAIDConfig}
 	 * @param i
 	 *            The number of the thread.
 	 */
-	public FileManager(int i) {
-		this();
+	public FileManager(ICloudRAIDConfig config, int i) {
+		this(config);
 		this.setName("FileManager-" + i);
 		this.interval = (i + 1) * 2000;
 	}
@@ -98,25 +103,25 @@ public class FileManager extends Thread {
 
 				if (FileLock.lock(fqe.getFileName(), this)) {
 					switch (fqe.getFileAction()) {
-						case CREATE :
-							System.out.println("Upload new file "
-									+ fqe.getFileName());
-							splitFile(fqe.getFileName());
-							break;
+					case CREATE:
+						System.out.println("Upload new file "
+								+ fqe.getFileName());
+						splitFile(fqe.getFileName());
+						break;
 
-						case DELETE :
-							System.out.println("Send delete order for "
-									+ fqe.getFileName());
-							break;
+					case DELETE:
+						System.out.println("Send delete order for "
+								+ fqe.getFileName());
+						break;
 
-						case MODIFY :
-							System.out.println("Upload updated file "
-									+ fqe.getFileName());
-							splitFile(fqe.getFileName());
-							break;
-						default :
-							System.err.println("This should not happen.");
-							break;
+					case MODIFY:
+						System.out.println("Upload updated file "
+								+ fqe.getFileName());
+						splitFile(fqe.getFileName());
+						break;
+					default:
+						System.err.println("This should not happen.");
+						break;
 					}
 					FileLock.unlock(fqe.getFileName(), this);
 				} else {

@@ -33,7 +33,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.config.Config;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 
 /**
  * This JUnit test tests the {@link HSQLMetadataManager}.
@@ -49,12 +50,18 @@ public class TestHSQLDatabaseConnector {
 	private static final String HASH = "hash", HASH2 = "hash2";
 	private static final long TIME = 100000L, TIME2 = 200000L;
 	private static int user1Id, user2Id;
+	private static ICloudRAIDConfig config;
 
 	@BeforeClass
 	public static void oneTimeSetUp() throws InstantiationException,
 			IllegalAccessException, ClassNotFoundException, ClassCastException {
+		config = new Config();
+		config.setCloudRAIDHome(System.getProperty("java.io.tmpdir")
+				+ File.separator + "cloudraid");
+		config.init("CloudRAID-unitTests");
 		dbc = new HSQLMetadataManager();
-		assertTrue(dbc.connect(Config.getCloudRAIDHome() + DATABASE_FILE));
+		assertTrue(dbc.connect(config.getCloudRAIDHome() + DATABASE_FILE, "SA",
+				""));
 		assertTrue(dbc.initialize());
 		dbc.addUser("User1", "Password1");
 		dbc.addUser("User2", "Password2");
@@ -65,10 +72,10 @@ public class TestHSQLDatabaseConnector {
 	@AfterClass
 	public static void oneTimeTearDown() {
 		assertTrue(dbc.disconnect());
-		new File(Config.getCloudRAIDHome() + DATABASE_FILE + ".data").delete();
-		new File(Config.getCloudRAIDHome() + DATABASE_FILE + ".properties")
+		new File(config.getCloudRAIDHome() + DATABASE_FILE + ".data").delete();
+		new File(config.getCloudRAIDHome() + DATABASE_FILE + ".properties")
 				.delete();
-		new File(Config.getCloudRAIDHome() + DATABASE_FILE + ".script")
+		new File(config.getCloudRAIDHome() + DATABASE_FILE + ".script")
 				.delete();
 	}
 
@@ -146,7 +153,8 @@ public class TestHSQLDatabaseConnector {
 		assertFalse(dbc.initialize());
 		assertEquals(dbc.fileDelete(PATH, user1Id), -1);
 
-		assertTrue(dbc.connect(Config.getCloudRAIDHome() + DATABASE_FILE));
+		assertTrue(dbc.connect(config.getCloudRAIDHome() + DATABASE_FILE, "SA",
+				""));
 		assertTrue(dbc.initialize());
 	}
 

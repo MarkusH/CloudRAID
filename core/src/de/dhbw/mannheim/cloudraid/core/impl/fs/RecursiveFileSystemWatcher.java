@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.fs;
+package de.dhbw.mannheim.cloudraid.core.impl.fs;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.naming.directory.InvalidAttributeValueException;
 
-import de.dhbw.mannheim.cloudraid.fs.FileQueue.FileAction;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.FileQueue.FileAction;
 
 /**
  * Watches a directory recursively and writes newly created, modified and

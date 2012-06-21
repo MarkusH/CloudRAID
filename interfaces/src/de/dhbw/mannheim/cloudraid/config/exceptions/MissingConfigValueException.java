@@ -21,17 +21,17 @@
  */
 
 
-package de.dhbw.mannheim.cloudraid.util.exceptions;
+package de.dhbw.mannheim.cloudraid.config.exceptions;
 
 /**
  * @author markus
  *
  */
-public class InvalidConfigValueException extends ConfigException {
+public class MissingConfigValueException extends ConfigException {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -1376179325413163634L;
+	private static final long serialVersionUID = 1395268042344847832L;
 
 }

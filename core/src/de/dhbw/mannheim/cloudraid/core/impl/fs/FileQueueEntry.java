@@ -20,9 +20,9 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.fs;
+package de.dhbw.mannheim.cloudraid.core.impl.fs;
 
-import de.dhbw.mannheim.cloudraid.fs.FileQueue.FileAction;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.FileQueue.FileAction;
 
 /**
  * This class maps a filename to an according action.

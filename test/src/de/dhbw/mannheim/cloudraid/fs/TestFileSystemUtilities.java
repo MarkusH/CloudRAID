@@ -22,9 +22,9 @@
 
 package de.dhbw.mannheim.cloudraid.fs;
 
-import static de.dhbw.mannheim.cloudraid.fs.FileQueue.FileAction.CREATE;
-import static de.dhbw.mannheim.cloudraid.fs.FileQueue.FileAction.DELETE;
-import static de.dhbw.mannheim.cloudraid.fs.FileQueue.FileAction.MODIFY;
+import static de.dhbw.mannheim.cloudraid.core.impl.fs.FileQueue.FileAction.CREATE;
+import static de.dhbw.mannheim.cloudraid.core.impl.fs.FileQueue.FileAction.DELETE;
+import static de.dhbw.mannheim.cloudraid.core.impl.fs.FileQueue.FileAction.MODIFY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -37,28 +37,36 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.config.Config;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.FileManager;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.FileQueue;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.FileQueueEntry;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.RecursiveFileSystemWatcher;
 
 public class TestFileSystemUtilities {
 
 	private static File file1, file2, file3, file4;
 	private static String splitInputDir, mergeOutputDir;
+	private static ICloudRAIDConfig config;
 
 	@BeforeClass
 	public static void oneTimeSetUp() throws IOException {
 		String TMP = System.getProperty("java.io.tmpdir") + File.separator
 				+ "cloudraid-test" + File.separator;
-		Config.getInstance().put("merge.input.dir", TMP);
-		Config.getInstance().put("merge.output.dir",
-				TMP + "out" + File.separator);
-		Config.getInstance().put("split.input.dir", TMP);
-		Config.getInstance().put("split.output.dir", TMP);
+		config = new Config();
+		config.setCloudRAIDHome(System.getProperty("java.io.tmpdir")
+				+ File.separator + "cloudraid");
+		config.init("CloudRAID-unitTests");
+		config.put("merge.input.dir", TMP);
+		config.put("merge.output.dir", TMP + "out" + File.separator);
+		config.put("split.input.dir", TMP);
+		config.put("split.output.dir", TMP);
 
 		try {
-			mergeOutputDir = Config.getInstance().getString("merge.output.dir",
-					TMP + "out" + File.separator);
-			splitInputDir = Config.getInstance().getString("split.input.dir",
-					TMP);
+			mergeOutputDir = config.getString("merge.output.dir", TMP + "out"
+					+ File.separator);
+			splitInputDir = config.getString("split.input.dir", TMP);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -82,6 +90,7 @@ public class TestFileSystemUtilities {
 		new File(mergeOutputDir).delete();
 		new File(splitInputDir + "subdir" + File.separator).delete();
 		new File(splitInputDir).delete();
+		config.delete();
 	}
 
 	@Test
@@ -151,7 +160,7 @@ public class TestFileSystemUtilities {
 
 		assertFalse(FileQueue.isEmpty());
 
-		FileManager fm = new FileManager(0);
+		FileManager fm = new FileManager(config, 0);
 		fm.start();
 		Thread.sleep(1000);
 		fm.interrupt();

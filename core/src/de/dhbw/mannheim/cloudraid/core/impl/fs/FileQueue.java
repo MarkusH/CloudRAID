@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.fs;
+package de.dhbw.mannheim.cloudraid.core.impl.fs;
 
 import java.util.LinkedList;
 

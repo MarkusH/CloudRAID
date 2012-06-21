@@ -31,6 +31,7 @@ import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
 import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
 
 /**
@@ -68,18 +69,61 @@ public class RestApiComponent {
 	/**
 	 * 
 	 */
+	private ICloudRAIDConfig config = null;
+
+	/**
+	 * 
+	 */
 	private IMetadataManager database = null;
 
 	/**
 	 * Service that handles all the request. Injected by the component.xml
 	 */
-	private HttpService httpService;
+	private HttpService httpService = null;
+
+	/**
+	 * @param configService
+	 */
+	public void setConfig(ICloudRAIDConfig configService) {
+		this.config = configService;
+	}
+
+	/**
+	 * @param configService
+	 */
+	public void unsetConfig(ICloudRAIDConfig configService) {
+		httpService.unregister(SERVLET_ALIAS);
+		this.config = null;
+	}
+
+	/**
+	 * @param metadataService
+	 */
+	public void setMetadataMgr(IMetadataManager metadataService) {
+		this.database = metadataService;
+	}
+
+	/**
+	 * @param metadataService
+	 */
+	public void unsetMetadataMgr(IMetadataManager metadataService) {
+		httpService.unregister(SERVLET_ALIAS);
+		this.database = null;
+	}
 
 	/**
 	 * @param httpService
 	 */
 	public void setHttpService(HttpService httpService) {
 		this.httpService = httpService;
+	}
+
+	/**
+	 * @param httpService
+	 */
+	public void unsetHttpService(HttpService httpService) {
+		httpService.unregister(SERVLET_ALIAS);
+		this.httpService = null;
 	}
 
 	/**
@@ -106,7 +150,7 @@ public class RestApiComponent {
 					.getServiceReference(IMetadataManager.class);
 			database = context.getService(databaseServiceReference);
 			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
-			RestApiServlet servlet = new RestApiServlet(database);
+			RestApiServlet servlet = new RestApiServlet(database, config);
 			httpService.registerServlet(SERVLET_ALIAS, servlet, null, null);
 		} catch (ServletException e) {
 			e.printStackTrace();

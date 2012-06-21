@@ -20,15 +20,15 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.cli;
+package de.dhbw.mannheim.cloudraid.config.cli;
 
 import java.io.Console;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 
-import de.dhbw.mannheim.cloudraid.util.Config;
-import de.dhbw.mannheim.cloudraid.util.exceptions.ConfigException;
+import de.dhbw.mannheim.cloudraid.config.Config;
+import de.dhbw.mannheim.cloudraid.config.exceptions.ConfigException;
 
 /**
  * @author Markus Holtermann
@@ -36,14 +36,14 @@ import de.dhbw.mannheim.cloudraid.util.exceptions.ConfigException;
  */
 public class Configurator {
 
-	private static Config config = null;
+	private static Config config;
 
 	/**
 	 * @param args
 	 *            the arguments
 	 */
 	public static void main(String[] args) {
-		config = Config.getInstance();
+		config = new Config();
 		Console cons = System.console();
 		if (args.length == 0 || args.length > 4) {
 			System.err.println("Invalid number of arguments!");
@@ -106,7 +106,7 @@ public class Configurator {
 	}
 
 	private static void list() {
-		Set<String> s = Config.getDefaultData().keySet();
+		Set<String> s = config.getDefaultData().keySet();
 		s.addAll(config.keySet());
 		ArrayList<String> list = new ArrayList<String>(s);
 		Collections.sort(list);

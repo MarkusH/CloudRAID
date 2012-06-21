@@ -44,10 +44,10 @@ import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
 import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.JsonApiResponse;
 import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw.mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
 import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
 import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager.FILE_STATUS;
-import de.dhbw.mannheim.cloudraid.util.Config;
-import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
 
 /**
  * @author Markus Holtermann
@@ -65,7 +65,7 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1967811240645738359L;
 
-	private Config config;
+	private ICloudRAIDConfig config;
 
 	/**
 	 * A reference to the database that is used
@@ -79,6 +79,8 @@ public class RestApiServlet extends HttpServlet {
 	 * @param database
 	 *            The {@link IMetadataManager} that will be used for all
 	 *            database requests
+	 * @param config
+	 *            A reference to a running {@link ICloudRAIDConfig} service.
 	 * @throws IllegalArgumentException
 	 *             Thrown if the pattern or the function is invalid.
 	 * @throws SecurityException
@@ -86,7 +88,7 @@ public class RestApiServlet extends HttpServlet {
 	 * @throws NoSuchMethodException
 	 *             Thrown if no such function can be found
 	 */
-	public RestApiServlet(IMetadataManager database)
+	public RestApiServlet(IMetadataManager database, ICloudRAIDConfig config)
 			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "DELETE",
@@ -114,7 +116,7 @@ public class RestApiServlet extends HttpServlet {
 
 		this.database = database;
 
-		this.config = Config.getInstance();
+		this.config = config;
 	}
 
 	@Override

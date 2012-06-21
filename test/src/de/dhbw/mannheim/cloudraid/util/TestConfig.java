@@ -33,8 +33,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
-import de.dhbw.mannheim.cloudraid.util.exceptions.MissingConfigValueException;
+import de.dhbw.mannheim.cloudraid.config.Config;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw.mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
+import de.dhbw.mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 
 /**
  * @author Markus Holtermann
@@ -49,7 +51,7 @@ public class TestConfig {
 			+ File.separator
 			+ "cloudraid-new"
 			+ File.separator;
-	private static Config config;
+	private static ICloudRAIDConfig config;
 
 	@BeforeClass
 	public static void oneTimeSetUp() {
@@ -57,8 +59,10 @@ public class TestConfig {
 		if (f.exists()) {
 			f.delete();
 		}
-		Config.setCloudRAIDHome(cloudraidHome1);
-		config = Config.getInstance();
+		config = new Config();
+		config.setCloudRAIDHome(System.getProperty("java.io.tmpdir")
+				+ File.separator + "cloudraid");
+		config.init("CloudRAID-unitTests");
 		config.init(password);
 	}
 
@@ -80,17 +84,17 @@ public class TestConfig {
 
 	@Test
 	public void testCloudRAIDHome() {
-		Config.setCloudRAIDHome(cloudraidHome2);
-		assertEquals(cloudraidHome2, Config.getCloudRAIDHome());
-		Config.setCloudRAIDHome(cloudraidHome1);
-		assertEquals(cloudraidHome1 + File.separator, Config.getCloudRAIDHome());
+		config.setCloudRAIDHome(cloudraidHome2);
+		assertEquals(cloudraidHome2, config.getCloudRAIDHome());
+		config.setCloudRAIDHome(cloudraidHome1);
+		assertEquals(cloudraidHome1 + File.separator, config.getCloudRAIDHome());
 	}
 
 	@Test
 	public void testConfigPath() {
-		Config.setCloudRAIDHome(cloudraidHome1);
+		config.setCloudRAIDHome(cloudraidHome1);
 		assertEquals(cloudraidHome1 + File.separator + "config.xml",
-				Config.getConfigPath());
+				config.getConfigPath());
 	}
 
 	@Test
@@ -226,7 +230,7 @@ public class TestConfig {
 		 * are just the inverse of the above and therefore fail in a positive
 		 * manner.
 		 */
-		Config.setCloudRAIDHome(cloudraidHome2);
+		config.setCloudRAIDHome(cloudraidHome2);
 		config.reload();
 
 		// Test plain data

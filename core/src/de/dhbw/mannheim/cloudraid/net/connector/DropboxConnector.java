@@ -45,8 +45,8 @@ import org.scribe.model.Token;
 import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
-import de.dhbw.mannheim.cloudraid.util.Config;
 
 /**
  * The API wrapper for Dropbox (API version 1).

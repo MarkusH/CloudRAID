@@ -28,11 +28,11 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
-import de.dhbw.mannheim.cloudraid.fs.FileManager;
-import de.dhbw.mannheim.cloudraid.fs.RecursiveFileSystemWatcher;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.FileManager;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.RecursiveFileSystemWatcher;
 import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
 import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
-import de.dhbw.mannheim.cloudraid.util.Config;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 
 /**
  * @author Markus Holtermann
@@ -48,12 +48,12 @@ public class Activator implements BundleActivator {
 	/**
 	 * 
 	 */
-	private IMetadataManager database = null;
+	private IMetadataManager metadata = null;
 
 	/**
 	 * 
 	 */
-	private Config config;
+	private ICloudRAIDConfig config = null;
 
 	private RecursiveFileSystemWatcher recursiveFileSystemWatcher = null;
 
@@ -65,9 +65,9 @@ public class Activator implements BundleActivator {
 	 * components (in order):
 	 * <ul>
 	 * <li>A {@link IPasswordManager} to handle passwords for the configuration</li>
-	 * <li>A {@link Config} storing the I/O paths for RAID, the database name,
+	 * <li>A {@link Config} storing the I/O paths for RAID, the metadata name,
 	 * number of threads, etc.</li>
-	 * <li>A {@link IMetadataManager} that represents the underlying database
+	 * <li>A {@link IMetadataManager} that represents the underlying metadata
 	 * used to store all file information</li>
 	 * <li>A {@link RecursiveFileSystemWatcher} that permanently watches the
 	 * split input directory for new files</li>
@@ -84,16 +84,18 @@ public class Activator implements BundleActivator {
 
 		// Initialize the configuration using the password from the password
 		// manager
-		config = Config.getInstance();
+		ServiceReference<ICloudRAIDConfig> configServiceReference = context
+				.getServiceReference(ICloudRAIDConfig.class);
+		config = context.getService(configServiceReference);
 		config.init(pwdmngr.getCredentials());
 
-		// Connect to the database
-		ServiceReference<IMetadataManager> databaseServiceReference = context
+		// Connect to the metadata
+		ServiceReference<IMetadataManager> metadataServiceReference = context
 				.getServiceReference(IMetadataManager.class);
-		database = context.getService(databaseServiceReference);
-		String databasename = config.getString("database.name", null);
-		database.connect(databasename);
-		database.initialize();
+		metadata = context.getService(metadataServiceReference);
+		// String databasename = config.getString("metadata.name", null);
+		// metadata.connect(databasename);
+		// metadata.initialize();
 
 		String mergeInputDir = config.getString("merge.input.dir", null);
 		String mergeOutputDir = config.getString("merge.output.dir", null);
@@ -114,23 +116,18 @@ public class Activator implements BundleActivator {
 		System.out.println("Number FileManagers: " + proc);
 		fileManagers = new FileManager[proc];
 		for (int i = 0; i < proc; i++) {
-			fileManagers[i] = new FileManager(i);
+			fileManagers[i] = new FileManager(config, i);
 			fileManagers[i].start();
 		}
 	}
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
-	 */
+
 	@Override
 	public void stop(BundleContext context) throws Exception {
 		for (int i = 0; i < fileManagers.length; i++) {
 			fileManagers[i].interrupt();
 		}
 		recursiveFileSystemWatcher.interrupt();
-		database.disconnect();
+		metadata.disconnect();
 		config.save();
 	}
 

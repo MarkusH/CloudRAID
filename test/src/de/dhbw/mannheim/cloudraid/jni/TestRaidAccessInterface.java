@@ -38,8 +38,9 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import de.dhbw.mannheim.cloudraid.util.Config;
-import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
+import de.dhbw.mannheim.cloudraid.config.Config;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw.mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
 
 /**
  * @author Markus Holtermann
@@ -57,17 +58,21 @@ public class TestRaidAccessInterface {
 	private static String mergeOutPath;
 	private static String splitInPath;
 	private static String splitOutPath;
+	private static ICloudRAIDConfig config;
 
 	@BeforeClass
 	public static void oneTimeSetUp() throws NoSuchElementException,
 			InvalidConfigValueException, IOException {
 		int i;
-		Config c = Config.getInstance();
-		mergeInPath = c.getString("split.input.dir", null);
-		mergeOutPath = c.getString("split.output.dir", null);
+		config = new Config();
+		config.setCloudRAIDHome(System.getProperty("java.io.tmpdir")
+				+ File.separator + "cloudraid");
+		config.init("CloudRAID-unitTests");
+		mergeInPath = config.getString("split.input.dir", null);
+		mergeOutPath = config.getString("split.output.dir", null);
 
-		splitInPath = c.getString("split.input.dir", null);
-		splitOutPath = c.getString("split.output.dir", null);
+		splitInPath = config.getString("split.input.dir", null);
+		splitOutPath = config.getString("split.output.dir", null);
 
 		new File(mergeInPath).mkdirs();
 		new File(mergeOutPath).mkdirs();
@@ -98,6 +103,7 @@ public class TestRaidAccessInterface {
 		new File(mergeInPath, hash + ".2").delete();
 		new File(mergeInPath, hash + ".m").delete();
 		out.delete();
+		config.delete();
 	}
 
 	@Test

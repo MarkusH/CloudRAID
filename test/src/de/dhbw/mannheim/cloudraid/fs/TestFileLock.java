@@ -25,25 +25,38 @@ package de.dhbw.mannheim.cloudraid.fs;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import de.dhbw.mannheim.cloudraid.config.Config;
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.FileLock;
+import de.dhbw.mannheim.cloudraid.core.impl.fs.FileManager;
+
 public class TestFileLock {
+
+	private static ICloudRAIDConfig config;
+
 	@BeforeClass
 	public static void oneTimeSetUp() {
-
+		config = new Config();
+		config.setCloudRAIDHome(System.getProperty("java.io.tmpdir")
+				+ File.separator + "cloudraid");
+		config.init("CloudRAID-unitTests");
 	}
 
 	@AfterClass
 	public static void oneTimeTearDown() {
-
+		config.delete();
 	}
 
 	@Test
 	public void testLock() {
-		FileManager fm1 = new FileManager();
-		FileManager fm2 = new FileManager();
+		FileManager fm1 = new FileManager(config);
+		FileManager fm2 = new FileManager(config);
 
 		assertTrue(FileLock.lock("string", fm1));
 
@@ -56,9 +69,9 @@ public class TestFileLock {
 		assertTrue(FileLock.lock("string", fm2));
 
 		assertTrue(FileLock.lock("another-string", fm1));
-		
+
 		assertTrue(FileLock.unlock("string", fm2));
-		
+
 		assertFalse(FileLock.unlock("string", fm2));
 	}
 

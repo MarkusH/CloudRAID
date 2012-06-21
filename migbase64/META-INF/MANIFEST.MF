@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: MiGBase64
+Bundle-SymbolicName: MiGBase64
+Bundle-Version: 2.2
+Bundle-Vendor: Mikael Grev
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: com.miginfocom.base64

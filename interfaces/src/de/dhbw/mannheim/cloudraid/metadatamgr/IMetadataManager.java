@@ -99,13 +99,18 @@ public interface IMetadataManager {
 	 * 
 	 * @param database
 	 *            The absolute path to the database.
+	 * @param username
+	 *            The username to login to the database.
+	 * @param password
+	 *            The password for the username.
 	 * 
 	 * @return true, if the connection could be opened; false, if not.
 	 */
-	public boolean connect(String database);
+	public boolean connect(String database, String username, String password);
 
 	/**
-	 * Closes the connection to the database opened by {@link #connect(String)}.
+	 * Closes the connection to the database opened by
+	 * {@link #connect(String, String, String)}.
 	 * 
 	 * @return true, if the connection could be closed.
 	 */
@@ -248,4 +253,5 @@ public interface IMetadataManager {
 	 * @return true, if the data set could be inserted into the database.
 	 */
 	public boolean insert(String path, String hash, long lastMod, int userId);
+
 }

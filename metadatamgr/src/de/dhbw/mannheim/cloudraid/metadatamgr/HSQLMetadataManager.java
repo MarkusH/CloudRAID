@@ -32,7 +32,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.NoSuchElementException;
 import java.util.Random;
+
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw.mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
 
 /**
  * An implementation of the {@link IMetadataManager} for the HSQL database
@@ -102,6 +106,35 @@ public class HSQLMetadataManager implements IMetadataManager {
 	 * 
 	 */
 	private Statement statement = null;
+
+	/**
+	 * @param config
+	 */
+	public void setConfig(ICloudRAIDConfig config) {
+		try {
+			String database = config.getString("database.name", null);
+			if (database != null) {
+				String username = config.getString("database.username", "SA");
+				String password = config.getString("database.password", "");
+				this.connect(database, username, password);
+				this.initialize();
+			} else {
+				System.err
+						.println("No database specified. You need to set database.name");
+			}
+		} catch (NoSuchElementException e) {
+			e.printStackTrace();
+		} catch (InvalidConfigValueException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * @param config
+	 */
+	public void unsetConfig(ICloudRAIDConfig config) {
+		this.disconnect();
+	}
 
 	@Override
 	public boolean addUser(String username, String password) {
@@ -179,11 +212,12 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public synchronized boolean connect(String database) {
+	public synchronized boolean connect(String database, String username,
+			String password) {
 		try {
 			Class.forName("org.hsqldb.jdbcDriver");
 			con = DriverManager.getConnection("jdbc:hsqldb:file:" + database
-					+ ";shutdown=true", "SA", "");
+					+ ";shutdown=true", username, password);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;

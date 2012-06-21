@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CloudRAID-Config
+Bundle-SymbolicName: CloudRAID-Config;singleton:=true
+Bundle-Version: 0.0.1.prealpha
+Bundle-Vendor: cloudraid
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: MiGBase64;bundle-version="2.2.0",
+ CloudRAID-Interfaces;bundle-version="0.0.1"

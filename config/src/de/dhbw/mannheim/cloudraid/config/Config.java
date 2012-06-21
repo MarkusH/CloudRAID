@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.util;
+package de.dhbw.mannheim.cloudraid.config;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -49,28 +49,29 @@ import org.xml.sax.SAXException;
 
 import com.miginfocom.base64.Base64;
 
-import de.dhbw.mannheim.cloudraid.util.exceptions.InvalidConfigValueException;
-import de.dhbw.mannheim.cloudraid.util.exceptions.MissingConfigValueException;
+import de.dhbw.mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
+import de.dhbw.mannheim.cloudraid.config.exceptions.MissingConfigValueException;
+import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
 
 /**
  * Enables you to handle the program's configuration via a XML file.<br>
- * Singleton
  * 
  * @author Florian Bausch, Markus Holtermann
  */
-public class Config extends HashMap<String, String> {
+public class Config extends HashMap<String, String> implements ICloudRAIDConfig {
 
 	/**
-	 * The holder class for the singleton object.
-	 * 
-	 * @author Florian Bausch.
-	 * 
+	 * @param passwordManager
 	 */
-	private static class Holder {
-		/**
-		 * The singleton instance
-		 */
-		public static final Config INSTANCE = new Config();
+	public void setPasswordManager(IPasswordManager passwordManager) {
+		this.init(passwordManager.getCredentials());
+	}
+
+	/**
+	 * @param passwordManager
+	 */
+	public void unsetPasswordManager(IPasswordManager passwordManager) {
+		this.save();
 	}
 
 	/**
@@ -165,45 +166,23 @@ public class Config extends HashMap<String, String> {
 	 */
 	private static Random r = new Random(System.currentTimeMillis());
 
-	/**
-	 * @return Returns the CloudRAID user home path
-	 */
-	public static String getCloudRAIDHome() {
+	@Override
+	public String getCloudRAIDHome() {
 		return CLOUDRAID_HOME;
 	}
 
-	/**
-	 * @return Returns the config path
-	 */
-	public static String getConfigPath() {
+	@Override
+	public String getConfigPath() {
 		return CONFIG_PATH;
 	}
 
-	/**
-	 * Returns the default data for this configuration.
-	 * 
-	 * @return the defaultData
-	 */
-	public static HashMap<String, String> getDefaultData() {
+	@Override
+	public HashMap<String, String> getDefaultData() {
 		return defaultData;
 	}
 
-	/**
-	 * Get the Singleton instance of Config.
-	 * 
-	 * @return The instance of Config
-	 */
-	public static synchronized Config getInstance() {
-		return Holder.INSTANCE;
-	}
-
-	/**
-	 * Sets the CloudRAID user home directory path
-	 * 
-	 * @param path
-	 *            The new path
-	 */
-	public static void setCloudRAIDHome(String path) {
+	@Override
+	public void setCloudRAIDHome(String path) {
 		if (path.endsWith(File.separator)) {
 			CLOUDRAID_HOME = path;
 		} else {
@@ -212,13 +191,8 @@ public class Config extends HashMap<String, String> {
 		setConfigPath(CLOUDRAID_HOME + "config.xml");
 	}
 
-	/**
-	 * Sets the config Path
-	 * 
-	 * @param path
-	 *            The new path
-	 */
-	public static void setConfigPath(String path) {
+	@Override
+	public void setConfigPath(String path) {
 		CONFIG_PATH = path;
 		CONFIG_FILE = new File(CONFIG_PATH);
 	}
@@ -227,7 +201,7 @@ public class Config extends HashMap<String, String> {
 	 * Creates a Config object that stores the configuration that is stored in
 	 * the config file.
 	 */
-	private Config() {
+	public Config() {
 		Config.allowedCiphers.put("AES", 256);
 		Config.defaultData.put("filesize.max", "" + DEFAULT_FILESIZE_MAX);
 		Config.defaultData.put("merge.input.dir", DEFAULT_MERGE_INPUT_DIR);
@@ -319,6 +293,7 @@ public class Config extends HashMap<String, String> {
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
 	 */
+	@Override
 	public synchronized boolean getBoolean(String key, Boolean defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException {
 		try {
@@ -351,6 +326,7 @@ public class Config extends HashMap<String, String> {
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
 	 */
+	@Override
 	public synchronized double getDouble(String key, Double defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException {
 		try {
@@ -384,6 +360,7 @@ public class Config extends HashMap<String, String> {
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
 	 */
+	@Override
 	public synchronized float getFloat(String key, Float defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException {
 		try {
@@ -416,6 +393,7 @@ public class Config extends HashMap<String, String> {
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
 	 */
+	@Override
 	public synchronized int getInt(String key, Integer defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException {
 		try {
@@ -448,6 +426,7 @@ public class Config extends HashMap<String, String> {
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
 	 */
+	@Override
 	public synchronized long getLong(String key, Long defaultVal)
 			throws NoSuchElementException, InvalidConfigValueException {
 		try {
@@ -480,6 +459,7 @@ public class Config extends HashMap<String, String> {
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
 	 */
+	@Override
 	public synchronized String getString(String key, String defaultVal)
 			throws NoSuchElementException, InvalidConfigValueException {
 		try {
@@ -517,14 +497,8 @@ public class Config extends HashMap<String, String> {
 		return b;
 	}
 
-	/**
-	 * Initialize the config with a password
-	 * 
-	 * @param password
-	 *            The users masterpassword
-	 * @return returns the instance
-	 */
-	public Config init(String password) {
+	@Override
+	public ICloudRAIDConfig init(String password) {
 		this.password = password.getBytes();
 
 		try {
@@ -575,13 +549,7 @@ public class Config extends HashMap<String, String> {
 		return Config.allowedCiphers.keySet().contains(algorithm);
 	}
 
-	/**
-	 * Checks if there <code>key</code> is set.
-	 * 
-	 * @param key
-	 *            The key to check.
-	 * @return <code>true</code> if it exists.
-	 */
+	@Override
 	public synchronized boolean keyExists(String key) {
 		return super.keySet().contains(key);
 	}
@@ -592,158 +560,62 @@ public class Config extends HashMap<String, String> {
 		return super.remove(key);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
-	 */
+	@Override
 	public synchronized void put(String key, boolean value) {
 		this.put(key, String.valueOf(value), false);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @param encrypted
-	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
-	 */
+	@Override
 	public synchronized void put(String key, boolean value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
-	 */
+	@Override
 	public synchronized void put(String key, double value) {
 		this.put(key, String.valueOf(value), false);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @param encrypted
-	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
-	 */
+	@Override
 	public synchronized void put(String key, double value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
-	 */
+	@Override
 	public synchronized void put(String key, float value) {
 		this.put(key, String.valueOf(value), false);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @param encrypted
-	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
-	 */
+	@Override
 	public synchronized void put(String key, float value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
-	 */
+	@Override
 	public synchronized void put(String key, int value) {
 		this.put(key, String.valueOf(value), false);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @param encrypted
-	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
-	 */
+	@Override
 	public synchronized void put(String key, int value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String)
-	 */
+	@Override
 	public synchronized void put(String key, long value) {
 		this.put(key, String.valueOf(value), false);
 	}
 
-	/**
-	 * @param key
-	 *            The configuration key
-	 * @param value
-	 *            The configuration value
-	 * @param encrypted
-	 *            <code>true</code> if the entry shall be stored encrypted
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.Config#put(String, String, boolean)
-	 */
+	@Override
 	public synchronized void put(String key, long value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
 	}
 
-	/**
-	 * Sets the value of a certain parameter in the config. When the config is
-	 * written to a file the last value that was set for the <code>key</code> is
-	 * stored.
-	 * 
-	 * @param key
-	 *            A unique identification key for this setting.
-	 * @param value
-	 *            The value that shall be stored.
-	 */
 	@Override
 	public synchronized String put(String key, String value) {
 		return this.put(key, value, false);
 	}
 
-	/**
-	 * Sets the value of a certain parameter in the config. When the config is
-	 * written to a file the last value that was set for the <code>key</code> is
-	 * stored.
-	 * 
-	 * If anything during encryption fails, we store the configuration value
-	 * unencrypted. This is a lack of security but inevitable!
-	 * 
-	 * @param key
-	 *            A unique identification key for this setting.
-	 * @param value
-	 *            The value that shall be stored.
-	 * @param encrypted
-	 *            If set to true, the value will be encrypted with a the salted
-	 *            user password.
-	 * @return Returns the value that was stored at the key before overriding.
-	 */
+	@Override
 	public synchronized String put(String key, String value, boolean encrypted) {
 
 		if (encrypted) {
@@ -785,12 +657,8 @@ public class Config extends HashMap<String, String> {
 				.replace(">", "&gt;").replace("\"", "&quot;"));
 	}
 
-	/**
-	 * (Re)load the config
-	 * 
-	 * @return the current config instance
-	 */
-	public Config reload() {
+	@Override
+	public ICloudRAIDConfig reload() {
 		this.clear();
 		this.salts.clear();
 
@@ -846,9 +714,7 @@ public class Config extends HashMap<String, String> {
 		return this;
 	}
 
-	/**
-	 * Writes the config to a file.
-	 */
+	@Override
 	public void save() {
 		try {
 			if (!CONFIG_FILE.getParentFile().exists())
@@ -877,5 +743,20 @@ public class Config extends HashMap<String, String> {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig#delete()
+	 */
+	@Override
+	public boolean delete() {
+		boolean res = false;
+		if (CONFIG_FILE.exists()) {
+			res = CONFIG_FILE.delete();
+			CONFIG_FILE = null;
+		}
+		return res;
 	}
 }
