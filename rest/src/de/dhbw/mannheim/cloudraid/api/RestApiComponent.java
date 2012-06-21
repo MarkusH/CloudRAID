@@ -116,34 +116,34 @@ public class RestApiComponent {
 	 * @param metadataService
 	 */
 	public void unsetMetadataMgr(IMetadataManager metadataService) {
-		System.out.println("RestApiComponent: unsetConfig: begin");
-		System.out.println("RestApiComponent: unsetConfig: " + metadataService);
+		System.out.println("RestApiComponent: unsetMetadataMgr: begin");
+		System.out.println("RestApiComponent: unsetMetadataMgr: " + metadataService);
 		httpService.unregister(SERVLET_ALIAS);
 		this.metadata = null;
-		System.out.println("RestApiComponent: unsetConfig: " + this.metadata);
-		System.out.println("RestApiComponent: unsetConfig: end");
+		System.out.println("RestApiComponent: unsetMetadataMgr: " + this.metadata);
+		System.out.println("RestApiComponent: unsetMetadataMgr: end");
 	}
 
 	/**
 	 * @param httpService
 	 */
 	public void setHttpService(HttpService httpService) {
-		System.out.println("RestApiComponent: setConfig: begin");
+		System.out.println("RestApiComponent: setHttpService: begin");
 		this.httpService = httpService;
-		System.out.println("RestApiComponent: setConfig: " + this.httpService);
-		System.out.println("RestApiComponent: setConfig: end");
+		System.out.println("RestApiComponent: setHttpService: " + this.httpService);
+		System.out.println("RestApiComponent: setHttpService: end");
 	}
 
 	/**
 	 * @param httpService
 	 */
 	public void unsetHttpService(HttpService httpService) {
-		System.out.println("RestApiComponent: unsetConfig: begin");
-		System.out.println("RestApiComponent: unsetConfig: " + httpService);
+		System.out.println("RestApiComponent: unsetHttpService: begin");
+		System.out.println("RestApiComponent: unsetHttpService: " + httpService);
 		httpService.unregister(SERVLET_ALIAS);
 		this.httpService = null;
-		System.out.println("RestApiComponent: unsetConfig: " + this.httpService);
-		System.out.println("RestApiComponent: unsetConfig: end");
+		System.out.println("RestApiComponent: unsetHttpService: " + this.httpService);
+		System.out.println("RestApiComponent: unsetHttpService: end");
 	}
 
 	/**

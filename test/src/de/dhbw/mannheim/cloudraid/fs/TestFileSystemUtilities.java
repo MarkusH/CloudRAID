@@ -37,7 +37,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.dhbw.mannheim.cloudraid.config.Config;
+import de.dhbw.mannheim.cloudraid.config.impl.Config;
 import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.core.impl.fs.FileManager;
 import de.dhbw.mannheim.cloudraid.core.impl.fs.FileQueue;

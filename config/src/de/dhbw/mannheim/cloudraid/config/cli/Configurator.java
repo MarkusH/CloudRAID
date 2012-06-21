@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 
-import de.dhbw.mannheim.cloudraid.config.Config;
+import de.dhbw.mannheim.cloudraid.config.impl.Config;
 import de.dhbw.mannheim.cloudraid.config.exceptions.ConfigException;
 
 /**

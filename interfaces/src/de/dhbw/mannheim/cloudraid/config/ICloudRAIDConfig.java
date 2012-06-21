@@ -170,6 +170,7 @@ public interface ICloudRAIDConfig {
 
 	/**
 	 * @param key
+	 *            The key to remove
 	 * @return Returns the value matching the removed key.
 	 */
 	public String remove(Object key);

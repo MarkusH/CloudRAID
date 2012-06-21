@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="startup" deactivate="shutdown" name="CloudRAID-Config">
-   <implementation class="de.dhbw.mannheim.cloudraid.config.Config"/>
-   <reference bind="setPasswordManager" cardinality="1..1" interface="de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager" name="IPasswordManager" policy="static" unbind="unsetPasswordManager"/>
+   <implementation class="de.dhbw.mannheim.cloudraid.config.impl.Config"/>
    <service>
       <provide interface="de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig"/>
    </service>
+   <reference bind="setPasswordManager" cardinality="1..1" interface="de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager" name="IPasswordManager" policy="static" unbind="unsetPasswordManager"/>
 </scr:component>

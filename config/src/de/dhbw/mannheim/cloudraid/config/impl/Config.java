@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.config;
+package de.dhbw.mannheim.cloudraid.config.impl;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -49,6 +49,7 @@ import org.xml.sax.SAXException;
 
 import com.miginfocom.base64.Base64;
 
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
 import de.dhbw.mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
@@ -176,11 +177,6 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 				+ DEFAULT_FILEMANAGEMENT_INTERVALL);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig#delete()
-	 */
 	@Override
 	public boolean delete() {
 		boolean res = false;

@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.metadatamgr;
+package de.dhbw.mannheim.cloudraid.metadatamgr.impl;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -37,6 +37,7 @@ import java.util.Random;
 
 import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
+import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
 
 /**
  * An implementation of the {@link IMetadataManager} for the HSQL database

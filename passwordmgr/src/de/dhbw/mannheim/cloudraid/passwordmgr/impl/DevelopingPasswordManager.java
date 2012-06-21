@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.passwordmgr;
+package de.dhbw.mannheim.cloudraid.passwordmgr.impl;
 
 import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
 

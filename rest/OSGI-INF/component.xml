@@ -3,5 +3,5 @@
    <implementation class="de.dhbw.mannheim.cloudraid.api.RestApiComponent"/>
    <reference bind="setConfig" cardinality="1..1" interface="de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig" name="ICloudRAIDConfig" policy="static" unbind="unsetConfig"/>
    <reference bind="setMetadataMgr" cardinality="1..1" interface="de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager" name="IMetadataManager" policy="static" unbind="unsetMetadataMgr"/>
-   <reference bind="setHttpService" interface="org.osgi.service.http.HttpService" unbind="unsetHttpService"/>
+   <reference bind="setHttpService" cardinality="1..1" interface="org.osgi.service.http.HttpService" name="HttpService" policy="static" unbind="unsetHttpService"/>
 </scr:component>
