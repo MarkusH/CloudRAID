@@ -35,40 +35,40 @@ public interface IMetadataManager {
 	 */
 	public enum FILE_STATUS {
 		/**
-		 * File has been uploaded. Next state will be SPLITTING
+		 * File has been removed from the cloud storages. Next action will
+		 * remove the item from the database!
 		 */
-		UPLOADED,
-		/**
-		 * File is going to be splitted now. Next state will be SPLITTED
-		 */
-		SPLITTING,
-		/**
-		 * File has been splitted. Next state will be DISTRIBUTING
-		 */
-		SPLITTED,
-		/**
-		 * File is going to be distributed to the cloud storages. Next state
-		 * will be DISTRIBUTED
-		 */
-		DISTRIBUTING,
-		/**
-		 * File has been distributed. Next state will be READY.
-		 */
-		DISTRIBUTED,
-		/**
-		 * File has successfully been stored in the cloud.
-		 */
-		READY,
+		DELETED,
 		/**
 		 * File is going to be removed from the cloud. Next step will be
 		 * DELETED. This state cannot be interrupted!
 		 */
 		DELETING,
 		/**
-		 * File has been removed from the cloud storages. Next action will
-		 * remove the item from the database!
+		 * File has been distributed. Next state will be READY.
 		 */
-		DELETED
+		DISTRIBUTED,
+		/**
+		 * File is going to be distributed to the cloud storages. Next state
+		 * will be DISTRIBUTED
+		 */
+		DISTRIBUTING,
+		/**
+		 * File has successfully been stored in the cloud.
+		 */
+		READY,
+		/**
+		 * File has been splitted. Next state will be DISTRIBUTING
+		 */
+		SPLITTED,
+		/**
+		 * File is going to be splitted now. Next state will be SPLITTED
+		 */
+		SPLITTING,
+		/**
+		 * File has been uploaded. Next state will be SPLITTING
+		 */
+		UPLOADED
 	}
 
 	/**

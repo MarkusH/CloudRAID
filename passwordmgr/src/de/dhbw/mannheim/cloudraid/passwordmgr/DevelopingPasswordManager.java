@@ -30,14 +30,26 @@ import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
  */
 public class DevelopingPasswordManager implements IPasswordManager {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager#getCredentials()
-	 */
 	@Override
 	public String getCredentials() {
+		System.out.println("DevelopingPasswordManager: getCredentials: invocation");
 		return "Test!P4ssw0rd";
+	}
+
+	/**
+	 * 
+	 */
+	protected void shutdown() {
+		System.out.println("DevelopingPasswordManager: shutdown: begin");
+		System.out.println("DevelopingPasswordManager: shutdown: end");
+	}
+
+	/**
+	 * 
+	 */
+	protected void startup() {
+		System.out.println("DevelopingPasswordManager: startup: begin");
+		System.out.println("DevelopingPasswordManager: startup: end");
 	}
 
 }

@@ -61,19 +61,34 @@ import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
 public class Config extends HashMap<String, String> implements ICloudRAIDConfig {
 
 	/**
-	 * @param passwordManager
+	 * A HashMap of allowed allowed ciphers. The keys of the map contain the
+	 * available ciphers, while the value contains the maximum salt length.
 	 */
-	public void setPasswordManager(IPasswordManager passwordManager) {
-		this.init(passwordManager.getCredentials());
-	}
+	private static HashMap<String, Integer> allowedCiphers = new HashMap<String, Integer>();
 
 	/**
-	 * @param passwordManager
+	 * The top-level path to the programs config.
 	 */
-	public void unsetPasswordManager(IPasswordManager passwordManager) {
-		this.save();
-	}
+	private static String CLOUDRAID_HOME = System.getProperty("os.name")
+			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
+			: System.getProperty("user.home") + "/.config/cloudraid/";
 
+	/**
+	 * The path to the default configuration file.
+	 */
+	private static String CONFIG_PATH = CLOUDRAID_HOME + "config.xml";
+
+	/**
+	 * A File object of the configuration file.
+	 */
+	private static File CONFIG_FILE = new File(CONFIG_PATH);
+
+	private static final String DEFAULT_DATABASE_NAME = CLOUDRAID_HOME
+			+ "database";
+
+	private static final int DEFAULT_FILEMANAGEMENT_COUNT = (int) Math
+			.ceil(Runtime.getRuntime().availableProcessors() / 2);
+	private static final int DEFAULT_FILEMANAGEMENT_INTERVALL = 60000;
 	/**
 	 * Maximum file size in MiB
 	 */
@@ -90,56 +105,27 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			.getProperty("java.io.tmpdir")
 			+ File.separator
 			+ "cloudraid-split-input" + File.separator;
+
 	private static final String DEFAULT_SPLIT_OUTPUT_DIR = System
 			.getProperty("java.io.tmpdir")
 			+ File.separator
 			+ "cloudraid-split-output" + File.separator;
+
 	private static final String DEFAULT_UPLOAD_DIR = System
 			.getProperty("java.io.tmpdir")
 			+ File.separator
 			+ "cloudraid-upload" + File.separator;
 
-	/**
-	 * The top-level path to the programs config.
-	 */
-	private static String CLOUDRAID_HOME = System.getProperty("os.name")
-			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
-			: System.getProperty("user.home") + "/.config/cloudraid/";
-
-	/**
-	 * The path to the default configuration file.
-	 */
-	private static String CONFIG_PATH = CLOUDRAID_HOME + "config.xml";
-
-	private static final String DEFAULT_DATABASE_NAME = CLOUDRAID_HOME
-			+ "database";
-
-	private static final int DEFAULT_FILEMANAGEMENT_COUNT = (int) Math
-			.ceil(Runtime.getRuntime().availableProcessors() / 2);
-	private static final int DEFAULT_FILEMANAGEMENT_INTERVALL = 60000;
-
-	/**
-	 * A File object of the configuration file.
-	 */
-	private static File CONFIG_FILE = new File(CONFIG_PATH);
-
 	private static HashMap<String, String> defaultData = new HashMap<String, String>();
 
 	/**
-	 * A HashMap of allowed allowed ciphers. The keys of the map contain the
-	 * available ciphers, while the value contains the maximum salt length.
+	 * Global Random object for salt generation
 	 */
-	private static HashMap<String, Integer> allowedCiphers = new HashMap<String, Integer>();
-
+	private static Random r = new Random(System.currentTimeMillis());
 	/**
-	 * The encryption standard to use
+	 * Auto generated serialVersionUID
 	 */
-	private String encryption = "AES";
-
-	/**
-	 * The users master password to decrypt the config
-	 */
-	private byte[] password;
+	private static final long serialVersionUID = -3740632761998756639L;
 
 	/**
 	 * The cipher instance used for de- and encryption
@@ -147,55 +133,29 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	private Cipher cipher;
 
 	/**
+	 * The encryption standard to use
+	 */
+	private String encryption = "AES";
+
+	/**
 	 * The maximum key length for the chosen {@link #encryption} standard
 	 */
 	private int keyLength;
 
 	/**
+	 * The users master password to decrypt the config
+	 */
+	private byte[] password;
+
+	/**
+	 * 
+	 */
+	private IPasswordManager passwordmgr = null;
+
+	/**
 	 * Contains the salts for configuration values that are stored encrypted
 	 */
 	private HashMap<String, String> salts = new HashMap<String, String>();
-
-	/**
-	 * Auto generated serialVersionUID
-	 */
-	private static final long serialVersionUID = -3740632761998756639L;
-
-	/**
-	 * Global Random object for salt generation
-	 */
-	private static Random r = new Random(System.currentTimeMillis());
-
-	@Override
-	public String getCloudRAIDHome() {
-		return CLOUDRAID_HOME;
-	}
-
-	@Override
-	public String getConfigPath() {
-		return CONFIG_PATH;
-	}
-
-	@Override
-	public HashMap<String, String> getDefaultData() {
-		return defaultData;
-	}
-
-	@Override
-	public void setCloudRAIDHome(String path) {
-		if (path.endsWith(File.separator)) {
-			CLOUDRAID_HOME = path;
-		} else {
-			CLOUDRAID_HOME = path + File.separator;
-		}
-		setConfigPath(CLOUDRAID_HOME + "config.xml");
-	}
-
-	@Override
-	public void setConfigPath(String path) {
-		CONFIG_PATH = path;
-		CONFIG_FILE = new File(CONFIG_PATH);
-	}
 
 	/**
 	 * Creates a Config object that stores the configuration that is stored in
@@ -214,6 +174,21 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 				+ DEFAULT_FILEMANAGEMENT_COUNT);
 		Config.defaultData.put("filemanagement.intervall", ""
 				+ DEFAULT_FILEMANAGEMENT_INTERVALL);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig#delete()
+	 */
+	@Override
+	public boolean delete() {
+		boolean res = false;
+		if (CONFIG_FILE.exists()) {
+			res = CONFIG_FILE.delete();
+			CONFIG_FILE = null;
+		}
+		return res;
 	}
 
 	/**
@@ -308,6 +283,21 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			}
 			return defaultVal;
 		}
+	}
+
+	@Override
+	public String getCloudRAIDHome() {
+		return CLOUDRAID_HOME;
+	}
+
+	@Override
+	public String getConfigPath() {
+		return CONFIG_PATH;
+	}
+
+	@Override
+	public HashMap<String, String> getDefaultData() {
+		return defaultData;
 	}
 
 	/**
@@ -555,12 +545,6 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public synchronized String remove(Object key) {
-		this.salts.remove(key);
-		return super.remove(key);
-	}
-
-	@Override
 	public synchronized void put(String key, boolean value) {
 		this.put(key, String.valueOf(value), false);
 	}
@@ -715,6 +699,12 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
+	public synchronized String remove(Object key) {
+		this.salts.remove(key);
+		return super.remove(key);
+	}
+
+	@Override
 	public void save() {
 		try {
 			if (!CONFIG_FILE.getParentFile().exists())
@@ -745,18 +735,58 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig#delete()
-	 */
 	@Override
-	public boolean delete() {
-		boolean res = false;
-		if (CONFIG_FILE.exists()) {
-			res = CONFIG_FILE.delete();
-			CONFIG_FILE = null;
+	public void setCloudRAIDHome(String path) {
+		if (path.endsWith(File.separator)) {
+			CLOUDRAID_HOME = path;
+		} else {
+			CLOUDRAID_HOME = path + File.separator;
 		}
-		return res;
+		setConfigPath(CLOUDRAID_HOME + "config.xml");
+	}
+
+	@Override
+	public void setConfigPath(String path) {
+		CONFIG_PATH = path;
+		CONFIG_FILE = new File(CONFIG_PATH);
+	}
+
+	/**
+	 * @param passwordManager
+	 */
+	protected void setPasswordManager(IPasswordManager passwordManager) {
+		System.out.println("Config: setPasswordManager: begin");
+		this.passwordmgr = passwordManager;
+		System.out.println("Config: setPasswordManager: " + this.passwordmgr);
+		System.out.println("Config: setPasswordManager: end");
+	}
+
+	/**
+	 * 
+	 */
+	protected void shutdown() {
+		System.out.println("Config: shutdown: begin");
+		System.out.println("Config: shutdown: end");
+	}
+
+	/**
+	 * 
+	 */
+	protected void startup() {
+		System.out.println("Config: startup: begin");
+		this.init(this.passwordmgr.getCredentials());
+		System.out.println("Config: startup: end");
+	}
+
+	/**
+	 * @param passwordManager
+	 */
+	protected void unsetPasswordManager(IPasswordManager passwordManager) {
+		System.out.println("Config: unsetPasswordManager: begin");
+		System.out.println("Config: setPasswordManager: " + passwordManager);
+		this.save();
+		this.passwordmgr = null;
+		System.out.println("Config: setPasswordManager: " + this.passwordmgr);
+		System.out.println("Config: unsetPasswordManager: end");
 	}
 }

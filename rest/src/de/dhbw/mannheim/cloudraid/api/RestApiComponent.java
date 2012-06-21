@@ -25,8 +25,6 @@ package de.dhbw.mannheim.cloudraid.api;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
@@ -74,7 +72,7 @@ public class RestApiComponent {
 	/**
 	 * 
 	 */
-	private IMetadataManager database = null;
+	private IMetadataManager metadata = null;
 
 	/**
 	 * Service that handles all the request. Injected by the component.xml
@@ -82,81 +80,101 @@ public class RestApiComponent {
 	private HttpService httpService = null;
 
 	/**
-	 * @param configService
+	 * @param config
 	 */
-	public void setConfig(ICloudRAIDConfig configService) {
-		this.config = configService;
+	public void setConfig(ICloudRAIDConfig config) {
+		System.out.println("RestApiComponent: setConfig: begin");
+		this.config = config;
+		System.out.println("RestApiComponent: setConfig: " + this.config);
+		System.out.println("RestApiComponent: setConfig: end");
 	}
 
 	/**
-	 * @param configService
+	 * @param config
 	 */
-	public void unsetConfig(ICloudRAIDConfig configService) {
+	public void unsetConfig(ICloudRAIDConfig config) {
+		System.out.println("RestApiComponent: unsetConfig: begin");
+		System.out.println("RestApiComponent: unsetConfig: " + config);
 		httpService.unregister(SERVLET_ALIAS);
 		this.config = null;
+		System.out.println("RestApiComponent: unsetConfig: " + this.config);
+		System.out.println("RestApiComponent: unsetConfig: end");
 	}
 
 	/**
 	 * @param metadataService
 	 */
 	public void setMetadataMgr(IMetadataManager metadataService) {
-		this.database = metadataService;
+		System.out.println("RestApiComponent: setMetadataMgr: begin");
+		this.metadata = metadataService;
+		System.out
+				.println("RestApiComponent: setMetadataMgr: " + this.metadata);
+		System.out.println("RestApiComponent: setMetadataMgr: end");
 	}
 
 	/**
 	 * @param metadataService
 	 */
 	public void unsetMetadataMgr(IMetadataManager metadataService) {
+		System.out.println("RestApiComponent: unsetConfig: begin");
+		System.out.println("RestApiComponent: unsetConfig: " + metadataService);
 		httpService.unregister(SERVLET_ALIAS);
-		this.database = null;
+		this.metadata = null;
+		System.out.println("RestApiComponent: unsetConfig: " + this.metadata);
+		System.out.println("RestApiComponent: unsetConfig: end");
 	}
 
 	/**
 	 * @param httpService
 	 */
 	public void setHttpService(HttpService httpService) {
+		System.out.println("RestApiComponent: setConfig: begin");
 		this.httpService = httpService;
+		System.out.println("RestApiComponent: setConfig: " + this.httpService);
+		System.out.println("RestApiComponent: setConfig: end");
 	}
 
 	/**
 	 * @param httpService
 	 */
 	public void unsetHttpService(HttpService httpService) {
+		System.out.println("RestApiComponent: unsetConfig: begin");
+		System.out.println("RestApiComponent: unsetConfig: " + httpService);
 		httpService.unregister(SERVLET_ALIAS);
 		this.httpService = null;
+		System.out.println("RestApiComponent: unsetConfig: " + this.httpService);
+		System.out.println("RestApiComponent: unsetConfig: end");
 	}
 
 	/**
 	 * Unregister the service.
 	 */
 	protected void shutdown() {
+		System.out.println("RestApiComponent: shutdown: begin");
 		httpService.unregister(SERVLET_ALIAS);
+		System.out.println("RestApiComponent: shutdown: end");
 	}
 
 	/**
 	 * Initialize and start the service.
 	 * 
-	 * @param context
-	 * 
 	 * @throws NoSuchMethodException
 	 * @throws SecurityException
 	 * @throws IllegalArgumentException
 	 */
-	protected void startup(BundleContext context)
-			throws IllegalArgumentException, SecurityException,
-			NoSuchMethodException {
+	protected void startup() throws IllegalArgumentException,
+			SecurityException, NoSuchMethodException {
+		System.out.println("RestApiComponent: startup: begin");
 		try {
-			ServiceReference<IMetadataManager> databaseServiceReference = context
-					.getServiceReference(IMetadataManager.class);
-			database = context.getService(databaseServiceReference);
 			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
-			RestApiServlet servlet = new RestApiServlet(database, config);
+			RestApiServlet servlet = new RestApiServlet(metadata, config);
 			httpService.registerServlet(SERVLET_ALIAS, servlet, null, null);
 		} catch (ServletException e) {
 			e.printStackTrace();
 		} catch (NamespaceException e) {
 			e.printStackTrace();
 		}
+		System.out.println("RestApiComponent: startup: end");
 	}
 
 }

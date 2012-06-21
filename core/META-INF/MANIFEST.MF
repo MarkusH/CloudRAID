@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: CloudRAID-core
-Bundle-SymbolicName: CloudRAID-core
+Bundle-Name: CloudRAID-Core
+Bundle-SymbolicName: CloudRAID-Core
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
@@ -23,7 +23,10 @@ Export-Package: de.dhbw.mannheim.cloudraid.core.impl.fs,
    org.scribe.model,
    org.scribe.oauth",
  de.dhbw.mannheim.cloudraid.net.util
-Import-Package: javax.activation,
+Import-Package: de.dhbw.mannheim.cloudraid.config,
+ de.dhbw.mannheim.cloudraid.config.exceptions,
+ de.dhbw.mannheim.cloudraid.metadatamgr,
+ javax.activation,
  javax.crypto,
  javax.crypto.spec,
  javax.net.ssl,
@@ -33,8 +36,5 @@ Import-Package: javax.activation,
  org.xml.sax
 Require-Bundle: MiGBase64;bundle-version="2.2.0",
  scribe-java;bundle-version="1.3.0.1-osgi",
- JSON-java;bundle-version="1.0.0.1-osgi",
- CloudRAID-Interfaces;bundle-version="0.0.1",
- CloudRAID-Password;bundle-version="0.0.1",
- CloudRAID-Metadata;bundle-version="0.0.1"
-Bundle-Activator: de.dhbw.mannheim.cloudraid.osgi.Activator
+ JSON-java;bundle-version="1.0.0.1-osgi"
+Service-Component: OSGI-INF/component.xml

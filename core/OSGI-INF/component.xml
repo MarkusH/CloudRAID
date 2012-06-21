@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="startup" deactivate="shutdown" name="CloudRAID-Core">
+   <implementation class="de.dhbw.mannheim.cloudraid.osgi.Activator"/>
+   <reference bind="setConfig" cardinality="1..1" interface="de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig" name="ICloudRAIDConfig" policy="static" unbind="unsetConfig"/>
+   <reference bind="setMetadata" cardinality="1..1" interface="de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager" name="IMetadataManager" policy="static" unbind="unsetMetadata"/>
+</scr:component>

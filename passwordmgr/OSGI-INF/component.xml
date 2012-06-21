@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="CloudRAID-Password">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="startup" deactivate="shutdown" immediate="true" name="CloudRAID-Password">
    <implementation class="de.dhbw.mannheim.cloudraid.passwordmgr.DevelopingPasswordManager"/>
    <service>
-      <provide interface="de.dhbw.mannheim.cloudraid.passwordmgr.DevelopingPasswordManager"/>
+      <provide interface="de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager"/>
    </service>
 </scr:component>

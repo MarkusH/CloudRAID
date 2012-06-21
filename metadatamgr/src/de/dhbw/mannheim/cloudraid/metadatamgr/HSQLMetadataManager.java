@@ -62,6 +62,8 @@ public class HSQLMetadataManager implements IMetadataManager {
 	 */
 	private Connection con;
 
+	private ICloudRAIDConfig config = null;
+
 	/**
 	 * 
 	 */
@@ -106,35 +108,6 @@ public class HSQLMetadataManager implements IMetadataManager {
 	 * 
 	 */
 	private Statement statement = null;
-
-	/**
-	 * @param config
-	 */
-	public void setConfig(ICloudRAIDConfig config) {
-		try {
-			String database = config.getString("database.name", null);
-			if (database != null) {
-				String username = config.getString("database.username", "SA");
-				String password = config.getString("database.password", "");
-				this.connect(database, username, password);
-				this.initialize();
-			} else {
-				System.err
-						.println("No database specified. You need to set database.name");
-			}
-		} catch (NoSuchElementException e) {
-			e.printStackTrace();
-		} catch (InvalidConfigValueException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * @param config
-	 */
-	public void unsetConfig(ICloudRAIDConfig config) {
-		this.disconnect();
-	}
 
 	@Override
 	public boolean addUser(String username, String password) {
@@ -542,6 +515,60 @@ public class HSQLMetadataManager implements IMetadataManager {
 			e.printStackTrace();
 			return false;
 		}
+	}
+
+	/**
+	 * @param config
+	 */
+	protected void setConfig(ICloudRAIDConfig config) {
+		System.out.println("HSQLMetadataManager: setConfig: begin");
+		this.config = config;
+		System.out.println("HSQLMetadataManager: setConfig: " + this.config);
+		System.out.println("HSQLMetadataManager: setConfig: end");
+	}
+
+	/**
+	 * 
+	 */
+	protected void shutdown() {
+		System.out.println("HSQLMetadataManager: shutdown: begin");
+		this.disconnect();
+		System.out.println("HSQLMetadataManager: shutdown: end");
+	}
+
+	/**
+	 * 
+	 */
+	protected void startup() {
+		System.out.println("HSQLMetadataManager: startup: begin");
+		try {
+			String database = config.getString("database.name", null);
+			if (database != null) {
+				String username = config.getString("database.username", "SA");
+				String password = config.getString("database.password", "");
+				this.connect(database, username, password);
+				this.initialize();
+			} else {
+				System.err
+						.println("No database specified. You need to set database.name");
+			}
+		} catch (NoSuchElementException e) {
+			e.printStackTrace();
+		} catch (InvalidConfigValueException e) {
+			e.printStackTrace();
+		}
+		System.out.println("HSQLMetadataManager: startup: end");
+	}
+
+	/**
+	 * @param config
+	 */
+	protected void unsetConfig(ICloudRAIDConfig config) {
+		System.out.println("CloudRAIDService: unsetConfig: begin");
+		System.out.println("CloudRAIDService: unsetConfig: " + config);
+		this.config = null;
+		System.out.println("CloudRAIDService: unsetConfig: " + this.config);
+		System.out.println("CloudRAIDService: unsetConfig: end");
 	}
 
 }

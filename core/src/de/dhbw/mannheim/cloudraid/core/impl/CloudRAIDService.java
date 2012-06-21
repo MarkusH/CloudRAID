@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.osgi;
+package de.dhbw.mannheim.cloudraid.core.impl;
 
 import java.io.File;
 
@@ -28,22 +28,24 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.core.impl.fs.FileManager;
 import de.dhbw.mannheim.cloudraid.core.impl.fs.RecursiveFileSystemWatcher;
 import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
 import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
-import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 
 /**
  * @author Markus Holtermann
  * 
  */
-public class Activator implements BundleActivator {
+public class CloudRAIDService {
 
 	/**
 	 * 
 	 */
-	private IPasswordManager pwdmngr = null;
+	private ICloudRAIDConfig config = null;
+
+	private FileManager[] fileManagers = null;
 
 	/**
 	 * 
@@ -53,11 +55,44 @@ public class Activator implements BundleActivator {
 	/**
 	 * 
 	 */
-	private ICloudRAIDConfig config = null;
+	private IPasswordManager pwdmngr = null;
 
 	private RecursiveFileSystemWatcher recursiveFileSystemWatcher = null;
 
-	private FileManager[] fileManagers = null;
+	/**
+	 * @param config
+	 */
+	protected void setConfig(ICloudRAIDConfig config) {
+		System.out.println("CloudRAIDService: setConfig: begin");
+		this.config = config;
+		System.out.println("CloudRAIDService: setConfig: " + this.config);
+		System.out.println("CloudRAIDService: setConfig: end");
+	}
+
+	/**
+	 * @param metadataService
+	 */
+	protected void setMetadataMgr(IMetadataManager metadataService) {
+		System.out.println("CloudRAIDService: setMetadataMgr: begin");
+		this.metadata = metadataService;
+		System.out
+				.println("CloudRAIDService: setMetadataMgr: " + this.metadata);
+		System.out.println("CloudRAIDService: setMetadataMgr: end");
+	}
+
+	/**
+	 * 
+	 */
+	protected void shutdown() {
+		System.out.println("CloudRAIDService: shutdown: begin");
+		for (int i = 0; i < fileManagers.length; i++) {
+			fileManagers[i].interrupt();
+		}
+		recursiveFileSystemWatcher.interrupt();
+		metadata.disconnect();
+		config.save();
+		System.out.println("CloudRAIDService: shutdown: end");
+	}
 
 	/**
 	 * During the {@link BundleActivator#start(BundleContext) startup} this
@@ -65,8 +100,8 @@ public class Activator implements BundleActivator {
 	 * components (in order):
 	 * <ul>
 	 * <li>A {@link IPasswordManager} to handle passwords for the configuration</li>
-	 * <li>A {@link Config} storing the I/O paths for RAID, the metadata name,
-	 * number of threads, etc.</li>
+	 * <li>A {@link ICloudRAIDConfig} storing the I/O paths for RAID, the
+	 * metadata name, number of threads, etc.</li>
 	 * <li>A {@link IMetadataManager} that represents the underlying metadata
 	 * used to store all file information</li>
 	 * <li>A {@link RecursiveFileSystemWatcher} that permanently watches the
@@ -74,9 +109,12 @@ public class Activator implements BundleActivator {
 	 * <li>Multiple {@link FileManager} that handle new files, e.g. split and
 	 * upload them</li>
 	 * </ul>
+	 * 
+	 * @param context
+	 * @throws Exception
 	 */
-	@Override
-	public void start(BundleContext context) throws Exception {
+	protected void startup(BundleContext context) throws Exception {
+		System.out.println("CloudRAIDService: startup: begin");
 		// Initialize the password manager
 		ServiceReference<IPasswordManager> passwordServiceReference = context
 				.getServiceReference(IPasswordManager.class);
@@ -119,16 +157,29 @@ public class Activator implements BundleActivator {
 			fileManagers[i] = new FileManager(config, i);
 			fileManagers[i].start();
 		}
+		System.out.println("CloudRAIDService: startup: end");
 	}
 
-	@Override
-	public void stop(BundleContext context) throws Exception {
-		for (int i = 0; i < fileManagers.length; i++) {
-			fileManagers[i].interrupt();
-		}
-		recursiveFileSystemWatcher.interrupt();
-		metadata.disconnect();
-		config.save();
+	/**
+	 * @param config
+	 */
+	protected void unsetConfig(ICloudRAIDConfig config) {
+		System.out.println("CloudRAIDService: unsetConfig: begin");
+		System.out.println("CloudRAIDService: unsetConfig: " + config);
+		this.config = null;
+		System.out.println("CloudRAIDService: unsetConfig: " + this.config);
+		System.out.println("CloudRAIDService: unsetConfig: end");
+	}
+
+	/**
+	 * @param metadataService
+	 */
+	protected void unsetMetadataMgr(IMetadataManager metadataService) {
+		System.out.println("CloudRAIDService: unsetConfig: begin");
+		System.out.println("CloudRAIDService: unsetConfig: " + metadataService);
+		this.metadata = null;
+		System.out.println("CloudRAIDService: unsetConfig: " + this.metadata);
+		System.out.println("CloudRAIDService: unsetConfig: end");
 	}
 
 }
