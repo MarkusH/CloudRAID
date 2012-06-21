@@ -7,4 +7,6 @@ Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Service-Component: OSGI-INF/component.xml
 Require-Bundle: org.hsqldb.hsqldb;bundle-version="2.2.8"
-Import-Package: de.dhbw.mannheim.cloudraid.metadatamgr
+Import-Package: de.dhbw.mannheim.cloudraid.config,
+ de.dhbw.mannheim.cloudraid.config.exceptions,
+ de.dhbw.mannheim.cloudraid.metadatamgr
