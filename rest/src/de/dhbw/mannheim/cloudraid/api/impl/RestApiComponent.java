@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.api;
+package de.dhbw.mannheim.cloudraid.api.impl;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
-import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
+import de.dhbw.mannheim.cloudraid.api.impl.responses.IRestApiResponse;
 import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
 
@@ -82,7 +82,7 @@ public class RestApiComponent {
 	/**
 	 * @param config
 	 */
-	public void setConfig(ICloudRAIDConfig config) {
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
 		System.out.println("RestApiComponent: setConfig: begin");
 		this.config = config;
 		System.out.println("RestApiComponent: setConfig: " + this.config);
@@ -90,60 +90,25 @@ public class RestApiComponent {
 	}
 
 	/**
-	 * @param config
+	 * @param httpService
 	 */
-	public void unsetConfig(ICloudRAIDConfig config) {
-		System.out.println("RestApiComponent: unsetConfig: begin");
-		System.out.println("RestApiComponent: unsetConfig: " + config);
-		httpService.unregister(SERVLET_ALIAS);
-		this.config = null;
-		System.out.println("RestApiComponent: unsetConfig: " + this.config);
-		System.out.println("RestApiComponent: unsetConfig: end");
+	protected synchronized void setHttpService(HttpService httpService) {
+		System.out.println("RestApiComponent: setHttpService: begin");
+		this.httpService = httpService;
+		System.out.println("RestApiComponent: setHttpService: "
+				+ this.httpService);
+		System.out.println("RestApiComponent: setHttpService: end");
 	}
 
 	/**
 	 * @param metadataService
 	 */
-	public void setMetadataMgr(IMetadataManager metadataService) {
+	protected synchronized void setMetadataMgr(IMetadataManager metadataService) {
 		System.out.println("RestApiComponent: setMetadataMgr: begin");
 		this.metadata = metadataService;
 		System.out
 				.println("RestApiComponent: setMetadataMgr: " + this.metadata);
 		System.out.println("RestApiComponent: setMetadataMgr: end");
-	}
-
-	/**
-	 * @param metadataService
-	 */
-	public void unsetMetadataMgr(IMetadataManager metadataService) {
-		System.out.println("RestApiComponent: unsetMetadataMgr: begin");
-		System.out.println("RestApiComponent: unsetMetadataMgr: " + metadataService);
-		httpService.unregister(SERVLET_ALIAS);
-		this.metadata = null;
-		System.out.println("RestApiComponent: unsetMetadataMgr: " + this.metadata);
-		System.out.println("RestApiComponent: unsetMetadataMgr: end");
-	}
-
-	/**
-	 * @param httpService
-	 */
-	public void setHttpService(HttpService httpService) {
-		System.out.println("RestApiComponent: setHttpService: begin");
-		this.httpService = httpService;
-		System.out.println("RestApiComponent: setHttpService: " + this.httpService);
-		System.out.println("RestApiComponent: setHttpService: end");
-	}
-
-	/**
-	 * @param httpService
-	 */
-	public void unsetHttpService(HttpService httpService) {
-		System.out.println("RestApiComponent: unsetHttpService: begin");
-		System.out.println("RestApiComponent: unsetHttpService: " + httpService);
-		httpService.unregister(SERVLET_ALIAS);
-		this.httpService = null;
-		System.out.println("RestApiComponent: unsetHttpService: " + this.httpService);
-		System.out.println("RestApiComponent: unsetHttpService: end");
 	}
 
 	/**
@@ -175,6 +140,46 @@ public class RestApiComponent {
 			e.printStackTrace();
 		}
 		System.out.println("RestApiComponent: startup: end");
+	}
+
+	/**
+	 * @param config
+	 */
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+		System.out.println("RestApiComponent: unsetConfig: begin");
+		System.out.println("RestApiComponent: unsetConfig: " + config);
+		httpService.unregister(SERVLET_ALIAS);
+		this.config = null;
+		System.out.println("RestApiComponent: unsetConfig: " + this.config);
+		System.out.println("RestApiComponent: unsetConfig: end");
+	}
+
+	/**
+	 * @param httpService
+	 */
+	protected synchronized void unsetHttpService(HttpService httpService) {
+		System.out.println("RestApiComponent: unsetHttpService: begin");
+		System.out
+				.println("RestApiComponent: unsetHttpService: " + httpService);
+		httpService.unregister(SERVLET_ALIAS);
+		this.httpService = null;
+		System.out.println("RestApiComponent: unsetHttpService: "
+				+ this.httpService);
+		System.out.println("RestApiComponent: unsetHttpService: end");
+	}
+
+	/**
+	 * @param metadataService
+	 */
+	protected synchronized void unsetMetadataMgr(IMetadataManager metadataService) {
+		System.out.println("RestApiComponent: unsetMetadataMgr: begin");
+		System.out.println("RestApiComponent: unsetMetadataMgr: "
+				+ metadataService);
+		httpService.unregister(SERVLET_ALIAS);
+		this.metadata = null;
+		System.out.println("RestApiComponent: unsetMetadataMgr: "
+				+ this.metadata);
+		System.out.println("RestApiComponent: unsetMetadataMgr: end");
 	}
 
 }

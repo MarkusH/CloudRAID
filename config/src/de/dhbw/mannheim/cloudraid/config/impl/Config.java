@@ -71,7 +71,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	 * The top-level path to the programs config.
 	 */
 	private static String CLOUDRAID_HOME = System.getProperty("os.name")
-			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
+			.contains("windows")
+			? System.getenv("APPDATA") + "\\cloudraid\\"
 			: System.getProperty("user.home") + "/.config/cloudraid/";
 
 	/**
@@ -718,7 +719,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("") ? ""
+				String salt = saltString == null || saltString.equals("")
+						? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");
@@ -750,7 +752,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	/**
 	 * @param passwordManager
 	 */
-	protected void setPasswordManager(IPasswordManager passwordManager) {
+	protected synchronized void setPasswordManager(
+			IPasswordManager passwordManager) {
 		System.out.println("Config: setPasswordManager: begin");
 		this.passwordmgr = passwordManager;
 		System.out.println("Config: setPasswordManager: " + this.passwordmgr);
@@ -777,7 +780,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	/**
 	 * @param passwordManager
 	 */
-	protected void unsetPasswordManager(IPasswordManager passwordManager) {
+	protected synchronized void unsetPasswordManager(
+			IPasswordManager passwordManager) {
 		System.out.println("Config: unsetPasswordManager: begin");
 		System.out.println("Config: setPasswordManager: " + passwordManager);
 		this.save();

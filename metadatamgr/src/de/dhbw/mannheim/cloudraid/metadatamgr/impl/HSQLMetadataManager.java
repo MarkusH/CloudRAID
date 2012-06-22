@@ -521,7 +521,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	/**
 	 * @param config
 	 */
-	protected void setConfig(ICloudRAIDConfig config) {
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
 		System.out.println("HSQLMetadataManager: setConfig: begin");
 		this.config = config;
 		System.out.println("HSQLMetadataManager: setConfig: " + this.config);
@@ -564,7 +564,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	/**
 	 * @param config
 	 */
-	protected void unsetConfig(ICloudRAIDConfig config) {
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
 		System.out.println("CloudRAIDService: unsetConfig: begin");
 		System.out.println("CloudRAIDService: unsetConfig: " + config);
 		this.config = null;

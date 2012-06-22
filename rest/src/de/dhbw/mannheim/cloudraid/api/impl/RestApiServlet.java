@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.api;
+package de.dhbw.mannheim.cloudraid.api.impl;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -40,10 +40,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
-import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
-import de.dhbw.mannheim.cloudraid.api.responses.JsonApiResponse;
-import de.dhbw.mannheim.cloudraid.api.responses.PlainApiResponse;
+import de.dhbw.mannheim.cloudraid.api.impl.RestApiUrlMapping.MatchResult;
+import de.dhbw.mannheim.cloudraid.api.impl.responses.IRestApiResponse;
+import de.dhbw.mannheim.cloudraid.api.impl.responses.JsonApiResponse;
+import de.dhbw.mannheim.cloudraid.api.impl.responses.PlainApiResponse;
 import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
 import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;

@@ -62,7 +62,7 @@ public class CloudRAIDService {
 	/**
 	 * @param config
 	 */
-	protected void setConfig(ICloudRAIDConfig config) {
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
 		System.out.println("CloudRAIDService: setConfig: begin");
 		this.config = config;
 		System.out.println("CloudRAIDService: setConfig: " + this.config);
@@ -72,7 +72,7 @@ public class CloudRAIDService {
 	/**
 	 * @param metadataService
 	 */
-	protected void setMetadataMgr(IMetadataManager metadataService) {
+	protected synchronized void setMetadata(IMetadataManager metadataService) {
 		System.out.println("CloudRAIDService: setMetadataMgr: begin");
 		this.metadata = metadataService;
 		System.out
@@ -163,7 +163,7 @@ public class CloudRAIDService {
 	/**
 	 * @param config
 	 */
-	protected void unsetConfig(ICloudRAIDConfig config) {
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
 		System.out.println("CloudRAIDService: unsetConfig: begin");
 		System.out.println("CloudRAIDService: unsetConfig: " + config);
 		this.config = null;
@@ -174,7 +174,7 @@ public class CloudRAIDService {
 	/**
 	 * @param metadataService
 	 */
-	protected void unsetMetadataMgr(IMetadataManager metadataService) {
+	protected synchronized void unsetMetadata(IMetadataManager metadataService) {
 		System.out.println("CloudRAIDService: unsetConfig: begin");
 		System.out.println("CloudRAIDService: unsetConfig: " + metadataService);
 		this.metadata = null;

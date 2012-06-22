@@ -5,7 +5,6 @@ Bundle-SymbolicName: CloudRAID-Config;singleton:=true
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Require-Bundle: MiGBase64;bundle-version="2.2.0"
-Import-Package: de.dhbw.mannheim.cloudraid.config,
- de.dhbw.mannheim.cloudraid.config.exceptions,
- de.dhbw.mannheim.cloudraid.passwordmgr
+Service-Component: OSGI-INF/component.xml
+Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1",
+ MiGBase64;bundle-version="2.2.0"

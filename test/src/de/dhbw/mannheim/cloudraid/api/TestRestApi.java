@@ -34,8 +34,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import de.dhbw.mannheim.cloudraid.api.RestApiUrlMapping.MatchResult;
-import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
+import de.dhbw.mannheim.cloudraid.api.impl.RestApiUrlMapping;
+import de.dhbw.mannheim.cloudraid.api.impl.RestApiUrlMapping.MatchResult;
+import de.dhbw.mannheim.cloudraid.api.impl.responses.IRestApiResponse;
 
 /**
  * @author Markus Holtermann
@@ -82,11 +83,11 @@ public class TestRestApi {
 
 	@Test
 	public void testRequestMatch() {
-		String paths[] = { "/test0/", "/test0/bar", "/test1/", "/test1/bar",
+		String paths[] = {"/test0/", "/test0/bar", "/test1/", "/test1/bar",
 				"/test2/", "/test2/bar", "/test3/", "/test3/bar", "/test4/",
 				"/test4/bar", "/test5/", "/test5/bar", "/test6/", "/test6/bar",
-				"/test7/", "/test7/bar" };
-		String methods[] = { "GET", "gEt", "PosT", "put" };
+				"/test7/", "/test7/bar"};
+		String methods[] = {"GET", "gEt", "PosT", "put"};
 		MatchResult mr;
 		for (int p = 0; p < paths.length; p++) {
 			for (int m = 0; m < methods.length; m++) {

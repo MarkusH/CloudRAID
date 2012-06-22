@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw.mannheim.cloudraid.api;
+package de.dhbw.mannheim.cloudraid.api.impl;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-import de.dhbw.mannheim.cloudraid.api.responses.IRestApiResponse;
+import de.dhbw.mannheim.cloudraid.api.impl.responses.IRestApiResponse;
 
 /**
  * @author Markus Holtermann
@@ -73,7 +73,7 @@ public class RestApiUrlMapping {
 		public Method getFunction() {
 			return this.function;
 		}
-		
+
 		@Override
 		public String toString() {
 			StringBuffer sb = new StringBuffer();
@@ -100,7 +100,7 @@ public class RestApiUrlMapping {
 	 * @throws NoSuchMethodException
 	 * @throws SecurityException
 	 */
-	static Method findFunction(Class<?> klass, String function)
+	public static Method findFunction(Class<?> klass, String function)
 			throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException {
 		return klass.getMethod(function, HttpServletRequest.class,

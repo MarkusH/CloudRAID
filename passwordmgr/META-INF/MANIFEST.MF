@@ -6,4 +6,4 @@ Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Service-Component: OSGI-INF/component.xml
-Import-Package: de.dhbw.mannheim.cloudraid.passwordmgr
+Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1"
