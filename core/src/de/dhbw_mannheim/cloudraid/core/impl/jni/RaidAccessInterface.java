@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw_mannheim.cloudraid.jni;
+package de.dhbw_mannheim.cloudraid.core.impl.jni;
 
 /**
  * @author Florian Bausch, Markus Holtermann
