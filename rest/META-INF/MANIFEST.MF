@@ -5,9 +5,9 @@ Bundle-SymbolicName: CloudRAID-RESTful
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: de.dhbw.mannheim.cloudraid.config,
- de.dhbw.mannheim.cloudraid.config.exceptions,
- de.dhbw.mannheim.cloudraid.metadatamgr,
+Import-Package: de.dhbw_mannheim.cloudraid.config,
+ de.dhbw_mannheim.cloudraid.config.exceptions,
+ de.dhbw_mannheim.cloudraid.metadatamgr,
  javax.servlet,
  javax.servlet.http;version="2.5.0",
  org.osgi.service.http;version="1.2.1"

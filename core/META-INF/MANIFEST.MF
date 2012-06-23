@@ -5,24 +5,24 @@ Bundle-SymbolicName: CloudRAID-Core
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.dhbw.mannheim.cloudraid.core.impl.fs,
- de.dhbw.mannheim.cloudraid.jni,
- de.dhbw.mannheim.cloudraid.net.connector;uses:="de.dhbw.mannheim.cloudraid.net.model",
- de.dhbw.mannheim.cloudraid.net.model,
- de.dhbw.mannheim.cloudraid.net.model.amazons3;uses:="de.dhbw.mannheim.cloudraid.net.model,org.w3c.dom",
- de.dhbw.mannheim.cloudraid.net.model.ubuntuone;uses:="de.dhbw.mannheim.cloudraid.net.model,org.json",
- de.dhbw.mannheim.cloudraid.net.oauth.amazons3;
+Export-Package: de.dhbw_mannheim.cloudraid.core.impl.fs,
+ de.dhbw_mannheim.cloudraid.jni,
+ de.dhbw_mannheim.cloudraid.net.connector;uses:="de.dhbw.mannheim.cloudraid.net.model",
+ de.dhbw_mannheim.cloudraid.net.model,
+ de.dhbw_mannheim.cloudraid.net.model.amazons3;uses:="de.dhbw.mannheim.cloudraid.net.model,org.w3c.dom",
+ de.dhbw_mannheim.cloudraid.net.model.ubuntuone;uses:="de.dhbw.mannheim.cloudraid.net.model,org.json",
+ de.dhbw_mannheim.cloudraid.net.oauth.amazons3;
   uses:="org.scribe.services,
    org.scribe.builder.api,
    org.scribe.extractors,
    org.scribe.model,
    org.scribe.oauth",
- de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone;
+ de.dhbw_mannheim.cloudraid.net.oauth.ubuntuone;
   uses:="org.scribe.builder.api,
    org.scribe.extractors,
    org.scribe.model,
    org.scribe.oauth",
- de.dhbw.mannheim.cloudraid.net.util
+ de.dhbw_mannheim.cloudraid.net.util
 Service-Component: OSGI-INF/component.xml
 Import-Package: javax.activation,
  javax.crypto,
