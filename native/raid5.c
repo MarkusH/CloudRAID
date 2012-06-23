@@ -801,7 +801,7 @@ DLLEXPORT int write_metadata ( FILE *fp, raid5md *md )
  * Implements the mergeInterface method defined in the Java RaidAccessInterface
  * class.
  */
-JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
+JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
 ( JNIEnv * env, jclass cls, jstring _tempInputDirPath, jstring _hash, jstring _outputFilePath, jstring _key )
 {
     /* Convert the Java Strings to char arrays for usage in the C program. */
@@ -914,7 +914,7 @@ end:
  * Implements the splitInterface method defined in the Java RaidAccessInterface
  * class.
  */
-JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
+JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
 ( JNIEnv *env, jclass cls, jstring _inputBasePath, jstring _inputFilePath, jstring _tempOutputDirPath, jstring _key )
 {
     /* Convert the Java Strings to char arrays for usage in this C program. */

@@ -12,7 +12,7 @@ extern "C" {
  * Method:    mergeInterface
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
  */
-JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
+JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_jni_RaidAccessInterface_mergeInterface
   (JNIEnv *, jclass, jstring, jstring, jstring, jstring);
 
 /*
@@ -20,7 +20,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_m
  * Method:    splitInterface
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_de_dhbw_mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
+JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_jni_RaidAccessInterface_splitInterface
   (JNIEnv *, jclass, jstring, jstring, jstring, jstring);
 
 #ifdef __cplusplus

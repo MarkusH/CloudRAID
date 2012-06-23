@@ -21,9 +21,9 @@ LIB = ./build/usr/lib/libcloudraid.so
 all: compile
 
 jcompile:
-	mkdir -p ${JAVABIN}/de/dhbw/mannheim/cloudraid/jni/
-	javac -sourcepath ${JAVASOURCE}/de/dhbw/mannheim/cloudraid/jni/ -classpath ${JAVASOURCE} -d ${JAVABIN} ${JAVASOURCE}/de/dhbw/mannheim/cloudraid/jni/RaidAccessInterface.java
-	javah -classpath ${JAVABIN}:. -d . de.dhbw.mannheim.cloudraid.jni.RaidAccessInterface
+	mkdir -p ${JAVABIN}/de/dhbw_mannheim/cloudraid/jni/
+	javac -sourcepath ${JAVASOURCE}/de/dhbw_mannheim/cloudraid/jni/ -classpath ${JAVASOURCE} -d ${JAVABIN} ${JAVASOURCE}/de/dhbw_mannheim/cloudraid/jni/RaidAccessInterface.java
+	javah -classpath ${JAVABIN}:. -d . de.dhbw_mannheim.cloudraid.jni.RaidAccessInterface
 
 compile: ${OBJ}
 	mkdir -p ./build/usr/lib
