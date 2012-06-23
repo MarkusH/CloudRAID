@@ -103,7 +103,7 @@ public class RestApiComponent {
 	/**
 	 * @param metadataService
 	 */
-	protected synchronized void setMetadataMgr(IMetadataManager metadataService) {
+	protected synchronized void setMetadata(IMetadataManager metadataService) {
 		System.out.println("RestApiComponent: setMetadataMgr: begin");
 		this.metadata = metadataService;
 		System.out
@@ -171,7 +171,7 @@ public class RestApiComponent {
 	/**
 	 * @param metadataService
 	 */
-	protected synchronized void unsetMetadataMgr(IMetadataManager metadataService) {
+	protected synchronized void unsetMetadata(IMetadataManager metadataService) {
 		System.out.println("RestApiComponent: unsetMetadataMgr: begin");
 		System.out.println("RestApiComponent: unsetMetadataMgr: "
 				+ metadataService);

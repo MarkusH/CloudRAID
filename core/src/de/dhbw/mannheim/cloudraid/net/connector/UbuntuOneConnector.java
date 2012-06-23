@@ -30,6 +30,9 @@ import java.util.HashMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -38,18 +41,17 @@ import org.scribe.model.Verb;
 import org.scribe.oauth.OAuthService;
 import org.scribe.utils.OAuthEncoder;
 
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
 import de.dhbw.mannheim.cloudraid.net.model.ubuntuone.UbuntuOneVolumeModel;
 import de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneApi;
 import de.dhbw.mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneService;
-import de.dhbw.mannheim.cloudraid.util.Config;
 
 /**
  * @author Markus Holtermann
  */
 public class UbuntuOneConnector implements IStorageConnector {
 
-	@SuppressWarnings("javadoc")
 	public static void main(String[] args) {
 		try {
 			HashMap<String, String> params = new HashMap<String, String>();
@@ -109,6 +111,11 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * A internal storage for all volumes of the user
 	 */
 	private HashMap<String, UbuntuOneVolumeModel> volumes = new HashMap<String, UbuntuOneVolumeModel>();
+
+	/**
+	 * A reference to the current config;
+	 */
+	private ICloudRAIDConfig config = null;
 
 	/**
 	 * {@inheritDoc}
@@ -182,6 +189,11 @@ public class UbuntuOneConnector implements IStorageConnector {
 			throw new InstantiationException(
 					"Either customer_key, customer_secret, token_key and token_secret or username and password have to be set during creation!");
 		}
+		BundleContext ctx = FrameworkUtil.getBundle(this.getClass())
+				.getBundleContext();
+		ServiceReference<ICloudRAIDConfig> configServiceReference = ctx
+				.getServiceReference(ICloudRAIDConfig.class);
+		this.config = ctx.getService(configServiceReference);
 		return this;
 	}
 
@@ -347,7 +359,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		File f = new File("/tmp/" + resource);
 		int max_filesize;
 		try {
-			max_filesize = Config.getInstance().getInt("filesize.max", null);
+			max_filesize = this.config.getInt("filesize.max", null);
 			if (f.length() > max_filesize) {
 				System.err.println("File too big");
 			}
@@ -408,9 +420,13 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * @see de.dhbw.mannheim.cloudraid.net.connector.UbuntuOneConnector#sendRequest(Verb,
 	 *      String)
 	 * @param verb
+	 *            The HTTP method
 	 * @param endpoint
+	 *            The URL that is called
 	 * @param body
-	 * @return
+	 *            The payload
+	 * @return Returns the response of getting the specified endpoint with the
+	 *         given method.
 	 */
 	private Response sendRequest(Verb verb, String endpoint, byte[] body) {
 		System.err.flush();

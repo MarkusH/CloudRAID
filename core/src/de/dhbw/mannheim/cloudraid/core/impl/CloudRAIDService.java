@@ -29,6 +29,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
 import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw.mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw.mannheim.cloudraid.core.impl.fs.FileManager;
 import de.dhbw.mannheim.cloudraid.core.impl.fs.RecursiveFileSystemWatcher;
 import de.dhbw.mannheim.cloudraid.metadatamgr.IMetadataManager;
@@ -38,7 +39,7 @@ import de.dhbw.mannheim.cloudraid.passwordmgr.IPasswordManager;
  * @author Markus Holtermann
  * 
  */
-public class CloudRAIDService {
+public class CloudRAIDService implements ICloudRAIDService {
 
 	/**
 	 * 

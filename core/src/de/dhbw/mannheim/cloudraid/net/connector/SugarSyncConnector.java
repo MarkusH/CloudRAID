@@ -37,13 +37,16 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.dhbw.mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw.mannheim.cloudraid.net.model.VolumeModel;
-import de.dhbw.mannheim.cloudraid.util.Config;
 
 /**
  * The API wrapper for SugarSync.
@@ -114,6 +117,11 @@ public class SugarSyncConnector implements IStorageConnector {
 			return;
 		}
 	}
+
+	/**
+	 * A reference to the current config;
+	 */
+	private ICloudRAIDConfig config = null;
 
 	private String baseURL = null;
 
@@ -200,6 +208,11 @@ public class SugarSyncConnector implements IStorageConnector {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		BundleContext ctx = FrameworkUtil.getBundle(this.getClass())
+				.getBundleContext();
+		ServiceReference<ICloudRAIDConfig> configServiceReference = ctx
+				.getServiceReference(ICloudRAIDConfig.class);
+		this.config = ctx.getService(configServiceReference);
 		return this;
 	}
 
@@ -626,7 +639,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		File f = new File("/tmp/" + resource);
 		int max_filesize;
 		try {
-			max_filesize = Config.getInstance().getInt("filesize.max", null);
+			max_filesize = this.config.getInt("filesize.max", null);
 			if (f.length() > max_filesize) {
 				System.err.println("File too big");
 			}

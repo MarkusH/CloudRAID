@@ -37,6 +37,9 @@ import java.util.Scanner;
 
 import javax.activation.MimetypesFileTypeMap;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.DropBoxApi;
 import org.scribe.model.OAuthRequest;
@@ -102,6 +105,11 @@ public class DropboxConnector implements IStorageConnector {
 			return;
 		}
 	}
+
+	/**
+	 * A reference to the current config;
+	 */
+	private ICloudRAIDConfig config = null;
 
 	private String accessTokenValue = null;
 	private String appKey = null;
@@ -172,6 +180,11 @@ public class DropboxConnector implements IStorageConnector {
 			throw new InstantiationException(
 					"Could not find required parameters.");
 		}
+		BundleContext ctx = FrameworkUtil.getBundle(this.getClass())
+				.getBundleContext();
+		ServiceReference<ICloudRAIDConfig> configServiceReference = ctx
+				.getServiceReference(ICloudRAIDConfig.class);
+		this.config = ctx.getService(configServiceReference);
 		return this;
 	}
 
@@ -279,8 +292,7 @@ public class DropboxConnector implements IStorageConnector {
 		} else {
 			int max_filesize;
 			try {
-				max_filesize = Config.getInstance()
-						.getInt("filesize.max", null);
+				max_filesize = this.config.getInt("filesize.max", null);
 				if (f.length() > max_filesize) {
 					System.err.println("File too big");
 					return false;
