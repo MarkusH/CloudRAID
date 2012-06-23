@@ -8,5 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.dhbw_mannheim.cloudraid.config,
  de.dhbw_mannheim.cloudraid.config.exceptions,
  de.dhbw_mannheim.cloudraid.core,
+ de.dhbw_mannheim.cloudraid.core.net.connector,
+ de.dhbw_mannheim.cloudraid.core.net.model,
  de.dhbw_mannheim.cloudraid.metadatamgr,
  de.dhbw_mannheim.cloudraid.passwordmgr

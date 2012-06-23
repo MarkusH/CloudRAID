@@ -25,7 +25,7 @@ package de.dhbw_mannheim.cloudraid.core.impl.fs;
 import java.io.File;
 import java.util.NoSuchElementException;
 
-import de.dhbw_mannheim.cloudraid.jni.RaidAccessInterface;
+import de.dhbw_mannheim.cloudraid.core.impl.jni.RaidAccessInterface;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 
 /**
