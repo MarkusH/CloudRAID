@@ -29,8 +29,6 @@ native/DevC++/test*
 !interfaces/.project
 !metadatamgr/.classpath
 !metadatamgr/.project
-!migbase64/.classpath
-!migbase64/.project
 !passwordmgr/.classpath
 !passwordmgr/.project
 !rest/.classpath
