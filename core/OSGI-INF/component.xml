@@ -2,7 +2,6 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="startup" deactivate="shutdown" immediate="true" name="CloudRAID-Core">
    <implementation class="de.dhbw_mannheim.cloudraid.core.impl.CloudRAIDService"/>
    <reference bind="setConfig" cardinality="1..1" interface="de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig" name="ICloudRAIDConfig" policy="static" unbind="unsetConfig"/>
-   <reference bind="setMetadata" cardinality="1..1" interface="de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager" name="IMetadataManager" policy="static" unbind="unsetMetadata"/>
    <service>
       <provide interface="de.dhbw_mannheim.cloudraid.core.ICloudRAIDService"/>
    </service>

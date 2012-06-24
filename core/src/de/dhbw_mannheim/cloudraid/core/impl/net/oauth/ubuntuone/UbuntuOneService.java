@@ -88,7 +88,9 @@ public class UbuntuOneService implements OAuthService {
 
 	/**
 	 * @param request
+	 *            The OAuth request
 	 * @param token
+	 *            The OAuth token
 	 */
 	private void addOAuthParams(OAuthRequest request, Token token) {
 		request.addOAuthParameter(OAuthConstants.TIMESTAMP, api
@@ -105,7 +107,9 @@ public class UbuntuOneService implements OAuthService {
 
 	/**
 	 * @param request
+	 *            The OAuth request
 	 * @param token
+	 *            The OAuth token
 	 */
 	private void addSignature(OAuthRequest request, Token token) {
 		String oauthHeader = api.getHeaderExtractor().extract(request);
@@ -121,7 +125,7 @@ public class UbuntuOneService implements OAuthService {
 	/**
 	 * Returns the customer token!
 	 * 
-	 * @see de.dhbw_mannheim.cloudraid.net.oauth.ubuntuone.UbuntuOneService#getAccessToken(Token,
+	 * @see de.dhbw_mannheim.cloudraid.core.impl.net.oauth.ubuntuone.UbuntuOneService#getAccessToken(Token,
 	 *      Verifier)
 	 * 
 	 * @param requestToken
@@ -236,8 +240,10 @@ public class UbuntuOneService implements OAuthService {
 
 	/**
 	 * @param request
+	 *            The OAuth request
 	 * @param token
-	 * @return
+	 *            The OAuth token
+	 * @return The signature
 	 */
 	private String getSignature(OAuthRequest request, Token token) {
 		String baseString = api.getBaseStringExtractor().extract(request);

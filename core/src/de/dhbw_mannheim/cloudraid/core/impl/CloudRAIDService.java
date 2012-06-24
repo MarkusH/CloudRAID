@@ -35,7 +35,6 @@ import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.core.impl.fs.FileManager;
 import de.dhbw_mannheim.cloudraid.core.impl.fs.RecursiveFileSystemWatcher;
-import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
 
 /**
  * @author Markus Holtermann
@@ -43,17 +42,9 @@ import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
  */
 public class CloudRAIDService implements ICloudRAIDService {
 
-	/**
-	 * 
-	 */
 	private ICloudRAIDConfig config = null;
 
 	private FileManager[] fileManagers = null;
-
-	/**
-	 * 
-	 */
-	private IMetadataManager metadata = null;
 
 	private RecursiveFileSystemWatcher recursiveFileSystemWatcher = null;
 
@@ -70,20 +61,10 @@ public class CloudRAIDService implements ICloudRAIDService {
 	}
 
 	/**
-	 * @param metadataService
-	 *            The running instance of the {@link IMetadataManager MetaData
-	 *            manager}
-	 */
-	protected synchronized void setMetadata(IMetadataManager metadataService) {
-		System.out.println("CloudRAIDService: setMetadataMgr: begin");
-		this.metadata = metadataService;
-		System.out
-				.println("CloudRAIDService: setMetadataMgr: " + this.metadata);
-		System.out.println("CloudRAIDService: setMetadataMgr: end");
-	}
-
-	/**
-	 * 
+	 * This function is called upon shutdown of this service. All
+	 * {@link FileManager}s are stopped and the
+	 * {@link RecursiveFileSystemWatcher} is stopped too. The instance of
+	 * {@link ICloudRAIDConfig} will be saved.
 	 */
 	protected void shutdown() {
 		System.out.println("CloudRAIDService: shutdown: begin");
@@ -91,7 +72,6 @@ public class CloudRAIDService implements ICloudRAIDService {
 			fileManagers[i].interrupt();
 		}
 		recursiveFileSystemWatcher.interrupt();
-		metadata.disconnect();
 		config.save();
 		System.out.println("CloudRAIDService: shutdown: end");
 	}
@@ -154,6 +134,8 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 	/**
 	 * @param config
+	 *            Reference to the still existing {@link ICloudRAIDConfig
+	 *            config} instance
 	 */
 	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
 		System.out.println("CloudRAIDService: unsetConfig: begin");
@@ -161,17 +143,6 @@ public class CloudRAIDService implements ICloudRAIDService {
 		this.config = null;
 		System.out.println("CloudRAIDService: unsetConfig: " + this.config);
 		System.out.println("CloudRAIDService: unsetConfig: end");
-	}
-
-	/**
-	 * @param metadataService
-	 */
-	protected synchronized void unsetMetadata(IMetadataManager metadataService) {
-		System.out.println("CloudRAIDService: unsetMetadata: begin");
-		System.out.println("CloudRAIDService: unsetMetadata: " + metadataService);
-		this.metadata = null;
-		System.out.println("CloudRAIDService: unsetMetadata: " + this.metadata);
-		System.out.println("CloudRAIDService: unsetMetadata: end");
 	}
 
 }

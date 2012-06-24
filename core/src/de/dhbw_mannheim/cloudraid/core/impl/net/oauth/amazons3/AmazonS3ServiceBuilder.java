@@ -93,7 +93,8 @@ public class AmazonS3ServiceBuilder {
 
 	/**
 	 * @param apiClass
-	 * @return
+	 *            Reference to the API class
+	 * @return New instance of the given API class
 	 */
 	private AmazonS3Api createApi(Class<? extends AmazonS3Api> apiClass) {
 		Preconditions.checkNotNull(apiClass, "Api class cannot be null");

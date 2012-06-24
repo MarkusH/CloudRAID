@@ -55,9 +55,12 @@ public class AmazonS3SignatureService implements SignatureService {
 
 	/**
 	 * @param toSign
+	 *            The string that will be signed
 	 * @param keyString
-	 * @return
+	 *            The key used for signing
+	 * @return The signed string
 	 * @throws Exception
+	 *             Thrown, if the signing fails
 	 */
 	private String doSign(String toSign, String keyString) throws Exception {
 		SecretKeySpec key = new SecretKeySpec((keyString).getBytes(UTF8),

@@ -96,7 +96,8 @@ public class UbuntuOneServiceBuilder {
 
 	/**
 	 * @param apiClass
-	 * @return
+	 *            Reference to the API class
+	 * @return New instance of the given API class
 	 */
 	private UbuntuOneApi createApi(Class<? extends UbuntuOneApi> apiClass) {
 		Preconditions.checkNotNull(apiClass, "Api class cannot be null");
