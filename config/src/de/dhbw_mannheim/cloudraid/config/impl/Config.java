@@ -27,7 +27,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -42,6 +44,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.osgi.framework.BundleContext;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -60,6 +63,8 @@ import de.dhbw_mannheim.cloudraid.passwordmgr.IPasswordManager;
  * @author Florian Bausch, Markus Holtermann
  */
 public class Config extends HashMap<String, String> implements ICloudRAIDConfig {
+
+	private boolean doSaveOnShutdown = true;
 
 	/**
 	 * A HashMap of allowed allowed ciphers. The keys of the map contain the
@@ -224,7 +229,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 				// we replace the first part of the salt by the user password
 				System.arraycopy(this.password, 0, salt, 0,
 						Math.min(this.password.length, salt.length));
-				SecretKeySpec skeySpec = new SecretKeySpec(salt, "AES");
+				SecretKeySpec skeySpec = new SecretKeySpec(salt,
+						this.encryption);
 				this.cipher.init(Cipher.DECRYPT_MODE, skeySpec);
 				byte[] value = Base64.decode(super.get(key));
 				String r = new String(this.cipher.doFinal(value));
@@ -500,8 +506,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			e1.printStackTrace();
 		}
 
-		reload();
-		return this;
+		return reload();
 	}
 
 	/**
@@ -608,7 +613,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			// we replace the first part of the salt by the user password
 			System.arraycopy(this.password, 0, salt2, 0,
 					Math.min(this.password.length, salt2.length));
-			SecretKeySpec skeySpec = new SecretKeySpec(salt2, "AES");
+			SecretKeySpec skeySpec = new SecretKeySpec(salt2, this.encryption);
 
 			// If we run into a encryption error, we will store the value in
 			// plain text!
@@ -681,6 +686,34 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			this.encryption = "AES";
 		}
 
+		try {
+			byte[] integr_hash = Base64.decode(doc.getDocumentElement()
+					.getAttribute("hash"));
+			byte[] integr_salt = Base64.decode(doc.getDocumentElement()
+					.getAttribute("salt"));
+			if (integr_hash.length > 0 && integr_salt.length > 0) {
+				byte[] cryptinput = new byte[this.keyLength];
+				System.arraycopy(integr_salt, 0, cryptinput, 0, this.keyLength);
+				System.arraycopy(this.password, 0, cryptinput, 0,
+						Math.min(this.password.length, cryptinput.length));
+
+				SecretKeySpec skeySpec = new SecretKeySpec(integr_salt,
+						this.encryption);
+				this.cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+				byte[] cryptoutput = this.cipher.doFinal(cryptinput);
+
+				MessageDigest digest = MessageDigest.getInstance("SHA-256");
+				digest.reset();
+				byte[] digestoutput = digest.digest(cryptoutput);
+				if (!Arrays.equals(digestoutput, integr_hash)) {
+					return null;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
 		// Iterate over all "entry" nodes and collect the information.
 		NodeList list = doc.getDocumentElement().getElementsByTagName("entry");
 		for (int i = 0; i < list.getLength(); i++) {
@@ -694,7 +727,6 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		}
 		return this;
 	}
-
 	@Override
 	public synchronized String remove(Object key) {
 		this.salts.remove(key);
@@ -704,17 +736,47 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	@Override
 	public void save() {
 		try {
-			if (!CONFIG_FILE.getParentFile().exists())
+			if (!CONFIG_FILE.getParentFile().exists()) {
 				CONFIG_FILE.getParentFile().mkdirs();
+			}
 
 			// Create the output writer.
 			BufferedWriter writer = new BufferedWriter(new FileWriter(
 					CONFIG_PATH));
 
+			String intgrsalt = "";
+			String intgrhash = "";
+			try {
+				byte[] integr_salt = getXMLSaveSalt(this.keyLength);
+				byte[] cryptinput = new byte[this.keyLength];
+				System.arraycopy(integr_salt, 0, cryptinput, 0, this.keyLength);
+				System.arraycopy(this.password, 0, cryptinput, 0,
+						Math.min(this.password.length, cryptinput.length));
+
+				SecretKeySpec skeySpec = new SecretKeySpec(integr_salt,
+						this.encryption);
+				this.cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
+				byte[] cryptoutput = this.cipher.doFinal(cryptinput);
+
+				MessageDigest digest = MessageDigest.getInstance("SHA-256");
+				digest.reset();
+				intgrhash = Base64.encodeToString(digest.digest(cryptoutput),
+						false);
+				intgrsalt = Base64.encodeToString(integr_salt, false);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
 			// Write standard conform XML code.
 			writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 			writer.newLine();
-			writer.write("<root encryption=\"" + this.encryption + "\">");
+			if (intgrhash.isEmpty() || intgrsalt.isEmpty()) {
+				writer.write("<root encryption=\"" + this.encryption + "\">");
+			} else {
+				writer.write("<root encryption=\"" + this.encryption
+						+ "\" salt=\"" + intgrsalt + "\" hash=\"" + intgrhash
+						+ "\">");
+			}
 			Set<String> keys = this.keySet();
 			for (String k : keys) {
 				writer.newLine();
@@ -732,7 +794,6 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			e.printStackTrace();
 		}
 	}
-
 	@Override
 	public void setCloudRAIDHome(String path) {
 		if (path.endsWith(File.separator)) {
@@ -769,11 +830,17 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	/**
+	 * @throws InvalidKeyException
 	 * 
 	 */
-	protected void startup() {
+	protected void startup(BundleContext context) throws InvalidKeyException {
 		System.out.println("Config: startup: begin");
-		this.init(this.passwordmgr.getCredentials());
+		doSaveOnShutdown = true;
+		if (this.init(this.passwordmgr.getCredentials()) == null) {
+			doSaveOnShutdown = false;
+			throw new InvalidKeyException(
+					"The provided key for the configuration is invalid!");
+		}
 		System.out.println("Config: startup: end");
 	}
 
@@ -784,7 +851,9 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			IPasswordManager passwordManager) {
 		System.out.println("Config: unsetPasswordManager: begin");
 		System.out.println("Config: unsetPasswordManager: " + passwordManager);
-		this.save();
+		if (doSaveOnShutdown) {
+			this.save();
+		}
 		this.passwordmgr = null;
 		System.out.println("Config: unsetPasswordManager: " + this.passwordmgr);
 		System.out.println("Config: unsetPasswordManager: end");
