@@ -23,17 +23,19 @@
 package de.dhbw_mannheim.cloudraid.core.impl;
 
 import java.io.File;
+import java.util.NoSuchElementException;
 
-import org.osgi.framework.BundleActivator;
+import javax.naming.directory.InvalidAttributeValueException;
+
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw_mannheim.cloudraid.config.exceptions.ConfigException;
+import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.core.impl.fs.FileManager;
 import de.dhbw_mannheim.cloudraid.core.impl.fs.RecursiveFileSystemWatcher;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
-import de.dhbw_mannheim.cloudraid.passwordmgr.IPasswordManager;
 
 /**
  * @author Markus Holtermann
@@ -53,15 +55,12 @@ public class CloudRAIDService implements ICloudRAIDService {
 	 */
 	private IMetadataManager metadata = null;
 
-	/**
-	 * 
-	 */
-	private IPasswordManager pwdmngr = null;
-
 	private RecursiveFileSystemWatcher recursiveFileSystemWatcher = null;
 
 	/**
 	 * @param config
+	 *            The running instance of the {@link ICloudRAIDConfig
+	 *            configuration service}.
 	 */
 	protected synchronized void setConfig(ICloudRAIDConfig config) {
 		System.out.println("CloudRAIDService: setConfig: begin");
@@ -72,6 +71,8 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 	/**
 	 * @param metadataService
+	 *            The running instance of the {@link IMetadataManager MetaData
+	 *            manager}
 	 */
 	protected synchronized void setMetadata(IMetadataManager metadataService) {
 		System.out.println("CloudRAIDService: setMetadataMgr: begin");
@@ -96,15 +97,9 @@ public class CloudRAIDService implements ICloudRAIDService {
 	}
 
 	/**
-	 * During the {@link BundleActivator#start(BundleContext) startup} this
-	 * {@link BundleActivator} starts and initializes the following services and
-	 * components (in order):
+	 * During the {@link #startup(BundleContext) startup} this service starts
+	 * and initializes the following threads and components (in order):
 	 * <ul>
-	 * <li>A {@link IPasswordManager} to handle passwords for the configuration</li>
-	 * <li>A {@link ICloudRAIDConfig} storing the I/O paths for RAID, the
-	 * metadata name, number of threads, etc.</li>
-	 * <li>A {@link IMetadataManager} that represents the underlying metadata
-	 * used to store all file information</li>
 	 * <li>A {@link RecursiveFileSystemWatcher} that permanently watches the
 	 * split input directory for new files</li>
 	 * <li>Multiple {@link FileManager} that handle new files, e.g. split and
@@ -112,34 +107,30 @@ public class CloudRAIDService implements ICloudRAIDService {
 	 * </ul>
 	 * 
 	 * @param context
-	 * @throws Exception
+	 *            The {@link BundleContext} for this bundle
+	 * @throws NoSuchElementException
+	 *             Thrown, if a configuration value is not found
+	 * @throws ConfigException
+	 *             Thrown, if a config value is invalid
+	 * @throws InvalidAttributeValueException
+	 *             Thrown, if the watching directory for the
+	 *             {@link RecursiveFileSystemWatcher} is invalid.
 	 */
-	protected void startup(BundleContext context) throws Exception {
+	protected void startup(BundleContext context)
+			throws NoSuchElementException, ConfigException,
+			InvalidAttributeValueException {
 		System.out.println("CloudRAIDService: startup: begin");
-		// Initialize the password manager
-		ServiceReference<IPasswordManager> passwordServiceReference = context
-				.getServiceReference(IPasswordManager.class);
-		pwdmngr = context.getService(passwordServiceReference);
-
-		// Initialize the configuration using the password from the password
-		// manager
-		ServiceReference<ICloudRAIDConfig> configServiceReference = context
-				.getServiceReference(ICloudRAIDConfig.class);
-		config = context.getService(configServiceReference);
-		config.init(pwdmngr.getCredentials());
-
-		// Connect to the metadata
-		ServiceReference<IMetadataManager> metadataServiceReference = context
-				.getServiceReference(IMetadataManager.class);
-		metadata = context.getService(metadataServiceReference);
-		// String databasename = config.getString("metadata.name", null);
-		// metadata.connect(databasename);
-		// metadata.initialize();
 
 		String mergeInputDir = config.getString("merge.input.dir", null);
 		String mergeOutputDir = config.getString("merge.output.dir", null);
 		String splitInputDir = config.getString("split.input.dir", null);
 		String splitOutputDir = config.getString("split.output.dir", null);
+
+		if (mergeInputDir == null || mergeOutputDir == null
+				|| splitInputDir == null || splitOutputDir == null) {
+			throw new MissingConfigValueException(
+					"Missing split or merge directory definitions.");
+		}
 
 		new File(mergeInputDir).mkdirs();
 		new File(mergeOutputDir).mkdirs();
@@ -176,11 +167,11 @@ public class CloudRAIDService implements ICloudRAIDService {
 	 * @param metadataService
 	 */
 	protected synchronized void unsetMetadata(IMetadataManager metadataService) {
-		System.out.println("CloudRAIDService: unsetConfig: begin");
-		System.out.println("CloudRAIDService: unsetConfig: " + metadataService);
+		System.out.println("CloudRAIDService: unsetMetadata: begin");
+		System.out.println("CloudRAIDService: unsetMetadata: " + metadataService);
 		this.metadata = null;
-		System.out.println("CloudRAIDService: unsetConfig: " + this.metadata);
-		System.out.println("CloudRAIDService: unsetConfig: end");
+		System.out.println("CloudRAIDService: unsetMetadata: " + this.metadata);
+		System.out.println("CloudRAIDService: unsetMetadata: end");
 	}
 
 }

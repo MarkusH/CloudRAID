@@ -20,12 +20,11 @@
  * under the License.
  */
 
-
 package de.dhbw_mannheim.cloudraid.config.exceptions;
 
 /**
- * @author markus
- *
+ * @author Markus Holtermann
+ * 
  */
 public class InvalidConfigValueException extends ConfigException {
 
@@ -34,4 +33,19 @@ public class InvalidConfigValueException extends ConfigException {
 	 */
 	private static final long serialVersionUID = -1376179325413163634L;
 
+	public InvalidConfigValueException() {
+		super();
+	}
+
+	public InvalidConfigValueException(String arg0) {
+		super(arg0);
+	}
+
+	public InvalidConfigValueException(Throwable cause) {
+		super(cause);
+	}
+
+	public InvalidConfigValueException(String arg0, Throwable cause) {
+		super(arg0, cause);
+	}
 }

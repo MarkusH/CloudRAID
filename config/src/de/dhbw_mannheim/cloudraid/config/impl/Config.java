@@ -783,10 +783,10 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	protected synchronized void unsetPasswordManager(
 			IPasswordManager passwordManager) {
 		System.out.println("Config: unsetPasswordManager: begin");
-		System.out.println("Config: setPasswordManager: " + passwordManager);
+		System.out.println("Config: unsetPasswordManager: " + passwordManager);
 		this.save();
 		this.passwordmgr = null;
-		System.out.println("Config: setPasswordManager: " + this.passwordmgr);
+		System.out.println("Config: unsetPasswordManager: " + this.passwordmgr);
 		System.out.println("Config: unsetPasswordManager: end");
 	}
 }

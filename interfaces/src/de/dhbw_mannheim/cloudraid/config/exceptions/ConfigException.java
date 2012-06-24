@@ -20,12 +20,11 @@
  * under the License.
  */
 
-
 package de.dhbw_mannheim.cloudraid.config.exceptions;
 
 /**
- * @author markus
- *
+ * @author Markus Holtermann
+ * 
  */
 public class ConfigException extends Exception {
 
@@ -33,5 +32,21 @@ public class ConfigException extends Exception {
 	 * 
 	 */
 	private static final long serialVersionUID = 3356582921046096965L;
+
+	public ConfigException() {
+		super();
+	}
+
+	public ConfigException(String arg0) {
+		super(arg0);
+	}
+
+	public ConfigException(Throwable cause) {
+		super(cause);
+	}
+
+	public ConfigException(String arg0, Throwable cause) {
+		super(arg0, cause);
+	}
 
 }

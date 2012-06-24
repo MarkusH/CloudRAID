@@ -20,12 +20,11 @@
  * under the License.
  */
 
-
 package de.dhbw_mannheim.cloudraid.config.exceptions;
 
 /**
- * @author markus
- *
+ * @author Markus Holtermann
+ * 
  */
 public class MissingConfigValueException extends ConfigException {
 
@@ -34,4 +33,19 @@ public class MissingConfigValueException extends ConfigException {
 	 */
 	private static final long serialVersionUID = 1395268042344847832L;
 
+	public MissingConfigValueException() {
+		super();
+	}
+
+	public MissingConfigValueException(String arg0) {
+		super(arg0);
+	}
+
+	public MissingConfigValueException(Throwable cause) {
+		super(cause);
+	}
+
+	public MissingConfigValueException(String arg0, Throwable cause) {
+		super(arg0, cause);
+	}
 }
