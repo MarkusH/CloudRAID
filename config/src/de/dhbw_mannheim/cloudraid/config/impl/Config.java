@@ -254,23 +254,16 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		}
 	}
 
-	/**
-	 * Returns the boolean representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
-	 * If the key does not exist <code>defaultVal</code> is returned.
-	 * 
-	 * @param key
-	 *            The key of the value in the Config.
-	 * @param defaultVal
-	 *            The fall back value.
-	 * @return The boolean representation of the value or
-	 *         <code>defaultVal</code>
-	 * @throws MissingConfigValueException
-	 *             Thrown if neither the given key can be found nor the given
-	 *             default value is != null
-	 * @throws InvalidConfigValueException
-	 *             Thrown if the decryption process fails
-	 */
+	@Override
+	public boolean getBoolean(String key) throws MissingConfigValueException {
+		try {
+			return this.getBoolean(key, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MissingConfigValueException(e);
+		}
+	}
+
 	@Override
 	public synchronized boolean getBoolean(String key, Boolean defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException {
@@ -303,22 +296,16 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		return defaultData;
 	}
 
-	/**
-	 * Returns the double representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
-	 * If the key does not exist <code>defaultVal</code> is returned.
-	 * 
-	 * @param key
-	 *            The key of the value in the Config.
-	 * @param defaultVal
-	 *            The fall back value.
-	 * @return The float representation of the value or <code>defaultVal</code>
-	 * @throws MissingConfigValueException
-	 *             Thrown if neither the given key can be found nor the given
-	 *             default value is != null
-	 * @throws InvalidConfigValueException
-	 *             Thrown if the decryption process fails
-	 */
+	@Override
+	public double getDouble(String key) throws MissingConfigValueException {
+		try {
+			return this.getDouble(key, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MissingConfigValueException(e);
+		}
+	}
+
 	@Override
 	public synchronized double getDouble(String key, Double defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException {
@@ -336,23 +323,16 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		}
 	}
 
-	/**
-	 * Returns the float representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
-	 * If the key does not exist <code>defaultVal</code> is returned.
-	 * 
-	 * @param key
-	 *            The key of the value in the Config.
-	 * @param defaultVal
-	 *            The fall back value.
-	 * @return The float representation of the value or <code>defaultVal</code>
-	 * 
-	 * @throws MissingConfigValueException
-	 *             Thrown if neither the given key can be found nor the given
-	 *             default value is != null
-	 * @throws InvalidConfigValueException
-	 *             Thrown if the decryption process fails
-	 */
+	@Override
+	public float getFloat(String key) throws MissingConfigValueException {
+		try {
+			return this.getFloat(key, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MissingConfigValueException(e);
+		}
+	}
+
 	@Override
 	public synchronized float getFloat(String key, Float defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException {
@@ -370,22 +350,16 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		}
 	}
 
-	/**
-	 * Returns the int representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
-	 * If the key does not exist <code>defaultVal</code> is returned.
-	 * 
-	 * @param key
-	 *            The key of the value in the Config.
-	 * @param defaultVal
-	 *            The fall back value.
-	 * @return The int representation of the value or <code>defaultVal</code>
-	 * @throws MissingConfigValueException
-	 *             Thrown if neither the given key can be found nor the given
-	 *             default value is != null
-	 * @throws InvalidConfigValueException
-	 *             Thrown if the decryption process fails
-	 */
+	@Override
+	public int getInt(String key) throws MissingConfigValueException {
+		try {
+			return this.getInt(key, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MissingConfigValueException(e);
+		}
+	}
+
 	@Override
 	public synchronized int getInt(String key, Integer defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException {
@@ -403,22 +377,16 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		}
 	}
 
-	/**
-	 * Returns the int representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
-	 * If the key does not exist <code>defaultVal</code> is returned.
-	 * 
-	 * @param key
-	 *            The key of the value in the Config.
-	 * @param defaultVal
-	 *            The fall back value.
-	 * @return The int representation of the value or <code>defaultVal</code>
-	 * @throws NoSuchElementException
-	 *             Thrown if neither the given key can be found nor the given
-	 *             default value is != null
-	 * @throws InvalidConfigValueException
-	 *             Thrown if the decryption process fails
-	 */
+	@Override
+	public long getLong(String key) throws MissingConfigValueException {
+		try {
+			return this.getLong(key, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MissingConfigValueException(e);
+		}
+	}
+
 	@Override
 	public synchronized long getLong(String key, Long defaultVal)
 			throws NoSuchElementException, InvalidConfigValueException {
@@ -437,21 +405,16 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		}
 	}
 
-	/**
-	 * Returns the String representation of the value of a stored key.<br>
-	 * If the key does not exist <code>defaultVal</code> is returned.
-	 * 
-	 * @param key
-	 *            The key of the value in the Config.
-	 * @param defaultVal
-	 *            The fall back value.
-	 * @return The String representation of the value or <code>defaultVal</code>
-	 * @throws NoSuchElementException
-	 *             Thrown if neither the given key can be found nor the given
-	 *             default value is != null
-	 * @throws InvalidConfigValueException
-	 *             Thrown if the decryption process fails
-	 */
+	@Override
+	public String getString(String key) throws MissingConfigValueException {
+		try {
+			return this.getString(key, null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new MissingConfigValueException(e);
+		}
+	}
+
 	@Override
 	public synchronized String getString(String key, String defaultVal)
 			throws NoSuchElementException, InvalidConfigValueException {
@@ -580,7 +543,6 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	public synchronized void put(String key, int value) {
 		this.put(key, String.valueOf(value), false);
 	}
-
 	@Override
 	public synchronized void put(String key, int value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
@@ -590,7 +552,6 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	public synchronized void put(String key, long value) {
 		this.put(key, String.valueOf(value), false);
 	}
-
 	@Override
 	public synchronized void put(String key, long value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
@@ -727,6 +688,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		}
 		return this;
 	}
+
 	@Override
 	public synchronized String remove(Object key) {
 		this.salts.remove(key);
@@ -794,6 +756,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			e.printStackTrace();
 		}
 	}
+
 	@Override
 	public void setCloudRAIDHome(String path) {
 		if (path.endsWith(File.separator)) {

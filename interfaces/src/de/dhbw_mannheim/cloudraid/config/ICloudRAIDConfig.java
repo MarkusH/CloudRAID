@@ -36,116 +36,259 @@ import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 public interface ICloudRAIDConfig {
 
 	/**
-	 * Returns the boolean representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
+	 * Permanently remove the configuration.
+	 * 
+	 * @return True, if the configuration has been removed.
+	 */
+	public boolean delete();
+
+	/**
+	 * Returns the {@link Boolean} representation of the value of a stored key,
+	 * if it is possible. If not, the internal default value is returned.<br>
+	 * If neither the internal default value can be found nor the key exists, a
+	 * {@link MissingConfigValueException} is thrown.
+	 * 
+	 * @param key
+	 *            The key of the value in the Config.
+	 * @return The {@link Boolean} representation of the value
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found and has no
+	 *             internal default value
+	 * 
+	 * @see #getBoolean(String, Boolean)
+	 */
+	public boolean getBoolean(String key) throws MissingConfigValueException;
+
+	/**
+	 * Returns the {@link Boolean} representation of the value of a stored key,
+	 * if it is possible. If not, the <code>defaultVal</code> is returned. <br>
 	 * If the key does not exist <code>defaultVal</code> is returned.
 	 * 
 	 * @param key
 	 *            The key of the value in the Config.
 	 * @param defaultVal
 	 *            The fall back value.
-	 * @return The boolean representation of the value or
+	 * @return The {@link Boolean} representation of the value or
 	 *         <code>defaultVal</code>
 	 * @throws MissingConfigValueException
 	 *             Thrown if neither the given key can be found nor the given
 	 *             default value is != null
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
+	 * 
+	 * @see #getBoolean(String)
 	 */
 	public boolean getBoolean(String key, Boolean defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException;
 
 	/**
-	 * Returns the double representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
+	 * @return Returns the CloudRAID user home path
+	 */
+	public String getCloudRAIDHome();
+
+	/**
+	 * @return Returns the config path
+	 */
+	public String getConfigPath();
+
+	/**
+	 * Returns the default data for this configuration.
+	 * 
+	 * @return the defaultData
+	 */
+	public HashMap<String, String> getDefaultData();
+
+	/**
+	 * Returns the {@link Double} representation of the value of a stored key,
+	 * if it is possible. If not, the internal default value is returned.<br>
+	 * If neither the internal default value can be found nor the key exists, a
+	 * {@link MissingConfigValueException} is thrown.
+	 * 
+	 * @param key
+	 *            The key of the value in the Config.
+	 * @return The {@link Double} representation of the value
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found and has no
+	 *             internal default value
+	 * 
+	 * @see #getDouble(String, Double)
+	 */
+	public double getDouble(String key) throws MissingConfigValueException;
+
+	/**
+	 * Returns the {@link Double} representation of the value of a stored key,
+	 * if it is possible. If not, the <code>defaultVal</code> is returned. <br>
 	 * If the key does not exist <code>defaultVal</code> is returned.
 	 * 
 	 * @param key
 	 *            The key of the value in the Config.
 	 * @param defaultVal
 	 *            The fall back value.
-	 * @return The float representation of the value or <code>defaultVal</code>
+	 * @return The {@link Double} representation of the value or
+	 *         <code>defaultVal</code>
 	 * @throws MissingConfigValueException
 	 *             Thrown if neither the given key can be found nor the given
 	 *             default value is != null
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
+	 * 
+	 * @see #getDouble(String)
 	 */
 	public double getDouble(String key, Double defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException;
 
 	/**
-	 * Returns the float representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
+	 * Returns the {@link Float} representation of the value of a stored key, if
+	 * it is possible. If not, the internal default value is returned.<br>
+	 * If neither the internal default value can be found nor the key exists, a
+	 * {@link MissingConfigValueException} is thrown.
+	 * 
+	 * @param key
+	 *            The key of the value in the Config.
+	 * @return The {@link Float} representation of the value
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found and has no
+	 *             internal default value
+	 * 
+	 * @see #getFloat(String, Float)
+	 */
+	public float getFloat(String key) throws MissingConfigValueException;
+
+	/**
+	 * Returns the {@link Float} representation of the value of a stored key, if
+	 * it is possible. If not, the <code>defaultVal</code> is returned. <br>
 	 * If the key does not exist <code>defaultVal</code> is returned.
 	 * 
 	 * @param key
 	 *            The key of the value in the Config.
 	 * @param defaultVal
 	 *            The fall back value.
-	 * @return The float representation of the value or <code>defaultVal</code>
+	 * @return The {@link Float} representation of the value or
+	 *         <code>defaultVal</code>
 	 * 
 	 * @throws MissingConfigValueException
 	 *             Thrown if neither the given key can be found nor the given
 	 *             default value is != null
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
+	 * 
+	 * @see #getFloat(String)
 	 */
 	public float getFloat(String key, Float defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException;
 
 	/**
-	 * Returns the int representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
+	 * Returns the {@link Integer} representation of the value of a stored key,
+	 * if it is possible. If not, the internal default value is returned.<br>
+	 * If neither the internal default value can be found nor the key exists, a
+	 * {@link MissingConfigValueException} is thrown.
+	 * 
+	 * @param key
+	 *            The key of the value in the Config.
+	 * @return The {@link Integer} representation of the value
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found and has no
+	 *             internal default value
+	 * 
+	 * @see #getInt(String, Integer)
+	 */
+	public int getInt(String key) throws MissingConfigValueException;
+
+	/**
+	 * Returns the {@link Integer} representation of the value of a stored key,
+	 * if it is possible. If not, the <code>defaultVal</code> is returned. <br>
 	 * If the key does not exist <code>defaultVal</code> is returned.
 	 * 
 	 * @param key
 	 *            The key of the value in the Config.
 	 * @param defaultVal
 	 *            The fall back value.
-	 * @return The int representation of the value or <code>defaultVal</code>
+	 * @return The {@link Integer} representation of the value or
+	 *         <code>defaultVal</code>
 	 * @throws MissingConfigValueException
 	 *             Thrown if neither the given key can be found nor the given
 	 *             default value is != null
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
+	 * 
+	 * @see #getInt(String)
 	 */
 	public int getInt(String key, Integer defaultVal)
 			throws MissingConfigValueException, InvalidConfigValueException;
 
 	/**
-	 * Returns the int representation of the value of a stored key, if it is
-	 * possible. If not, the <code>defaultVal</code> is returned. <br>
+	 * Returns the {@link Long} representation of the value of a stored key, if
+	 * it is possible. If not, the internal default value is returned.<br>
+	 * If neither the internal default value can be found nor the key exists, a
+	 * {@link MissingConfigValueException} is thrown.
+	 * 
+	 * @param key
+	 *            The key of the value in the Config.
+	 * @return The {@link Long} representation of the value
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found and has no
+	 *             internal default value
+	 * 
+	 * @see #getLong(String, Long)
+	 */
+	public long getLong(String key) throws MissingConfigValueException;
+
+	/**
+	 * Returns the {@link Long} representation of the value of a stored key, if
+	 * it is possible. If not, the <code>defaultVal</code> is returned. <br>
 	 * If the key does not exist <code>defaultVal</code> is returned.
 	 * 
 	 * @param key
 	 *            The key of the value in the Config.
 	 * @param defaultVal
 	 *            The fall back value.
-	 * @return The int representation of the value or <code>defaultVal</code>
+	 * @return The {@link Long} representation of the value or
+	 *         <code>defaultVal</code>
 	 * @throws NoSuchElementException
 	 *             Thrown if neither the given key can be found nor the given
 	 *             default value is != null
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
+	 * 
+	 * @see #getLong(String)
 	 */
 	public long getLong(String key, Long defaultVal)
 			throws NoSuchElementException, InvalidConfigValueException;
 
 	/**
-	 * Returns the String representation of the value of a stored key.<br>
+	 * Returns the {@link String} representation of the value of a stored key,
+	 * if it is possible. If not, the internal default value is returned.<br>
+	 * If neither the internal default value can be found nor the key exists, a
+	 * {@link MissingConfigValueException} is thrown.
+	 * 
+	 * @param key
+	 *            The key of the value in the Config.
+	 * @return The {@link String} representation of the value
+	 * @throws MissingConfigValueException
+	 *             Thrown if neither the given key can be found and has no
+	 *             internal default value
+	 * 
+	 * @see #getString(String, String)
+	 */
+	public String getString(String key) throws MissingConfigValueException;
+
+	/**
+	 * Returns the {@link String} representation of the value of a stored key.<br>
 	 * If the key does not exist <code>defaultVal</code> is returned.
 	 * 
 	 * @param key
 	 *            The key of the value in the Config.
 	 * @param defaultVal
 	 *            The fall back value.
-	 * @return The String representation of the value or <code>defaultVal</code>
+	 * @return The {@link String} representation of the value or
+	 *         <code>defaultVal</code>
 	 * @throws NoSuchElementException
 	 *             Thrown if neither the given key can be found nor the given
 	 *             default value is != null
 	 * @throws InvalidConfigValueException
 	 *             Thrown if the decryption process fails
+	 * 
+	 * @see #getString(String)
 	 */
 	public String getString(String key, String defaultVal)
 			throws NoSuchElementException, InvalidConfigValueException;
@@ -167,20 +310,6 @@ public interface ICloudRAIDConfig {
 	 * @return <code>true</code> if it exists.
 	 */
 	public boolean keyExists(String key);
-
-	/**
-	 * @param key
-	 *            The key to remove
-	 * @return Returns the value matching the removed key.
-	 */
-	public String remove(Object key);
-
-	/**
-	 * Permanently remove the configuration.
-	 * 
-	 * @return True, if the configuration has been removed.
-	 */
-	public boolean delete();
 
 	/**
 	 * @param key
@@ -322,26 +451,16 @@ public interface ICloudRAIDConfig {
 	public ICloudRAIDConfig reload();
 
 	/**
+	 * @param key
+	 *            The key to remove
+	 * @return Returns the value matching the removed key.
+	 */
+	public String remove(Object key);
+
+	/**
 	 * Writes the config to a file.
 	 */
 	public void save();
-
-	/**
-	 * @return Returns the CloudRAID user home path
-	 */
-	public String getCloudRAIDHome();
-
-	/**
-	 * @return Returns the config path
-	 */
-	public String getConfigPath();
-
-	/**
-	 * Returns the default data for this configuration.
-	 * 
-	 * @return the defaultData
-	 */
-	public HashMap<String, String> getDefaultData();
 
 	/**
 	 * Sets the CloudRAID user home directory path
