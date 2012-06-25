@@ -25,6 +25,7 @@ package de.dhbw_mannheim.cloudraid.core.net.connector;
 import java.io.InputStream;
 import java.util.HashMap;
 
+import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
 /**
@@ -44,19 +45,14 @@ public interface IStorageConnector {
 	public boolean connect();
 
 	/**
-	 * Create a new instance of the <code>connector</code>.
-	 * 
-	 * @param parameter
-	 *            The given HashMap contains the parameters as key-value pairs
-	 *            that a <code>connector</code> should use during
-	 *            initialization.
+	 * Create a new instance of the <code>connector</code>. Any configuration
+	 * data must be retrieved from an {@link ICloudRAIDConfig} service!
 	 * 
 	 * @return Returns a new initialized instance of the <code>connector</code>.
 	 * @throws InstantiationException
 	 *             Thrown if not all required parameters are passed.
 	 */
-	public IStorageConnector create(HashMap<String, String> parameter)
-			throws InstantiationException;
+	public IStorageConnector create() throws InstantiationException;
 
 	/**
 	 * Create the volume name

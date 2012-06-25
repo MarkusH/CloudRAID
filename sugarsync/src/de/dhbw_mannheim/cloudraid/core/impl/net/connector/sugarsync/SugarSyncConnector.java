@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw_mannheim.cloudraid.core.impl.net.connector;
+package de.dhbw_mannheim.cloudraid.core.impl.net.connector.sugarsync;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -46,8 +46,10 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
-import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
+import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
+import de.dhbw_mannheim.cloudraid.core.impl.net.connector.StorageConnectorFactory;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
+import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
 /**
  * The API wrapper for SugarSync.
@@ -97,8 +99,7 @@ public class SugarSyncConnector implements IStorageConnector {
 				params.put("privateAccessKey", args[3]);
 			}
 			IStorageConnector ssc = StorageConnectorFactory
-					.create("de.dhbw_mannheim.cloudraid.net.connector.SugarSyncConnector",
-							params);
+					.create(SugarSyncConnector.class.getName());
 			ssc.connect();
 			if (args.length != 5) {
 				System.err
@@ -195,34 +196,43 @@ public class SugarSyncConnector implements IStorageConnector {
 	 *             Thrown, if some parameters are missing
 	 */
 	@Override
-	public IStorageConnector create(HashMap<String, String> parameter)
-			throws InstantiationException {
-		if (parameter.containsKey("username")
-				&& parameter.containsKey("password")
-				&& parameter.containsKey("accessKey")
-				&& parameter.containsKey("privateAccessKey")) {
-			this.username = parameter.get("username");
-			this.password = parameter.get("password");
-			this.accessKeyId = parameter.get("accessKey");
-			this.privateAccessKey = parameter.get("privateAccessKey");
-		} else {
-			throw new InstantiationException(
-					"username, password, accessKeyId and privateAccessKey have to be set during creation!");
-		}
-		docBuilder = null;
+	public IStorageConnector create() throws InstantiationException {
 		try {
-			docBuilder = DocumentBuilderFactory.newInstance()
-					.newDocumentBuilder();
-			docBuilder.setErrorHandler(null);
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
+			if (this.config.keyExists("connector.sugarsync.username")
+					&& this.config.keyExists("connector.sugarsync.password")
+					&& this.config.keyExists("connector.sugarsync.accessKey")
+					&& this.config
+							.keyExists("connector.sugarsync.privateAccessKey")) {
+				this.username = this.config
+						.getString("connector.sugarsync.username");
+				this.password = this.config
+						.getString("connector.sugarsync.password");
+				this.accessKeyId = this.config
+						.getString("connector.sugarsync.accessKey");
+				this.privateAccessKey = this.config
+						.getString("connector.sugarsync.privateAccessKey");
+			} else {
+				throw new InstantiationException(
+						"username, password, accessKeyId and privateAccessKey have to be set during creation!");
+			}
+			docBuilder = null;
+			try {
+				docBuilder = DocumentBuilderFactory.newInstance()
+						.newDocumentBuilder();
+				docBuilder.setErrorHandler(null);
+			} catch (ParserConfigurationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			BundleContext ctx = FrameworkUtil.getBundle(this.getClass())
+					.getBundleContext();
+			ServiceReference<ICloudRAIDConfig> configServiceReference = ctx
+					.getServiceReference(ICloudRAIDConfig.class);
+			this.config = ctx.getService(configServiceReference);
+		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
+			throw new InstantiationException(e.getMessage());
 		}
-		BundleContext ctx = FrameworkUtil.getBundle(this.getClass())
-				.getBundleContext();
-		ServiceReference<ICloudRAIDConfig> configServiceReference = ctx
-				.getServiceReference(ICloudRAIDConfig.class);
-		this.config = ctx.getService(configServiceReference);
 		return this;
 	}
 
@@ -721,5 +731,21 @@ public class SugarSyncConnector implements IStorageConnector {
 			return true;
 		}
 		return false;
+	}
+
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
+		this.config = config;
+	}
+
+	protected synchronized void startup(BundleContext context) {
+
+	}
+
+	protected synchronized void shutdown() {
+
+	}
+
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+		this.config = null;
 	}
 }

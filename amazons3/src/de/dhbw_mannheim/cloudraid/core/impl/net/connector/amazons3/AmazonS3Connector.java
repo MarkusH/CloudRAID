@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw_mannheim.cloudraid.core.impl.net.connector;
+package de.dhbw_mannheim.cloudraid.core.impl.net.connector.amazons3;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +31,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.osgi.framework.BundleContext;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -41,6 +42,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
+import de.dhbw_mannheim.cloudraid.core.impl.net.connector.StorageConnectorFactory;
 import de.dhbw_mannheim.cloudraid.core.impl.net.model.amazons3.AmazonS3VolumeModel;
 import de.dhbw_mannheim.cloudraid.core.impl.net.oauth.amazons3.AmazonS3Api;
 import de.dhbw_mannheim.cloudraid.core.impl.net.oauth.amazons3.AmazonS3Service;
@@ -60,8 +64,7 @@ public class AmazonS3Connector implements IStorageConnector {
 				params.put("secretAccessKey", args[1]);
 			}
 			IStorageConnector as3c = StorageConnectorFactory
-					.create("de.dhbw_mannheim.cloudraid.net.connector.AmazonS3Connector",
-							params);
+					.create(AmazonS3Connector.class.getName());
 			if (as3c.connect()) {
 				System.out.println("Connected");
 			} else {
@@ -105,6 +108,11 @@ public class AmazonS3Connector implements IStorageConnector {
 	private HashMap<String, AmazonS3VolumeModel> volumes = null;
 
 	/**
+	 * A reference to the current config;
+	 */
+	private ICloudRAIDConfig config = null;
+
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -142,23 +150,30 @@ public class AmazonS3Connector implements IStorageConnector {
 	 * 
 	 */
 	@Override
-	public IStorageConnector create(HashMap<String, String> parameter)
-			throws InstantiationException {
-		if (parameter.containsKey("accessKeyId")
-				&& parameter.containsKey("secretAccessKey")) {
-			this.accessKeyId = parameter.get("accessKeyId");
-			this.secretAccessKey = parameter.get("secretAccessKey");
-		} else {
-			throw new InstantiationException(
-					"accessKeyId and secretAccessKey have to be set during creation!");
-		}
+	public IStorageConnector create() throws InstantiationException {
 		try {
-			docBuilder = DocumentBuilderFactory.newInstance()
-					.newDocumentBuilder();
-			docBuilder.setErrorHandler(null);
-			is = new InputSource();
-		} catch (ParserConfigurationException e) {
+			if (this.config.keyExists("connector.amazons3.accessKeyId")
+					&& this.config
+							.keyExists("connector.amazons3.secretAccessKey")) {
+				this.accessKeyId = this.config
+						.getString("connector.amazons3.accessKeyId");
+				this.secretAccessKey = this.config
+						.getString("connector.amazons3.secretAccessKey");
+			} else {
+				throw new InstantiationException(
+						"accessKeyId and secretAccessKey have to be set during creation!");
+			}
+			try {
+				docBuilder = DocumentBuilderFactory.newInstance()
+						.newDocumentBuilder();
+				docBuilder.setErrorHandler(null);
+				is = new InputSource();
+			} catch (ParserConfigurationException e) {
+				e.printStackTrace();
+			}
+		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
+			throw new InstantiationException(e.getMessage());
 		}
 		return this;
 	}
@@ -290,4 +305,19 @@ public class AmazonS3Connector implements IStorageConnector {
 		return response;
 	}
 
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
+		this.config = config;
+	}
+
+	protected synchronized void startup(BundleContext context) {
+
+	}
+
+	protected synchronized void shutdown() {
+
+	}
+
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+		this.config = null;
+	}
 }

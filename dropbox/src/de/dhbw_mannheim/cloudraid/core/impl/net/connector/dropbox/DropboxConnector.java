@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw_mannheim.cloudraid.core.impl.net.connector;
+package de.dhbw_mannheim.cloudraid.core.impl.net.connector.dropbox;
 
 import static org.scribe.model.Verb.GET;
 import static org.scribe.model.Verb.POST;
@@ -38,8 +38,6 @@ import java.util.Scanner;
 import javax.activation.MimetypesFileTypeMap;
 
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.DropBoxApi;
 import org.scribe.model.OAuthRequest;
@@ -49,6 +47,8 @@ import org.scribe.model.Verifier;
 import org.scribe.oauth.OAuthService;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
+import de.dhbw_mannheim.cloudraid.core.impl.net.connector.StorageConnectorFactory;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
@@ -90,8 +90,8 @@ public class DropboxConnector implements IStorageConnector {
 				return;
 			}
 			IStorageConnector dbc = StorageConnectorFactory
-					.create("de.dhbw_mannheim.cloudraid.net.connector.DropboxConnector",
-							params);
+					.create(DropboxConnector.class.getName());
+
 			if (dbc.connect()) {
 				System.out.println("Connected");
 				dbc.put(args[args.length - 1]);
@@ -163,32 +163,35 @@ public class DropboxConnector implements IStorageConnector {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public IStorageConnector create(HashMap<String, String> parameter)
-			throws InstantiationException {
-		if (parameter.containsKey("accessTokenSecret")
-				&& parameter.containsKey("accessTokenValue")
-				&& parameter.containsKey("appKey")
-				&& parameter.containsKey("appSecret")) {
-			this.accessTokenSecret = parameter.get("accessTokenSecret");
-			this.accessTokenValue = parameter.get("accessTokenValue");
-			this.appKey = parameter.get("appKey");
-			this.appSecret = parameter.get("appSecret");
-		} else if (parameter.containsKey("appKey")
-				&& parameter.containsKey("appSecret")) {
-			this.appKey = parameter.get("appKey");
-			this.appSecret = parameter.get("appSecret");
-		} else {
-			throw new InstantiationException(
-					"Could not find required parameters.");
+	public IStorageConnector create() throws InstantiationException {
+		try {
+			if (this.config.keyExists("connector.dropbox.accessTokenSecret")
+					&& this.config
+							.keyExists("connector.dropbox.accessTokenValue")
+					&& this.config.keyExists("connector.dropbox.appKey")
+					&& this.config.keyExists("connector.dropbox.appSecret")) {
+				this.accessTokenSecret = this.config
+						.getString("connector.dropbox.accessTokenSecret");
+				this.accessTokenValue = this.config
+						.getString("connector.dropbox.accessTokenValue");
+				this.appKey = this.config.getString("connector.dropbox.appKey");
+				this.appSecret = this.config
+						.getString("connector.dropbox.appSecret");
+			} else if (this.config.keyExists("connector.dropbox.appKey")
+					&& this.config.keyExists("connector.dropbox.appSecret")) {
+				this.appKey = this.config.getString("connector.dropbox.appKey");
+				this.appSecret = this.config
+						.getString("connector.dropbox.appSecret");
+			} else {
+				throw new InstantiationException(
+						"Could not find required parameters.");
+			}
+		} catch (MissingConfigValueException e) {
+			e.printStackTrace();
+			throw new InstantiationException(e.getMessage());
 		}
-		BundleContext ctx = FrameworkUtil.getBundle(this.getClass())
-				.getBundleContext();
-		ServiceReference<ICloudRAIDConfig> configServiceReference = ctx
-				.getServiceReference(ICloudRAIDConfig.class);
-		this.config = ctx.getService(configServiceReference);
 		return this;
 	}
-
 	/**
 	 * {@inheritDoc}
 	 */
@@ -326,4 +329,19 @@ public class DropboxConnector implements IStorageConnector {
 		return true;
 	}
 
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
+		this.config = config;
+	}
+
+	protected synchronized void startup(BundleContext context) {
+
+	}
+
+	protected synchronized void shutdown() {
+
+	}
+
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+		this.config = null;
+	}
 }

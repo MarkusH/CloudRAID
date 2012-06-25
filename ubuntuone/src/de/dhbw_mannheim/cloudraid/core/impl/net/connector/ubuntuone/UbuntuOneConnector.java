@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw_mannheim.cloudraid.core.impl.net.connector;
+package de.dhbw_mannheim.cloudraid.core.impl.net.connector.ubuntuone;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,8 +31,6 @@ import java.util.HashMap;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -42,11 +40,13 @@ import org.scribe.oauth.OAuthService;
 import org.scribe.utils.OAuthEncoder;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
-import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
+import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
+import de.dhbw_mannheim.cloudraid.core.impl.net.connector.StorageConnectorFactory;
 import de.dhbw_mannheim.cloudraid.core.impl.net.model.ubuntuone.UbuntuOneVolumeModel;
 import de.dhbw_mannheim.cloudraid.core.impl.net.oauth.ubuntuone.UbuntuOneApi;
 import de.dhbw_mannheim.cloudraid.core.impl.net.oauth.ubuntuone.UbuntuOneService;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
+import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
 /**
  * @author Markus Holtermann
@@ -67,8 +67,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 				params.put("token_secret", args[3]);
 			}
 			IStorageConnector uoc = StorageConnectorFactory
-					.create("de.dhbw_mannheim.cloudraid.net.connector.UbuntuOneConnector",
-							params);
+					.create(UbuntuOneConnector.class.getName());
 			if (uoc != null && uoc.connect()) {
 				System.out.println("Connected");
 			} else {
@@ -172,29 +171,37 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * 
 	 */
 	@Override
-	public IStorageConnector create(HashMap<String, String> parameter)
-			throws InstantiationException {
-		if (parameter.containsKey("customer_key")
-				&& parameter.containsKey("customer_secret")
-				&& parameter.containsKey("token_key")
-				&& parameter.containsKey("token_secret")) {
-			this.ctoken = new Token(parameter.get("customer_key"),
-					parameter.get("customer_secret"));
-			this.stoken = new Token(parameter.get("token_key"),
-					parameter.get("token_secret"));
-		} else if (parameter.containsKey("username")
-				&& parameter.containsKey("password")) {
-			this.username = parameter.get("username");
-			this.password = parameter.get("password");
-		} else {
-			throw new InstantiationException(
-					"Either customer_key, customer_secret, token_key and token_secret or username and password have to be set during creation!");
+	public IStorageConnector create() throws InstantiationException {
+		try {
+			if (this.config.keyExists("connector.ubuntuone.customer_key")
+					&& this.config
+							.keyExists("connector.ubuntuone.customer_secret")
+					&& this.config.keyExists("connector.ubuntuone.token_key")
+					&& this.config
+							.keyExists("connector.ubuntuone.token_secret")) {
+				this.ctoken = new Token(
+						this.config
+								.getString("connector.ubuntuone.customer_key"),
+						this.config
+								.getString("connector.ubuntuone.customer_secret"));
+				this.stoken = new Token(
+						this.config.getString("connector.ubuntuone.token_key"),
+						this.config
+								.getString("connector.ubuntuone.token_secret"));
+			} else if (this.config.keyExists("connector.ubuntuone.username")
+					&& this.config.keyExists("connector.ubuntuone.password")) {
+				this.username = this.config
+						.getString("connector.ubuntuone.username");
+				this.password = this.config
+						.getString("connector.ubuntuone.password");
+			} else {
+				throw new InstantiationException(
+						"Either customer_key, customer_secret, token_key and token_secret or username and password have to be set during creation!");
+			}
+		} catch (MissingConfigValueException e) {
+			e.printStackTrace();
+			throw new InstantiationException(e.getMessage());
 		}
-		BundleContext ctx = FrameworkUtil.getBundle(this.getClass())
-				.getBundleContext();
-		ServiceReference<ICloudRAIDConfig> configServiceReference = ctx
-				.getServiceReference(ICloudRAIDConfig.class);
-		this.config = ctx.getService(configServiceReference);
 		return this;
 	}
 
@@ -442,4 +449,19 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return response;
 	}
 
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
+		this.config = config;
+	}
+
+	protected synchronized void startup(BundleContext context) {
+
+	}
+
+	protected synchronized void shutdown() {
+
+	}
+
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+		this.config = null;
+	}
 }
