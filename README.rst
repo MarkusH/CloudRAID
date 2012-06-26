@@ -15,18 +15,25 @@ Core Application
 ----------------
 
 - `HSQLDB <http://hsqldb.org/>`_ is the standard database system for the
-  backend. CloudRAID is tested with HSQLDB 2.2.8. Therefore HSQLDB is
-  required as long as no other wrapper for another database system is
-  used. If you want to use another database, have a look at
+  backend. CloudRAID is tested with HSQLDB 2.2.8. Therefore HSQLDB is required
+  as long as no other wrapper for another database system is used. If you want
+  to use another database, have a look at
   `de.dhbw.mannheim.cloudraid.persistence.DatabaseConnector`.
 
-- `scribe-java <https://github.com/Markush2010/scribe-java>`_ from the
-  linked fork. The original version has some restrictions and does
-  therefore not work.
+- `scribe-java <https://github.com/Markush2010/scribe-java>`_ from the linked
+  fork. The original version has some restrictions and does therefore not work.
+  Downloads can be found at
+  `https://github.com/Markush2010/scribe-java/downloads`_
 
-- `JSON-java <https://github.com/Markush2010/JSON-java>`_ from the
-  linked fork. The original version has some restrictions and does
-  therefore not work.
+- `JSON-java <https://github.com/Markush2010/JSON-java>`_ from the linked fork.
+  The original version has some restrictions and does therefore not work.
+  Downloads can be found at
+  `https://github.com/Markush2010/JSON-java/downloads`_
+
+- `MiGBase64 <https://github.com/Markush2010/MiGBase64>`_ from the
+  linked fork, since the original version is not an OSGi bundle.
+  Downloads can be found at
+  `https://github.com/Markush2010/MiGBase64/downloads`_
 
 - In order to run the unittests you need JUnit 4.
 
@@ -73,10 +80,10 @@ org.apache.ant
 ^^^^^^^^^^^^^^
 .. note::
 
-    The ant packages are part of the Eclipse Classic IDE and usually installed
-    in ``/usr/share/eclipse/plugins/org.apache.ant_1.8.2.v20120109-1030``. The
-    individual Jar files are not correctly *OSGi-ified*. You can download the
-    single Java Archives but you will need to adjust the bundles!
+   The ant packages are part of the Eclipse Classic IDE and usually installed
+   in ``/usr/share/eclipse/plugins/org.apache.ant_1.8.2.v20120109-1030``. The
+   individual Jar files are not correctly *OSGi-ified*. You can download the
+   single Java Archives but you will need to adjust the bundles!
 
 - `ant <http://repo1.maven.org/maven2/org/apache/ant/ant/1.8.2/ant-1.8.2.jar>`_
 - `ant-antlr
@@ -129,35 +136,36 @@ in Java but in C.  The C source code is located in src/native.
 To build the shared objects change to the native source folder and
 execute::
 
-    make clean (optional)
-    make
-    sudo make install
+   make clean (optional)
+   make
+   sudo make install
 
 If you want to build a debug version of the libraries, execute::
 
-    make clean (optional)
-    make DEBUG=1
-    sudo make install
+   make clean (optional)
+   make DEBUG=1
+   sudo make install
 
 Testing the C code::
 
-    make clean (optional)
-    make test (optional DEBUG=1)
-    make run-test
+   make clean (optional)
+   make test (optional DEBUG=1)
+   make run-test
 
 Run
 ===
 
 To run CloudRAID, you need to start the OSGi console with
-``-Dorg.osgi.service.http.port=PORT``. Replace ``PORT`` with any unbound port >
-1024 if you don't have administrative privileges.
+``-Dorg.osgi.service.http.port=PORT``. Replace ``PORT`` with any unbound port
+larger than 1024 if you don't have administrative privileges.
 
 Please start the bundles in the following order:
 
 #. org.eclipse.equinox.ds_1.3.1.R37x_v20110701
 #. org.eclipse.equinox.http.jetty_2.0.100.v20110502
 #. org.eclipse.equinox.http.servlet_1.1.200.v20110502
-#. CloudRAID-pwdmngr_0.0.1.prealpha
-#. CloudRAID-persistance_0.0.1.prealpha
-#. CloudRAID-core_0.0.1.prealpha
-#. CloudRAID-rest_0.0.1.prealpha
+#. CloudRAID-Password
+#. CloudRAID-Config
+#. CloudRAID-Metadata
+#. CloudRAID-Core
+#. CloudRAID-RESTful
