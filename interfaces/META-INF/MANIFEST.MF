@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: CloudRAID-interfaces
+Bundle-Name: CloudRAID-Interfaces
 Bundle-SymbolicName: CloudRAID-Interfaces
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
