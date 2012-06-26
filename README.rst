@@ -23,17 +23,17 @@ Core Application
 - `scribe-java <https://github.com/Markush2010/scribe-java>`_ from the linked
   fork. The original version has some restrictions and does therefore not work.
   Downloads can be found at
-  `https://github.com/Markush2010/scribe-java/downloads`_
+  `<https://github.com/Markush2010/scribe-java/downloads>`_
 
 - `JSON-java <https://github.com/Markush2010/JSON-java>`_ from the linked fork.
   The original version has some restrictions and does therefore not work.
   Downloads can be found at
-  `https://github.com/Markush2010/JSON-java/downloads`_
+  `<https://github.com/Markush2010/JSON-java/downloads>`_
 
 - `MiGBase64 <https://github.com/Markush2010/MiGBase64>`_ from the
   linked fork, since the original version is not an OSGi bundle.
   Downloads can be found at
-  `https://github.com/Markush2010/MiGBase64/downloads`_
+  `<https://github.com/Markush2010/MiGBase64/downloads>`_
 
 - In order to run the unittests you need JUnit 4.
 
