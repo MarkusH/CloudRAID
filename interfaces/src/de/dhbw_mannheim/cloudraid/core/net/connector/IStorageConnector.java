@@ -23,7 +23,6 @@
 package de.dhbw_mannheim.cloudraid.core.net.connector;
 
 import java.io.InputStream;
-import java.util.HashMap;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
