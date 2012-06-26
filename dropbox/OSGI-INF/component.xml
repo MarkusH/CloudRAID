@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="Dropbox-Connector">
-   <implementation class="de.dhbw_mannheim.cloudraid.core.impl.net.connector.dropbox.DropboxConnector"/>
+   <implementation class="de.dhbw_mannheim.cloudraid.dropbox.impl.net.connector.DropboxConnector"/>
    <reference bind="setConfig" cardinality="1..1" interface="de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig" name="ICloudRAIDConfig" policy="static" unbind="unsetConfig"/>
    <service>
       <provide interface="de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector"/>
