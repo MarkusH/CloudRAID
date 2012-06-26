@@ -25,10 +25,9 @@ package de.dhbw_mannheim.cloudraid.config.cli;
 import java.io.Console;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
 
-import de.dhbw_mannheim.cloudraid.config.impl.Config;
 import de.dhbw_mannheim.cloudraid.config.exceptions.ConfigException;
+import de.dhbw_mannheim.cloudraid.config.impl.Config;
 
 /**
  * @author Markus Holtermann
@@ -67,7 +66,10 @@ public class Configurator {
 		if (cons != null) {
 			char[] password = cons
 					.readPassword("Please enter the password to access the configuration file: ");
-			config.init(new String(password));
+			if (config.init(new String(password)) == null) {
+				System.err.println("Invalid password!");
+				System.exit(1);
+			}
 			System.out.println();
 
 			if (args[0].equals("get")) {
@@ -90,7 +92,7 @@ public class Configurator {
 
 	private static void help() {
 		System.out
-				.println("Usage: java de.dhbw_mannheim.cloudraid.cli.Configurator COMMAND");
+				.println("Usage: java de.dhbw_mannheim.cloudraid.config.cli.Configurator COMMAND");
 		System.out.println("    COMMAND:");
 		System.out.println("        get KEY");
 		System.out.println("        list");
@@ -106,7 +108,8 @@ public class Configurator {
 	}
 
 	private static void list() {
-		Set<String> s = config.getDefaultData().keySet();
+		ArrayList<String> s = new ArrayList<String>(config.getDefaultData()
+				.keySet());
 		s.addAll(config.keySet());
 		ArrayList<String> list = new ArrayList<String>(s);
 		Collections.sort(list);
