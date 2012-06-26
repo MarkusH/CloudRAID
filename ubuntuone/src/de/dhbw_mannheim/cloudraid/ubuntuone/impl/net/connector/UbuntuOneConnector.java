@@ -41,7 +41,6 @@ import org.scribe.utils.OAuthEncoder;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
-import de.dhbw_mannheim.cloudraid.core.impl.net.connector.StorageConnectorFactory;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 import de.dhbw_mannheim.cloudraid.ubuntuone.impl.net.model.UbuntuOneVolumeModel;
@@ -52,38 +51,6 @@ import de.dhbw_mannheim.cloudraid.ubuntuone.impl.net.oauth.UbuntuOneService;
  * @author Markus Holtermann
  */
 public class UbuntuOneConnector implements IStorageConnector {
-
-	public static void main(String[] args) {
-		try {
-			HashMap<String, String> params = new HashMap<String, String>();
-			if (args.length == 2) {
-				params.put("username", args[0]);
-				params.put("password", args[1]);
-
-			} else if (args.length == 4) {
-				params.put("customer_key", args[0]);
-				params.put("customer_secret", args[1]);
-				params.put("token_key", args[2]);
-				params.put("token_secret", args[3]);
-			}
-			IStorageConnector uoc = StorageConnectorFactory
-					.create(UbuntuOneConnector.class.getName());
-			if (uoc != null && uoc.connect()) {
-				System.out.println("Connected");
-			} else {
-				System.err.println("Connection Error!");
-				System.exit(2);
-			}
-			// uoc.loadVolumes();
-			IVolumeModel v = uoc.getVolume("CloudRAID");
-			System.out.println(v.getMetadata());
-			((UbuntuOneConnector) uoc).loadDirectories(v);
-			System.out.println(v);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-	}
 
 	/**
 	 * The user name at UbuntuOne. This has to be the users email address
@@ -116,10 +83,8 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * A reference to the current config;
 	 */
 	private ICloudRAIDConfig config = null;
+	private int id = -1;
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean connect() {
 		if (this.ctoken != null && this.stoken != null) {
@@ -145,58 +110,62 @@ public class UbuntuOneConnector implements IStorageConnector {
 	}
 
 	/**
-	 * This function initializes the UbuntuOneConnector with the customer and
-	 * application tokens. During the
-	 * {@link de.dhbw_mannheim.cloudraid.core.impl.net.connector.UbuntuOneConnector#connect()}
-	 * process the given tokens are used. If <code>connect()</code> returns
-	 * false, this class has to be reinstantiated and initialized with username
-	 * and password.
+	 * This function initializes the {@link UbuntuOneConnector} with the
+	 * customer and application tokens. During the {@link #connect()} various
+	 * tokens are used. If {@link #connect()} returns <code>false</code>, this
+	 * class has to be re-instantiated and initialized with user name and
+	 * password.
 	 * 
-	 * @param parameter
-	 *            There are two creation modes. In case the tokens already
-	 *            exist, the HashMap has to contain the following keys:
-	 *            <ul>
-	 *            <li><code>customer_key</li>
-	 *            <li><code>customer_secret</code></li>
-	 *            <li><code>token_key</code></li>
-	 *            <li><code>token_secret</code></li>
-	 *            </ul>
-	 *            or
-	 *            <ul>
-	 *            <li><code>username</code></li>
-	 *            <li><code>password</code></li>
-	 *            </ul>
+	 * The {@link ICloudRAIDConfig} must either contain:
+	 * <ul>
+	 * <li><code>connector.ID.customer_key</li>
+	 * <li><code>connector.ID.customer_secret</code></li>
+	 * <li><code>connector.ID.token_key</code></li>
+	 * <li><code>connector.ID.token_secret</code></li>
+	 * </ul>
+	 * or
+	 * <ul>
+	 * <li><code>connector.ID.username</code></li>
+	 * <li><code>connector.ID.password</code></li>
+	 * </ul>
+	 * 
+	 * @param connectorid
+	 *            The internal id of this connector.
+	 * 
 	 * @throws InstantiationException
 	 *             Thrown if not all required parameters are passed.
-	 * 
 	 */
 	@Override
-	public IStorageConnector create() throws InstantiationException {
+	public IStorageConnector create(int connectorid)
+			throws InstantiationException {
+		this.id = connectorid;
+		String kCustomerKey = String.format("connector.%d.customer_key",
+				this.id);
+		String kCustomerSecret = String.format("connector.%d.customer_secret",
+				this.id);
+		String kTokenKey = String.format("connector.%d.token_key", this.id);
+		String kTokenSecret = String.format("connector.%d.token_secret",
+				this.id);
+		String kUsername = String.format("connector.%d.username", this.id);
+		String kPassword = String.format("connector.%d.password", this.id);
 		try {
-			if (this.config.keyExists("connector.ubuntuone.customer_key")
-					&& this.config
-							.keyExists("connector.ubuntuone.customer_secret")
-					&& this.config.keyExists("connector.ubuntuone.token_key")
-					&& this.config
-							.keyExists("connector.ubuntuone.token_secret")) {
-				this.ctoken = new Token(
-						this.config
-								.getString("connector.ubuntuone.customer_key"),
-						this.config
-								.getString("connector.ubuntuone.customer_secret"));
-				this.stoken = new Token(
-						this.config.getString("connector.ubuntuone.token_key"),
-						this.config
-								.getString("connector.ubuntuone.token_secret"));
-			} else if (this.config.keyExists("connector.ubuntuone.username")
-					&& this.config.keyExists("connector.ubuntuone.password")) {
-				this.username = this.config
-						.getString("connector.ubuntuone.username");
-				this.password = this.config
-						.getString("connector.ubuntuone.password");
+			if (this.config.keyExists(kCustomerKey)
+					&& this.config.keyExists(kCustomerSecret)
+					&& this.config.keyExists(kTokenKey)
+					&& this.config.keyExists(kTokenSecret)) {
+				this.ctoken = new Token(this.config.getString(kCustomerKey),
+						this.config.getString(kCustomerSecret));
+				this.stoken = new Token(this.config.getString(kTokenKey),
+						this.config.getString(kTokenSecret));
+			} else if (this.config.keyExists(kUsername)
+					&& this.config.keyExists(kPassword)) {
+				this.username = this.config.getString(kUsername);
+				this.password = this.config.getString(kPassword);
 			} else {
-				throw new InstantiationException(
-						"Either customer_key, customer_secret, token_key and token_secret or username and password have to be set during creation!");
+				throw new InstantiationException("Either " + kCustomerKey
+						+ ", " + kCustomerSecret + ", " + kTokenKey + " and "
+						+ kTokenSecret + " or " + kUsername + " and "
+						+ kPassword + " have to be set in the config!");
 			}
 		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
@@ -205,9 +174,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return this;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public IVolumeModel createVolume(String name) {
 		if (this.volumes.containsKey(name)) {
@@ -229,9 +195,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean delete(String resource) {
 		Response response = sendRequest(Verb.DELETE,
@@ -240,9 +203,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return (response.getCode() == 200 || response.getCode() == 404);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void deleteVolume(String name) {
 		if (this.volumes.containsKey(name)) {
@@ -255,9 +215,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public InputStream get(String resource) {
 		Response response = sendRequest(Verb.GET,
@@ -270,9 +227,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public IVolumeModel getVolume(String name) {
 		if (this.volumes.containsKey(name)) {
@@ -295,9 +249,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String head(String resource) {
 		return null;
@@ -316,9 +267,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		System.out.println(response.getBody());
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void loadVolumes() {
 		Response response = sendRequest(Verb.GET,
@@ -343,25 +291,16 @@ public class UbuntuOneConnector implements IStorageConnector {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String[] options(String resource) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String post(String resource, String parent) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean put(String resource) {
 		File f = new File("/tmp/" + resource);

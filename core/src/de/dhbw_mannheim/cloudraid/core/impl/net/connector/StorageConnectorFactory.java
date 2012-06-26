@@ -35,15 +35,18 @@ public class StorageConnectorFactory {
 	 * 
 	 * @param name
 	 *            The class to load
+	 * @param connectorid
+	 *            The internal id of this connector.
+	 * 
 	 * @return An instance of the {@link IStorageConnector} or null in case an
 	 *         error occured
 	 */
-	public static IStorageConnector create(String name) {
+	public static IStorageConnector create(String name, int connectorid) {
 		try {
 			Class<?> klass = Class.forName(name);
 			IStorageConnector connector = (IStorageConnector) klass
 					.newInstance();
-			connector.create();
+			connector.create(connectorid);
 			return connector;
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();

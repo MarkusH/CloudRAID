@@ -47,7 +47,6 @@ import de.dhbw_mannheim.cloudraid.amazons3.impl.net.oauth.AmazonS3Api;
 import de.dhbw_mannheim.cloudraid.amazons3.impl.net.oauth.AmazonS3Service;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
-import de.dhbw_mannheim.cloudraid.core.impl.net.connector.StorageConnectorFactory;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
@@ -55,27 +54,6 @@ import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
  * @author Markus Holtermann
  */
 public class AmazonS3Connector implements IStorageConnector {
-
-	public static void main(String[] args) {
-		try {
-			HashMap<String, String> params = new HashMap<String, String>();
-			if (args.length == 2) {
-				params.put("accessKeyId", args[0]);
-				params.put("secretAccessKey", args[1]);
-			}
-			IStorageConnector as3c = StorageConnectorFactory
-					.create(AmazonS3Connector.class.getName());
-			if (as3c.connect()) {
-				System.out.println("Connected");
-			} else {
-				System.err.println("Connection Error!");
-				System.exit(2);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-	}
 
 	/**
 	 * The users public key
@@ -112,6 +90,8 @@ public class AmazonS3Connector implements IStorageConnector {
 	 */
 	private ICloudRAIDConfig config = null;
 
+	private int id = -1;
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -133,35 +113,40 @@ public class AmazonS3Connector implements IStorageConnector {
 	}
 
 	/**
-	 * This function initializes the UbuntuOneConnector with the customer and
-	 * application tokens. During the
-	 * {@link de.dhbw_mannheim.cloudraid.core.impl.net.connector.AmazonS3Connector#connect()}
-	 * process the given tokens are used. If <code>connect()</code> returns
-	 * false, this class has to be reinstantiated and initialized with username
-	 * and password.
+	 * This function initializes the {@link AmazonS3Connector} with the customer
+	 * and application tokens. During the {@link #connect()} process various
+	 * tokens are used. If {@link #connect()} returns <code>false</code>, this
+	 * class has to be re-instantiated and initialized with proper credentials.
+	 * </br>
 	 * 
-	 * @param parameter
-	 *            <ul>
-	 *            <li><code>accessKeyId</code></li>
-	 *            <li><code>secretAccessKey</code></li>
-	 *            </ul>
+	 * The {@link ICloudRAIDConfig} must contain following keys:
+	 * <ul>
+	 * <li><code>connector.ID.accessKeyId</code></li>
+	 * <li><code>connector.ID.secretAccessKey</code></li>
+	 * </ul>
+	 * 
+	 * @param connectorid
+	 *            The internal id of this connector.
+	 * 
 	 * @throws InstantiationException
 	 *             Thrown if not all required parameters are passed.
-	 * 
 	 */
 	@Override
-	public IStorageConnector create() throws InstantiationException {
+	public IStorageConnector create(int connectorid)
+			throws InstantiationException {
+		this.id = connectorid;
+		String kAccessKeyId = String
+				.format("connector.%d.accessKeyId", this.id);
+		String ksecretAccessKey = String.format("connector.%d.secretAccessKey",
+				this.id);
 		try {
-			if (this.config.keyExists("connector.amazons3.accessKeyId")
-					&& this.config
-							.keyExists("connector.amazons3.secretAccessKey")) {
-				this.accessKeyId = this.config
-						.getString("connector.amazons3.accessKeyId");
-				this.secretAccessKey = this.config
-						.getString("connector.amazons3.secretAccessKey");
+			if (this.config.keyExists(kAccessKeyId)
+					&& this.config.keyExists(ksecretAccessKey)) {
+				this.accessKeyId = this.config.getString(kAccessKeyId);
+				this.secretAccessKey = this.config.getString(ksecretAccessKey);
 			} else {
-				throw new InstantiationException(
-						"accessKeyId and secretAccessKey have to be set during creation!");
+				throw new InstantiationException(kAccessKeyId + " and "
+						+ ksecretAccessKey + " have to be set in the config!");
 			}
 			try {
 				docBuilder = DocumentBuilderFactory.newInstance()
@@ -183,9 +168,6 @@ public class AmazonS3Connector implements IStorageConnector {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean delete(String resource) {
 		return false;
@@ -195,9 +177,6 @@ public class AmazonS3Connector implements IStorageConnector {
 	public void deleteVolume(String name) {
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public InputStream get(String resource) {
 		return null;
@@ -217,9 +196,6 @@ public class AmazonS3Connector implements IStorageConnector {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String head(String resource) {
 		return null;
@@ -255,25 +231,16 @@ public class AmazonS3Connector implements IStorageConnector {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String[] options(String resource) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String post(String resource, String parent) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean put(String resource) {
 		return false;

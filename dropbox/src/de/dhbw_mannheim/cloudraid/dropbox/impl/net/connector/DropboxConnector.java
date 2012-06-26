@@ -32,7 +32,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Scanner;
 
 import javax.activation.MimetypesFileTypeMap;
@@ -48,7 +47,6 @@ import org.scribe.oauth.OAuthService;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
-import de.dhbw_mannheim.cloudraid.core.impl.net.connector.StorageConnectorFactory;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
@@ -69,44 +67,6 @@ public class DropboxConnector implements IStorageConnector {
 
 	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 
-	public static void main(String[] args) {
-		try {
-			HashMap<String, String> params = new HashMap<String, String>();
-			if (args.length == 3) {
-				params.put("appKey", args[0]);
-				params.put("appSecret", args[1]);
-
-			} else if (args.length == 5) {
-				params.put("appKey", args[0]);
-				params.put("appSecret", args[1]);
-				params.put("accessTokenValue", args[2]);
-				params.put("accessTokenSecret", args[3]);
-
-			} else {
-				System.err.println("Wrong parameters");
-				System.err.println("usage: appKey appSecret path-to-resource");
-				System.err
-						.println("usage: appKey appSecret accessToken accessTokenSecret path-to-resource");
-				return;
-			}
-			IStorageConnector dbc = StorageConnectorFactory
-					.create(DropboxConnector.class.getName());
-
-			if (dbc.connect()) {
-				System.out.println("Connected");
-				dbc.put(args[args.length - 1]);
-				dbc.get(args[args.length - 1]);
-				dbc.delete(args[args.length - 1]);
-			} else {
-				System.err.println("Connection Error!");
-				System.exit(2);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-	}
-
 	/**
 	 * A reference to the current config;
 	 */
@@ -120,10 +80,8 @@ public class DropboxConnector implements IStorageConnector {
 	private OAuthService service = null;
 
 	private Token accessToken = null;
+	private int id = -1;
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean connect() {
 		service = new ServiceBuilder().provider(DropBoxApi.class)
@@ -160,31 +118,56 @@ public class DropboxConnector implements IStorageConnector {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * This function initializes the {@link DropboxConnector} with the customer
+	 * and application tokens. During the {@link #connect()} process various
+	 * tokens are used. If {@link #connect()} returns <code>false</code>, this
+	 * class has to be re-instantiated and initialized with proper credentials.
+	 * </br>
+	 * 
+	 * The {@link ICloudRAIDConfig} must contain following keys:
+	 * <ul>
+	 * <li><code>connector.ID.appKey</code></li>
+	 * <li><code>connector.ID.appSecret</code></li>
+	 * <li><i><code>connector.ID.accessTokenValue</code></i> (optional)</li>
+	 * <li><i><code>connector.ID.accessTokenSecret</code></i> (optional)</li>
+	 * </ul>
+	 * 
+	 * @param connectorid
+	 *            The internal id of this connector.
+	 * 
+	 * @throws InstantiationException
+	 *             Thrown if not all required parameters are passed.
 	 */
 	@Override
-	public IStorageConnector create() throws InstantiationException {
+	public IStorageConnector create(int connectorid)
+			throws InstantiationException {
+		this.id = connectorid;
+		String kAccessTokenSecret = String.format(
+				"connector.%d.accessTokenSecret", this.id);
+		String kAccessTokenValue = String.format(
+				"connector.%d.accessTokenValue", this.id);
+		String kAppKey = String.format("connector.%d.appKey", this.id);
+		String kAppSecret = String.format("connector.%d.appSecret", this.id);
 		try {
-			if (this.config.keyExists("connector.dropbox.accessTokenSecret")
-					&& this.config
-							.keyExists("connector.dropbox.accessTokenValue")
-					&& this.config.keyExists("connector.dropbox.appKey")
-					&& this.config.keyExists("connector.dropbox.appSecret")) {
+			if (this.config.keyExists(kAccessTokenSecret)
+					&& this.config.keyExists(kAccessTokenValue)
+					&& this.config.keyExists(kAppKey)
+					&& this.config.keyExists(kAppSecret)) {
 				this.accessTokenSecret = this.config
-						.getString("connector.dropbox.accessTokenSecret");
+						.getString(kAccessTokenSecret);
 				this.accessTokenValue = this.config
-						.getString("connector.dropbox.accessTokenValue");
-				this.appKey = this.config.getString("connector.dropbox.appKey");
-				this.appSecret = this.config
-						.getString("connector.dropbox.appSecret");
-			} else if (this.config.keyExists("connector.dropbox.appKey")
-					&& this.config.keyExists("connector.dropbox.appSecret")) {
-				this.appKey = this.config.getString("connector.dropbox.appKey");
-				this.appSecret = this.config
-						.getString("connector.dropbox.appSecret");
+						.getString(kAccessTokenValue);
+				this.appKey = this.config.getString(kAppKey);
+				this.appSecret = this.config.getString(kAppSecret);
+			} else if (this.config.keyExists(kAppKey)
+					&& this.config.keyExists(kAppSecret)) {
+				this.appKey = this.config.getString(kAppKey);
+				this.appSecret = this.config.getString(kAppSecret);
 			} else {
-				throw new InstantiationException(
-						"Could not find required parameters.");
+				throw new InstantiationException("At least " + kAppKey
+						+ " and " + kAppSecret
+						+ " have to be set in the config. " + kAccessTokenValue
+						+ " and " + kAccessTokenSecret + " are optional!");
 			}
 		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
@@ -192,17 +175,12 @@ public class DropboxConnector implements IStorageConnector {
 		}
 		return this;
 	}
-	/**
-	 * {@inheritDoc}
-	 */
+
 	@Override
 	public IVolumeModel createVolume(String name) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean delete(String resource) {
 		System.out.println("DELETE " + resource);
@@ -220,16 +198,10 @@ public class DropboxConnector implements IStorageConnector {
 		return true;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void deleteVolume(String name) {
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public InputStream get(String resource) {
 		System.out.println("GET " + resource);
@@ -243,49 +215,31 @@ public class DropboxConnector implements IStorageConnector {
 		return response.getStream();
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public IVolumeModel getVolume(String name) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String head(String resource) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void loadVolumes() {
 
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String[] options(String resource) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public String post(String resource, String parent) {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean put(String resource) {
 		System.out.println("PUT " + resource);

@@ -24,12 +24,10 @@ package de.dhbw_mannheim.cloudraid.sugarsync.impl.net.connector;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.util.HashMap;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.net.ssl.HttpsURLConnection;
@@ -47,7 +45,6 @@ import org.xml.sax.SAXException;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
-import de.dhbw_mannheim.cloudraid.core.impl.net.connector.StorageConnectorFactory;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
@@ -89,46 +86,6 @@ public class SugarSyncConnector implements IStorageConnector {
 		return con;
 	}
 
-	public static void main(String[] args) {
-		try {
-			HashMap<String, String> params = new HashMap<String, String>(4);
-			if (args.length >= 4) {
-				params.put("username", args[0]);
-				params.put("password", args[1]);
-				params.put("accessKey", args[2]);
-				params.put("privateAccessKey", args[3]);
-			}
-			IStorageConnector ssc = StorageConnectorFactory
-					.create(SugarSyncConnector.class.getName());
-			ssc.connect();
-			if (args.length != 5) {
-				System.err
-						.println("You have to pass a resource as 5th parameter");
-				return;
-			}
-
-			ssc.put(args[4]);
-			ssc.put(args[4]);
-			System.out.println("Uploading done.");
-			InputStream is = ssc.get(args[4]);
-			File f = new File("/tmp/" + args[4]);
-			f.getParentFile().mkdirs();
-			FileOutputStream fos = new FileOutputStream(f);
-
-			byte[] inputBytes = new byte[02000];
-			int readLength;
-			while ((readLength = is.read(inputBytes)) >= 0) {
-				fos.write(inputBytes, 0, readLength);
-			}
-			System.out.println("Getting done.");
-			System.out.println(ssc.delete(args[4]));
-			System.out.println("Deleting done.");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-	}
-
 	/**
 	 * A reference to the current config;
 	 */
@@ -141,6 +98,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	private String token = "";
 
 	private String username, password, accessKeyId, privateAccessKey;
+	private int id = -1;
 
 	/**
 	 * Connects to the SugarSync cloud service.
@@ -181,39 +139,49 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	/**
-	 * This function initializes the SugarSyncConnector.
+	 * This function initializes the {@link SugarSyncConnector} with the
+	 * customer and application tokens. During the {@link #connect()} process
+	 * various tokens are used. If {@link #connect()} returns <code>false</code>
+	 * , this class has to be re-instantiated and initialized with proper
+	 * credentials. </br>
 	 * 
-	 * @param parameter
-	 *            There are two creation modes. In case the tokens already
-	 *            exist, the HashMap has to contain the following keys:
-	 *            <ul>
-	 *            <li><code>username</li>
-	 *            <li><code>customer_secret</code></li>
-	 *            <li><code>accessKeyId</code></li>
-	 *            <li><code>privateAccessKey</code></li>
-	 *            </ul>
+	 * The {@link ICloudRAIDConfig} must contain following keys:
+	 * <ul>
+	 * <li><code>connector.ID.username</li>
+	 * <li><code>connector.ID.customer_secret</code></li>
+	 * <li><code>connector.ID.accessKeyId</code></li>
+	 * <li><code>connector.ID.privateAccessKey</code></li>
+	 * </ul>
+	 * 
+	 * @param connectorid
+	 *            The internal id of this connector.
+	 * 
 	 * @throws InstantiationException
 	 *             Thrown, if some parameters are missing
 	 */
 	@Override
-	public IStorageConnector create() throws InstantiationException {
+	public IStorageConnector create(int connectorid)
+			throws InstantiationException {
+		this.id = connectorid;
+		String kUsername = String.format("connector.%d.username", this.id);
+		String kPassword = String.format("connector.%d.password", this.id);
+		String kAccessKey = String.format("connector.%d.accessKey", this.id);
+		String kPrivateAccessKey = String.format(
+				"connector.%d.privateAccessKey", this.id);
 		try {
-			if (this.config.keyExists("connector.sugarsync.username")
-					&& this.config.keyExists("connector.sugarsync.password")
-					&& this.config.keyExists("connector.sugarsync.accessKey")
-					&& this.config
-							.keyExists("connector.sugarsync.privateAccessKey")) {
-				this.username = this.config
-						.getString("connector.sugarsync.username");
-				this.password = this.config
-						.getString("connector.sugarsync.password");
-				this.accessKeyId = this.config
-						.getString("connector.sugarsync.accessKey");
+			if (this.config.keyExists(kUsername)
+					&& this.config.keyExists(kPassword)
+					&& this.config.keyExists(kAccessKey)
+					&& this.config.keyExists(kPrivateAccessKey)) {
+				this.username = this.config.getString(kUsername);
+				this.password = this.config.getString(kPassword);
+				this.accessKeyId = this.config.getString(kAccessKey);
 				this.privateAccessKey = this.config
-						.getString("connector.sugarsync.privateAccessKey");
+						.getString(kPrivateAccessKey);
 			} else {
-				throw new InstantiationException(
-						"username, password, accessKeyId and privateAccessKey have to be set during creation!");
+				throw new InstantiationException(kUsername + ", " + kPassword
+						+ ", " + kAccessKey + " and " + kPrivateAccessKey
+						+ " have to be set in the config!");
 			}
 			docBuilder = null;
 			try {
@@ -327,9 +295,6 @@ public class SugarSyncConnector implements IStorageConnector {
 		return null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public boolean delete(String resource) {
 		String parent;
