@@ -612,7 +612,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		setConfigPath(CONFIG_PATH);
 
 		if (!CONFIG_FILE.exists()) {
-			return null;
+			return this;
 		}
 
 		// Create DocumentBuilder for XML files.
