@@ -181,6 +181,12 @@ public class AmazonS3Connector implements IStorageConnector {
 	}
 
 	@Override
+	public void disconnect() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
 	public InputStream get(String resource) {
 		return null;
 	}
@@ -229,16 +235,6 @@ public class AmazonS3Connector implements IStorageConnector {
 		}
 	}
 
-	@Override
-	public boolean update(String resource) {
-		return false;
-	}
-
-	@Override
-	public boolean upload(String resource) {
-		return false;
-	}
-
 	/**
 	 * Creates a {@link org.scribe.model.OAuthRequest} to <code>endpoint</code>
 	 * as a HTTP <code>verb</code> Request Method. The request is signed with
@@ -269,15 +265,25 @@ public class AmazonS3Connector implements IStorageConnector {
 		this.config = config;
 	}
 
-	protected synchronized void startup(BundleContext context) {
-
+	protected synchronized void shutdown() {
+		disconnect();
 	}
 
-	protected synchronized void shutdown() {
+	protected synchronized void startup(BundleContext context) {
 
 	}
 
 	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
 		this.config = null;
+	}
+
+	@Override
+	public boolean update(String resource) {
+		return false;
+	}
+
+	@Override
+	public boolean upload(String resource) {
+		return false;
 	}
 }

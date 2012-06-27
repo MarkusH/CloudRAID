@@ -205,6 +205,12 @@ public class DropboxConnector implements IStorageConnector {
 	}
 
 	@Override
+	public void disconnect() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
 	public InputStream get(String resource) {
 		System.out.println("GET " + resource);
 		OAuthRequest request = new OAuthRequest(GET, GET_URL + resource);
@@ -225,6 +231,22 @@ public class DropboxConnector implements IStorageConnector {
 	@Override
 	public void loadVolumes() {
 
+	}
+
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
+		this.config = config;
+	}
+
+	protected synchronized void shutdown() {
+		disconnect();
+	}
+
+	protected synchronized void startup(BundleContext context) {
+
+	}
+
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+		this.config = null;
 	}
 
 	@Override
@@ -273,21 +295,5 @@ public class DropboxConnector implements IStorageConnector {
 			return false;
 		}
 		return true;
-	}
-
-	protected synchronized void setConfig(ICloudRAIDConfig config) {
-		this.config = config;
-	}
-
-	protected synchronized void startup(BundleContext context) {
-
-	}
-
-	protected synchronized void shutdown() {
-
-	}
-
-	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
-		this.config = null;
 	}
 }

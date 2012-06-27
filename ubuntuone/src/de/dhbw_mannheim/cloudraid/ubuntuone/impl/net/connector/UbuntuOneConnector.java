@@ -218,6 +218,12 @@ public class UbuntuOneConnector implements IStorageConnector {
 	}
 
 	@Override
+	public void disconnect() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
 	public InputStream get(String resource) {
 		Response response = sendRequest(Verb.GET,
 				this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
@@ -288,46 +294,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		}
 	}
 
-	@Override
-	public boolean update(String resource) {
-		return false;
-	}
-
-	@Override
-	public boolean upload(String resource) {
-		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
-		int maxFilesize;
-		try {
-			maxFilesize = this.config.getInt("filesize.max", null);
-			if (f.length() > maxFilesize) {
-				System.err.println("File too big");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		if (f.length() > maxFilesize) {
-			System.err.println("File too big.");
-		} else {
-			byte[] fileBytes = new byte[(int) f.length()];
-			InputStream fis;
-			try {
-				fis = new FileInputStream(f);
-				fis.read(fileBytes);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			}
-			Response response = sendRequest(Verb.PUT,
-					this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
-							+ OAuthEncoder.encode(resource), fileBytes);
-			if (response.getCode() == 201) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	/**
 	 * Creates a {@link org.scribe.model.OAuthRequest} to <code>endpoint</code>
 	 * as a HTTP <code>verb</code> Request Method. The request is signed with
@@ -384,15 +350,55 @@ public class UbuntuOneConnector implements IStorageConnector {
 		this.config = config;
 	}
 
-	protected synchronized void startup(BundleContext context) {
-
+	protected synchronized void shutdown() {
+		disconnect();
 	}
 
-	protected synchronized void shutdown() {
+	protected synchronized void startup(BundleContext context) {
 
 	}
 
 	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
 		this.config = null;
+	}
+
+	@Override
+	public boolean update(String resource) {
+		return false;
+	}
+
+	@Override
+	public boolean upload(String resource) {
+		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
+		int maxFilesize;
+		try {
+			maxFilesize = this.config.getInt("filesize.max", null);
+			if (f.length() > maxFilesize) {
+				System.err.println("File too big");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		if (f.length() > maxFilesize) {
+			System.err.println("File too big.");
+		} else {
+			byte[] fileBytes = new byte[(int) f.length()];
+			InputStream fis;
+			try {
+				fis = new FileInputStream(f);
+				fis.read(fileBytes);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			Response response = sendRequest(Verb.PUT,
+					this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
+							+ OAuthEncoder.encode(resource), fileBytes);
+			if (response.getCode() == 201) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

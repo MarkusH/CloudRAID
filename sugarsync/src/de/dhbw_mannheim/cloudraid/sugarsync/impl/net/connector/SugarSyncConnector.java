@@ -58,8 +58,6 @@ public class SugarSyncConnector implements IStorageConnector {
 	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 	private final static String USER_INFO_URL = "https://api.sugarsync.com/user";
 
-	private String splitOutputDir = null;
-
 	/**
 	 * Creates an HTTPS connection with some predefined values
 	 * 
@@ -85,6 +83,8 @@ public class SugarSyncConnector implements IStorageConnector {
 
 		return con;
 	}
+
+	private String splitOutputDir = null;
 
 	/**
 	 * A reference to the current config;
@@ -353,6 +353,12 @@ public class SugarSyncConnector implements IStorageConnector {
 	public void deleteVolume(String name) {
 	}
 
+	@Override
+	public void disconnect() {
+		// TODO Auto-generated method stub
+
+	}
+
 	/**
 	 * Checks, if a file is in the specific folder on the SugarSync servers.
 	 * 
@@ -597,6 +603,22 @@ public class SugarSyncConnector implements IStorageConnector {
 	public void loadVolumes() {
 	}
 
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
+		this.config = config;
+	}
+
+	protected synchronized void shutdown() {
+		disconnect();
+	}
+
+	protected synchronized void startup(BundleContext context) {
+
+	}
+
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+		this.config = null;
+	}
+
 	@Override
 	public boolean update(String resource) {
 		return false;
@@ -663,21 +685,5 @@ public class SugarSyncConnector implements IStorageConnector {
 			return true;
 		}
 		return false;
-	}
-
-	protected synchronized void setConfig(ICloudRAIDConfig config) {
-		this.config = config;
-	}
-
-	protected synchronized void startup(BundleContext context) {
-
-	}
-
-	protected synchronized void shutdown() {
-
-	}
-
-	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
-		this.config = null;
 	}
 }

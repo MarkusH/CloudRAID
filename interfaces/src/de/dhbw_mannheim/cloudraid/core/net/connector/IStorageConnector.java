@@ -89,6 +89,13 @@ public interface IStorageConnector {
 	public void deleteVolume(String name);
 
 	/**
+	 * Ends the current session on a cloud storage. There might be APIs that do
+	 * not support logging out or disconnecting; in this case, the method can be
+	 * empty. If there is no existing session, this method should do nothing.
+	 */
+	public void disconnect();
+
+	/**
 	 * Gets a file from a cloud service. The method <b>returns <code>null</code>
 	 * </b>, if the resource is not available.
 	 * 
