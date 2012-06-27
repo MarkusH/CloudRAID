@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -61,6 +62,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 	private int fileid;
 	private boolean update;
 	private File file;
+	private String hash;
+	private boolean uploadstate;
 
 	public CoreAccess() throws InstantiationException {
 		// unset/initialize the values for this instance
@@ -152,26 +155,26 @@ public class CoreAccess extends Thread implements ICoreAccess {
 					this.start();
 				} else {
 					this.run();
-					return true;
 				}
+				this.uploadstate = true;
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			this.uploadstate = false;
 			e.printStackTrace();
 		} catch (MissingConfigValueException e) {
-			// TODO Auto-generated catch block
+			this.uploadstate = false;
 			e.printStackTrace();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
+			this.uploadstate = false;
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			this.uploadstate = false;
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
+			this.uploadstate = false;
 			e.printStackTrace();
 		}
-		return false;
+		return this.uploadstate;
 	}
 
 	@Override
@@ -189,27 +192,46 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		this.metadata.fileUpdateState(this.fileid, FILE_STATUS.SPLITTING);
 		try {
 			// perform the splitting process
-			RaidAccessInterface.splitInterface(this.file.getParent(),
-					this.file.getName(), config.getString("split.output.dir"),
+			this.hash = RaidAccessInterface.splitInterface(
+					this.file.getParent(), this.file.getName(),
+					config.getString("split.output.dir"),
 					config.getString("file.password"));
-			// Update state to splitted
+			// Update state to split
+			// TODO set lastMod
+			this.metadata.fileUpdate(this.fileid, this.path, this.hash,
+					new Date().getTime(), this.userid);
 			this.metadata.fileUpdateState(this.fileid, FILE_STATUS.SPLITTED);
 
 			IStorageConnector[] storageConnectors = coreService
 					.getStorageConnectors();
 
-			for (int i = 0; i < 3; i++) {
-				// TODO iterate over all connectors and upload the files with
+			this.metadata
+					.fileUpdateState(this.fileid, FILE_STATUS.DISTRIBUTING);
+			if (update) {
+				// iterate over all connectors and upload the files with
 				// extension .0, .1 and .2 AND the .m file to all connectors
+				for (int i = 0; i < 3; i++) {
+					storageConnectors[i].update(hash);
+				}
+			} else {
+				// iterate over all connectors and upload the files with
+				// extension .0, .1 and .2 AND the .m file to all connectors
+				for (int i = 0; i < 3; i++) {
+					storageConnectors[i].upload(hash);
+				}
 			}
+			this.metadata.fileUpdateState(this.fileid, FILE_STATUS.DISTRIBUTED);
+
+			this.metadata.fileUpdateState(this.fileid, FILE_STATUS.READY);
 
 		} catch (MissingConfigValueException e) {
-			// TODO Auto-generated catch block
+			this.uploadstate = false;
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
+			this.uploadstate = false;
 			e.printStackTrace();
 		}
+		this.uploadstate = true;
 	}
 
 	private void reset() {
@@ -218,7 +240,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		this.fileid = -1;
 		this.update = false;
 		this.file = null;
-
+		this.hash = null;
+		this.uploadstate = false;
 	}
 
 }

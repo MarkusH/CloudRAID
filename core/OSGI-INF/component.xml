@@ -5,4 +5,5 @@
    <service>
       <provide interface="de.dhbw_mannheim.cloudraid.core.ICloudRAIDService"/>
    </service>
+   <reference cardinality="1..1" interface="de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager" name="IMetadataManager" policy="static"/>
 </scr:component>

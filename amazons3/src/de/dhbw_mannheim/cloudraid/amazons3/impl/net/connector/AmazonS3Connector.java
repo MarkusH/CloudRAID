@@ -31,7 +31,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.osgi.framework.BundleContext;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -91,7 +90,6 @@ public class AmazonS3Connector implements IStorageConnector {
 	private ICloudRAIDConfig config = null;
 
 	private int id = -1;
-	private String splitOutputDir = null;
 
 	/**
 	 * {@inheritDoc}
@@ -128,20 +126,22 @@ public class AmazonS3Connector implements IStorageConnector {
 	 * 
 	 * @param connectorid
 	 *            The internal id of this connector.
+	 * @param config
+	 *            The reference to a running {@link ICloudRAIDConfig} service.
 	 * 
 	 * @throws InstantiationException
 	 *             Thrown if not all required parameters are passed.
 	 */
 	@Override
-	public IStorageConnector create(int connectorid)
+	public IStorageConnector create(int connectorid, ICloudRAIDConfig config)
 			throws InstantiationException {
 		this.id = connectorid;
+		this.config = config;
 		String kAccessKeyId = String
 				.format("connector.%d.accessKeyId", this.id);
 		String ksecretAccessKey = String.format("connector.%d.secretAccessKey",
 				this.id);
 		try {
-			splitOutputDir = this.config.getString("split.output.dir");
 			if (this.config.keyExists(kAccessKeyId)
 					&& this.config.keyExists(ksecretAccessKey)) {
 				this.accessKeyId = this.config.getString(kAccessKeyId);
@@ -259,22 +259,6 @@ public class AmazonS3Connector implements IStorageConnector {
 		System.err.print(response.getBody());
 		System.err.flush();
 		return response;
-	}
-
-	protected synchronized void setConfig(ICloudRAIDConfig config) {
-		this.config = config;
-	}
-
-	protected synchronized void shutdown() {
-		disconnect();
-	}
-
-	protected synchronized void startup(BundleContext context) {
-
-	}
-
-	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
-		this.config = null;
 	}
 
 	@Override

@@ -23,23 +23,18 @@
 package de.dhbw_mannheim.cloudraid.core.impl;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import javax.management.ServiceNotFoundException;
-
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.ServiceReference;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.ConfigException;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.core.ICoreAccess;
-import de.dhbw_mannheim.cloudraid.core.impl.fs.FileManager;
-import de.dhbw_mannheim.cloudraid.core.impl.fs.RecursiveFileSystemWatcher;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 
 /**
@@ -50,8 +45,8 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 	private ICloudRAIDConfig config = null;
 
-	private IStorageConnector[] storageConnectors = { null, null, null };
-	private String[] storageConnectorClassnames = { null, null, null };
+	private IStorageConnector[] storageConnectors = {null, null, null};
+	private String[] storageConnectorClassnames = {null, null, null};
 
 	private Queue<ICoreAccess> availableSlots = new LinkedList<ICoreAccess>();
 	private Queue<ICoreAccess> freeSlots = new LinkedList<ICoreAccess>();
@@ -78,9 +73,7 @@ public class CloudRAIDService implements ICloudRAIDService {
 	}
 
 	/**
-	 * This function is called upon shutdown of this service. All
-	 * {@link FileManager}s are stopped and the
-	 * {@link RecursiveFileSystemWatcher} is stopped too. The instance of
+	 * This function is called upon shutdown of this service. The
 	 * {@link ICloudRAIDConfig} will be saved.
 	 */
 	protected synchronized void shutdown() {
@@ -137,42 +130,18 @@ public class CloudRAIDService implements ICloudRAIDService {
 			for (int i = 0; i < 3 && connectedServices < 3; i++) {
 
 				try {
-					b.loadClass(this.storageConnectorClassnames[i]);
-					Thread.sleep(2500);
-					if (b.getState() != Bundle.ACTIVE) {
-						System.out.println("\tStarting bundle "
-								+ b.getSymbolicName()
-								+ " and wait 5 seconds ...");
-						b.start();
-						Thread.sleep(2500);
-						System.out.println("\t\tDone");
-					} else {
-						System.out.println("\tBundle " + b.getSymbolicName()
-								+ " already active.");
-					}
+					Class<?> klass = b
+							.loadClass(this.storageConnectorClassnames[i]);
 
-					ServiceReference<?>[] scs = b.getRegisteredServices();
-					if (scs == null || scs.length < 1) {
-						throw new ServiceNotFoundException(
-								"\tThe service for class "
-										+ this.storageConnectorClassnames[i]
-										+ " could not be found!");
-					}
-					IStorageConnector sc = (IStorageConnector) context
-							.getService(scs[0]);
-					if (this.storageConnectorClassnames[i].equals(sc.getClass()
-							.getName()) && this.storageConnectors[i] == null) {
-						this.storageConnectors[i] = sc;
-						connectedServices++;
-					}
+					IStorageConnector connector = (IStorageConnector) klass
+							.newInstance();
+					this.storageConnectors[i] = connector;
+					connectedServices++;
 
-				} catch (BundleException e) {
+				} catch (ClassNotFoundException ignore) {
+				} catch (Exception e) {
 					System.err.println("Cannot start bundle " + b);
 					e.printStackTrace();
-				} catch (Exception e) {
-					// System.err.println("Class "
-					// + this.storageConnectorClassnames[i]
-					// + " not found in bundle " + b.getSymbolicName());
 				}
 
 			}
@@ -183,16 +152,15 @@ public class CloudRAIDService implements ICloudRAIDService {
 		if (connectedServices == 3) {
 			System.out
 					.println("Resolved and started all required cloud connector bundles.");
+			System.out.println(Arrays.toString(this.storageConnectors));
 		} else {
 			System.err
 					.println("Couldn't resolve or start all required bundles!");
 			return;
-			// throw new ClassNotFoundException(
-			// "Couldn't resolve or start all required bundles!");
 		}
 
 		for (int i = 0; i < 3; i++) {
-			this.storageConnectors[i].create(i);
+			this.storageConnectors[i].create(i, this.config);
 		}
 
 		System.out.println("CloudRAIDService: startup: end");

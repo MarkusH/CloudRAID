@@ -5,9 +5,7 @@ Bundle-SymbolicName: CloudRAID-UbuntuOne
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Service-Component: OSGI-INF/component.xml
-Import-Package: de.dhbw_mannheim.cloudraid.core.impl.net.connector,
- de.dhbw_mannheim.cloudraid.core.impl.net.model,
+Import-Package: de.dhbw_mannheim.cloudraid.core.impl.net.model,
  de.dhbw_mannheim.cloudraid.core.impl.net.util,
  org.osgi.framework;version="1.6.0"
 Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1",

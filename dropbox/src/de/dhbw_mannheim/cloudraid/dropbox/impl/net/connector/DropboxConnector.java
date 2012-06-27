@@ -36,7 +36,6 @@ import java.util.Scanner;
 
 import javax.activation.MimetypesFileTypeMap;
 
-import org.osgi.framework.BundleContext;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.builder.api.DropBoxApi;
 import org.scribe.model.OAuthRequest;
@@ -137,14 +136,17 @@ public class DropboxConnector implements IStorageConnector {
 	 * 
 	 * @param connectorid
 	 *            The internal id of this connector.
+	 * @param config
+	 *            The reference to a running {@link ICloudRAIDConfig} service.
 	 * 
 	 * @throws InstantiationException
 	 *             Thrown if not all required parameters are passed.
 	 */
 	@Override
-	public IStorageConnector create(int connectorid)
+	public IStorageConnector create(int connectorid, ICloudRAIDConfig config)
 			throws InstantiationException {
 		this.id = connectorid;
+		this.config = config;
 		String kAccessTokenSecret = String.format(
 				"connector.%d.accessTokenSecret", this.id);
 		String kAccessTokenValue = String.format(
@@ -270,22 +272,6 @@ public class DropboxConnector implements IStorageConnector {
 			return false;
 		}
 		return true;
-	}
-
-	protected synchronized void setConfig(ICloudRAIDConfig config) {
-		this.config = config;
-	}
-
-	protected synchronized void shutdown() {
-		disconnect();
-	}
-
-	protected synchronized void startup(BundleContext context) {
-
-	}
-
-	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
-		this.config = null;
 	}
 
 	@Override

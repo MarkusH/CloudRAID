@@ -5,7 +5,6 @@ Bundle-SymbolicName: CloudRAID-AmazonS3
 Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Service-Component: OSGI-INF/component.xml
 Import-Package: de.dhbw_mannheim.cloudraid.core.impl.net.model,
  javax.crypto,
  javax.crypto.spec,

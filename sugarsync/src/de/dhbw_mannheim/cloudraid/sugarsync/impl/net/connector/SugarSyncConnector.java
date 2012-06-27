@@ -35,7 +35,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.osgi.framework.BundleContext;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -117,8 +116,8 @@ public class SugarSyncConnector implements IStorageConnector {
 							+ "</password>\n\t<accessKeyId>%s"
 							+ "</accessKeyId><privateAccessKey>%s"
 							+ "</privateAccessKey></authRequest>",
-					new Object[] { username, password, accessKeyId,
-							privateAccessKey });
+					new Object[]{username, password, accessKeyId,
+							privateAccessKey});
 
 			con.connect();
 			con.getOutputStream().write(authReq.getBytes());
@@ -148,14 +147,17 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * 
 	 * @param connectorid
 	 *            The internal id of this connector.
+	 * @param config
+	 *            The reference to a running {@link ICloudRAIDConfig} service.
 	 * 
 	 * @throws InstantiationException
-	 *             Thrown, if some parameters are missing
+	 *             Thrown if not all required parameters are passed.
 	 */
 	@Override
-	public IStorageConnector create(int connectorid)
+	public IStorageConnector create(int connectorid, ICloudRAIDConfig config)
 			throws InstantiationException {
 		this.id = connectorid;
+		this.config = config;
 		String kUsername = String.format("connector.%d.username", this.id);
 		String kPassword = String.format("connector.%d.password", this.id);
 		String kAccessKey = String.format("connector.%d.accessKey", this.id);
@@ -603,22 +605,6 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public void loadVolumes() {
-	}
-
-	protected synchronized void setConfig(ICloudRAIDConfig config) {
-		this.config = config;
-	}
-
-	protected synchronized void shutdown() {
-		disconnect();
-	}
-
-	protected synchronized void startup(BundleContext context) {
-
-	}
-
-	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
-		this.config = null;
 	}
 
 	@Override

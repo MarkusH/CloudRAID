@@ -44,18 +44,19 @@ public interface IStorageConnector {
 	public boolean connect();
 
 	/**
-	 * Create a new instance of the <code>connector</code>. Any configuration
-	 * data must be retrieved from an {@link ICloudRAIDConfig} service!
+	 * Create a new instance of an {@link IStorageConnector}.
 	 * 
 	 * @param connectorid
 	 *            The internal id of this connector.
+	 * @param config
+	 *            The reference to a running {@link ICloudRAIDConfig} service.
 	 * 
 	 * @return Returns a new initialized instance of the
 	 *         {@link IStorageConnector} implementation.
 	 * @throws InstantiationException
 	 *             Thrown if not all required parameters are passed.
 	 */
-	public IStorageConnector create(int connectorid)
+	public IStorageConnector create(int connectorid, ICloudRAIDConfig config)
 			throws InstantiationException;
 
 	/**
