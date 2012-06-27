@@ -58,6 +58,8 @@ public class SugarSyncConnector implements IStorageConnector {
 	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 	private final static String USER_INFO_URL = "https://api.sugarsync.com/user";
 
+	private String splitOutputDir = null;
+
 	/**
 	 * Creates an HTTPS connection with some predefined values
 	 * 
@@ -167,6 +169,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		String kPrivateAccessKey = String.format(
 				"connector.%d.privateAccessKey", this.id);
 		try {
+			splitOutputDir = this.config.getString("split.output.dir");
 			if (this.config.keyExists(kUsername)
 					&& this.config.keyExists(kPassword)
 					&& this.config.keyExists(kAccessKey)
@@ -631,29 +634,30 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	@Override
 	public boolean put(String resource) {
-		File f = new File("/tmp/" + resource);
-		int max_filesize;
+		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
+		int maxFilesize;
 		try {
-			max_filesize = this.config.getInt("filesize.max", null);
-			if (f.length() > max_filesize) {
+			maxFilesize = this.config.getInt("filesize.max", null);
+			if (f.length() > maxFilesize) {
 				System.err.println("File too big");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
-		if (f.length() > max_filesize) {
+		if (f.length() > maxFilesize) {
 			System.err.println("File too big");
 		} else if (!f.exists()) {
 			System.err.println("File does not exist");
 		} else {
 			try {
 				String parent;
-				if (resource.contains("/"))
+				if (resource.contains("/")) {
 					parent = this.getResourceURL(resource.substring(0,
 							resource.lastIndexOf("/") + 1), true);
-				else
+				} else {
 					parent = this.getResourceURL("", true);
+				}
 
 				String fileName = resource
 						.substring(resource.lastIndexOf("/") + 1);

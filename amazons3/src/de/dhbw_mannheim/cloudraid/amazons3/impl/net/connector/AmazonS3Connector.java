@@ -91,6 +91,7 @@ public class AmazonS3Connector implements IStorageConnector {
 	private ICloudRAIDConfig config = null;
 
 	private int id = -1;
+	private String splitOutputDir = null;
 
 	/**
 	 * {@inheritDoc}
@@ -140,6 +141,7 @@ public class AmazonS3Connector implements IStorageConnector {
 		String ksecretAccessKey = String.format("connector.%d.secretAccessKey",
 				this.id);
 		try {
+			splitOutputDir = this.config.getString("split.output.dir");
 			if (this.config.keyExists(kAccessKeyId)
 					&& this.config.keyExists(ksecretAccessKey)) {
 				this.accessKeyId = this.config.getString(kAccessKeyId);

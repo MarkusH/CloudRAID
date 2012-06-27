@@ -84,6 +84,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 */
 	private ICloudRAIDConfig config = null;
 	private int id = -1;
+	private String splitOutputDir = null;
 
 	@Override
 	public boolean connect() {
@@ -149,6 +150,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		String kUsername = String.format("connector.%d.username", this.id);
 		String kPassword = String.format("connector.%d.password", this.id);
 		try {
+			splitOutputDir = this.config.getString("split.output.dir");
 			if (this.config.keyExists(kCustomerKey)
 					&& this.config.keyExists(kCustomerSecret)
 					&& this.config.keyExists(kTokenKey)
@@ -303,24 +305,24 @@ public class UbuntuOneConnector implements IStorageConnector {
 
 	@Override
 	public boolean put(String resource) {
-		File f = new File("/tmp/" + resource);
-		int max_filesize;
+		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
+		int maxFilesize;
 		try {
-			max_filesize = this.config.getInt("filesize.max", null);
-			if (f.length() > max_filesize) {
+			maxFilesize = this.config.getInt("filesize.max", null);
+			if (f.length() > maxFilesize) {
 				System.err.println("File too big");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
-		if (f.length() > max_filesize) {
+		if (f.length() > maxFilesize) {
 			System.err.println("File too big.");
 		} else {
 			byte[] fileBytes = new byte[(int) f.length()];
 			InputStream fis;
 			try {
-				fis = new FileInputStream("/tmp/" + resource);
+				fis = new FileInputStream(f);
 				fis.read(fileBytes);
 			} catch (IOException e) {
 				e.printStackTrace();
