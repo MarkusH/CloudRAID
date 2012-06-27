@@ -76,6 +76,7 @@ public class DropboxConnector implements IStorageConnector {
 	private String appKey = null;
 	private String appSecret = null;
 	private String accessTokenSecret = null;
+	private String splitOutputDir = null;
 
 	private OAuthService service = null;
 
@@ -149,6 +150,7 @@ public class DropboxConnector implements IStorageConnector {
 		String kAppKey = String.format("connector.%d.appKey", this.id);
 		String kAppSecret = String.format("connector.%d.appSecret", this.id);
 		try {
+			splitOutputDir = this.config.getString("split.output.dir");
 			if (this.config.keyExists(kAccessTokenSecret)
 					&& this.config.keyExists(kAccessTokenValue)
 					&& this.config.keyExists(kAppKey)
@@ -243,15 +245,15 @@ public class DropboxConnector implements IStorageConnector {
 	@Override
 	public boolean put(String resource) {
 		System.out.println("PUT " + resource);
-		File f = new File("/tmp/" + resource);
+		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
 		if (!f.exists()) {
 			System.err.println("File does not exist.");
 			return false;
 		} else {
-			int max_filesize;
+			int maxFilesize;
 			try {
-				max_filesize = this.config.getInt("filesize.max", null);
-				if (f.length() > max_filesize) {
+				maxFilesize = this.config.getInt("filesize.max", null);
+				if (f.length() > maxFilesize) {
 					System.err.println("File too big");
 					return false;
 				}
@@ -264,7 +266,7 @@ public class DropboxConnector implements IStorageConnector {
 		byte[] fileBytes = new byte[(int) f.length()];
 		InputStream fis;
 		try {
-			fis = new FileInputStream("/tmp/" + resource);
+			fis = new FileInputStream(f);
 			fis.read(fileBytes);
 		} catch (IOException e) {
 			e.printStackTrace();
