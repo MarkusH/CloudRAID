@@ -232,9 +232,11 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			e.printStackTrace();
 		}
 		this.uploadstate = true;
+		this.coreService.ungetSlot(this);
 	}
 
-	private void reset() {
+	@Override
+	public void reset() {
 		this.path = null;
 		this.userid = -1;
 		this.fileid = -1;

@@ -39,4 +39,6 @@ public interface ICoreAccess {
 
 	public boolean deleteData(int fileid);
 
+	public void reset();
+
 }

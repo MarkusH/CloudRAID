@@ -209,6 +209,7 @@ public class CloudRAIDService implements ICloudRAIDService {
 			this.availableSlots.add(slot);
 			this.usedSlots.add(slot);
 		}
+		slot.reset();
 		return slot;
 	}
 
@@ -221,5 +222,18 @@ public class CloudRAIDService implements ICloudRAIDService {
 					"At least one storage connector missing");
 		}
 		return this.storageConnectors;
+	}
+
+	public void ungetSlot(ICoreAccess slot) {
+		if (!this.availableSlots.contains(slot)) {
+			this.availableSlots.add(slot);
+		}
+		if (this.usedSlots.remove(slot)) {
+			this.freeSlots.add(slot);
+		} else {
+			if (!this.freeSlots.contains(slot)) {
+				this.freeSlots.add(slot);
+			}
+		}
 	}
 }
