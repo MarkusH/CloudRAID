@@ -6,9 +6,7 @@ Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Service-Component: OSGI-INF/component.xml
-Import-Package: de.dhbw_mannheim.cloudraid.core.impl.net.connector,
- de.dhbw_mannheim.cloudraid.core.impl.net.model,
- de.dhbw_mannheim.cloudraid.core.impl.net.util,
+Import-Package: de.dhbw_mannheim.cloudraid.core.impl.net.model,
  javax.crypto,
  javax.crypto.spec,
  javax.xml.parsers,
@@ -17,5 +15,4 @@ Import-Package: de.dhbw_mannheim.cloudraid.core.impl.net.connector,
  org.xml.sax
 Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1",
  MiGBase64;bundle-version="2.2.0",
- scribe-java;bundle-version="1.3.0.1-osgi",
- JSON-java;bundle-version="1.0.0.1-osgi"
+ scribe-java;bundle-version="1.3.0.1-osgi"
