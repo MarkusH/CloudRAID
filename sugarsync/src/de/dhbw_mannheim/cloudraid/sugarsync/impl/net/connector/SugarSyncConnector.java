@@ -100,11 +100,6 @@ public class SugarSyncConnector implements IStorageConnector {
 	private String username, password, accessKeyId, privateAccessKey;
 	private int id = -1;
 
-	/**
-	 * Connects to the SugarSync cloud service.
-	 * 
-	 * @return true, if the service could be connected, false, if not.
-	 */
 	@Override
 	public boolean connect() {
 		try {
@@ -437,14 +432,6 @@ public class SugarSyncConnector implements IStorageConnector {
 		return null;
 	}
 
-	/**
-	 * Gets a resource (file)
-	 * 
-	 * @param resource
-	 *            The path on the SugarSync system.
-	 * @return Either an InputStream, if resource could be found, or
-	 *         <code>null</code>, if the resource could not be found.
-	 */
 	@Override
 	public InputStream get(String resource) {
 		try {
@@ -621,31 +608,24 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	@Override
-	public String post(String resource, String parent) {
+	public String post(String resource) {
 		return null;
 	}
 
-	/**
-	 * Puts a resource to the SugarSync folder.
-	 * 
-	 * @param resource
-	 *            The path (relative to /tmp) to the file to upload.
-	 * @return true, if it could be uploaded.
-	 */
 	@Override
 	public boolean put(String resource) {
 		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
-		int maxFilesize;
+		int max_filesize;
 		try {
-			maxFilesize = this.config.getInt("filesize.max", null);
-			if (f.length() > maxFilesize) {
+			max_filesize = this.config.getInt("filesize.max", null);
+			if (f.length() > max_filesize) {
 				System.err.println("File too big");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
-		if (f.length() > maxFilesize) {
+		if (f.length() > max_filesize) {
 			System.err.println("File too big");
 		} else if (!f.exists()) {
 			System.err.println("File does not exist");

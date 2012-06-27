@@ -299,7 +299,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 	}
 
 	@Override
-	public String post(String resource, String parent) {
+	public String post(String resource) {
 		return null;
 	}
 

@@ -134,11 +134,9 @@ public interface IStorageConnector {
 	 * 
 	 * @param resource
 	 *            The resource to use
-	 * @param parent
-	 *            The parent resource
 	 * @return The link to the new file on the cloud service.
 	 */
-	public String post(String resource, String parent);
+	public String post(String resource);
 
 	/**
 	 * Changes a file on a cloud service.
