@@ -68,7 +68,11 @@ public interface IMetadataManager {
 		/**
 		 * File has been uploaded. Next state will be SPLITTING
 		 */
-		UPLOADED
+		UPLOADED,
+		/**
+		 * File is going to be uploaded. Next state will be UPLOADED
+		 */
+		UPLOADING
 	}
 
 	/**
@@ -115,6 +119,15 @@ public interface IMetadataManager {
 	 * @return true, if the connection could be closed.
 	 */
 	public boolean disconnect();
+
+	/**
+	 * Returns a ResultSet for the given file id.
+	 * 
+	 * @param fileId
+	 *            The id of the file
+	 * @return The SQL ResultSet matching the given file id.
+	 */
+	public ResultSet fileById(int fileId);
 
 	/**
 	 * Deletes a data set in the database defined by the path.

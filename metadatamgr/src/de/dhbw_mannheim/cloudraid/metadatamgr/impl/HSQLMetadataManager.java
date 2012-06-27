@@ -73,6 +73,11 @@ public class HSQLMetadataManager implements IMetadataManager {
 	/**
 	 * 
 	 */
+	private PreparedStatement fileByIdStmnt = null;
+
+	/**
+	 * 
+	 */
 	private PreparedStatement fileDeleteStmnt = null;
 
 	/**
@@ -111,7 +116,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	private Statement statement = null;
 
 	@Override
-	public boolean addUser(String username, String password) {
+	public synchronized boolean addUser(String username, String password) {
 		try {
 			getUserSaltStatement.setString(1, username);
 			getUserSaltStatement.execute();
@@ -154,7 +159,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public int authUser(String username, String password) {
+	public synchronized int authUser(String username, String password) {
 		try {
 			getUserSaltStatement.setString(1, username);
 			getUserSaltStatement.execute();
@@ -242,6 +247,23 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
+	public ResultSet fileById(int fileId) {
+		try {
+			fileByIdStmnt.setInt(1, fileId);
+			fileByIdStmnt.execute();
+			ResultSet rs = fileGetStmnt.getResultSet();
+			if (rs.next()) {
+				return rs;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@Override
 	public synchronized int fileDelete(String path, int userId) {
 		try {
 			fileDeleteStmnt.setString(1, path);
@@ -296,7 +318,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 			fileAddStmnt.setString(2, hash);
 			fileAddStmnt.setTimestamp(3, new Timestamp(lastMod));
 			fileAddStmnt.setString(4,
-					IMetadataManager.FILE_STATUS.UPLOADED.toString());
+					IMetadataManager.FILE_STATUS.UPLOADING.toString());
 			fileAddStmnt.setInt(5, userId);
 			fileAddStmnt.execute();
 			con.commit();
@@ -319,7 +341,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 		try {
 			fileUpdateStmnt.setString(1, hash);
 			fileUpdateStmnt.setString(2,
-					IMetadataManager.FILE_STATUS.UPLOADED.toString());
+					IMetadataManager.FILE_STATUS.UPLOADING.toString());
 			fileUpdateStmnt.setTimestamp(3, new Timestamp(lastMod));
 			fileUpdateStmnt.setString(4, path);
 			fileUpdateStmnt.setInt(5, userId);
@@ -444,6 +466,8 @@ public class HSQLMetadataManager implements IMetadataManager {
 
 			fileAddStmnt = con
 					.prepareStatement("INSERT INTO cloudraid_files VALUES (NULL, ?, ?, ?, ?, ? );");
+			fileByIdStmnt = con
+					.prepareStatement("SELECT * FROM cloudraid_files WHERE id = ? ;");
 			fileDeleteStmnt = con
 					.prepareStatement("DELETE FROM cloudraid_files WHERE path_name = ? AND user_id = ? ;");
 			fileGetStmnt = con

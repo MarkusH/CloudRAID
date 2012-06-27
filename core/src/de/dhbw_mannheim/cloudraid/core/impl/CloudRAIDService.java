@@ -23,6 +23,8 @@
 package de.dhbw_mannheim.cloudraid.core.impl;
 
 import java.io.File;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import javax.management.ServiceNotFoundException;
 
@@ -35,6 +37,7 @@ import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.ConfigException;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
+import de.dhbw_mannheim.cloudraid.core.ICoreAccess;
 import de.dhbw_mannheim.cloudraid.core.impl.fs.FileManager;
 import de.dhbw_mannheim.cloudraid.core.impl.fs.RecursiveFileSystemWatcher;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
@@ -49,6 +52,10 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 	private IStorageConnector[] storageConnectors = { null, null, null };
 	private String[] storageConnectorClassnames = { null, null, null };
+
+	private Queue<ICoreAccess> availableSlots = new LinkedList<ICoreAccess>();
+	private Queue<ICoreAccess> freeSlots = new LinkedList<ICoreAccess>();
+	private Queue<ICoreAccess> usedSlots = new LinkedList<ICoreAccess>();
 
 	private String splitInputDir;
 
@@ -220,5 +227,31 @@ public class CloudRAIDService implements ICloudRAIDService {
 		new File(this.mergeOutputDir).mkdirs();
 		new File(this.splitInputDir).mkdirs();
 		new File(this.splitOutputDir).mkdirs();
+	}
+
+	@Override
+	public synchronized ICoreAccess getSlot() throws InstantiationException {
+		ICoreAccess slot;
+		if (this.freeSlots.size() > 0) {
+			slot = this.freeSlots.poll();
+			this.usedSlots.add(slot);
+		} else {
+			// TODO replace with service!
+			slot = new CoreAccess();
+			this.availableSlots.add(slot);
+			this.usedSlots.add(slot);
+		}
+		return slot;
+	}
+
+	@Override
+	public IStorageConnector[] getStorageConnectors() {
+		if (this.storageConnectors[0] == null
+				|| this.storageConnectors[1] == null
+				|| this.storageConnectors[2] == null) {
+			throw new IllegalStateException(
+					"At least one storage connector missing");
+		}
+		return this.storageConnectors;
 	}
 }

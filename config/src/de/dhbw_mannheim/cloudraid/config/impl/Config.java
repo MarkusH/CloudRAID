@@ -76,8 +76,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	 * The top-level path to the programs config.
 	 */
 	private static String CLOUDRAID_HOME = System.getProperty("os.name")
-			.contains("windows")
-			? System.getenv("APPDATA") + "\\cloudraid\\"
+			.contains("windows") ? System.getenv("APPDATA") + "\\cloudraid\\"
 			: System.getProperty("user.home") + "/.config/cloudraid/";
 
 	/**
@@ -176,6 +175,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		Config.defaultData.put("split.input.dir", DEFAULT_SPLIT_INPUT_DIR);
 		Config.defaultData.put("split.output.dir", DEFAULT_SPLIT_OUTPUT_DIR);
 		Config.defaultData.put("upload.dir", DEFAULT_UPLOAD_DIR);
+		Config.defaultData.put("upload.asynchronous", "true");
 		Config.defaultData.put("database.name", DEFAULT_DATABASE_NAME);
 		Config.defaultData.put("filemanagement.count", ""
 				+ DEFAULT_FILEMANAGEMENT_COUNT);
@@ -543,6 +543,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	public synchronized void put(String key, int value) {
 		this.put(key, String.valueOf(value), false);
 	}
+
 	@Override
 	public synchronized void put(String key, int value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
@@ -552,6 +553,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	public synchronized void put(String key, long value) {
 		this.put(key, String.valueOf(value), false);
 	}
+
 	@Override
 	public synchronized void put(String key, long value, boolean encrypted) {
 		this.put(key, String.valueOf(value), encrypted);
@@ -743,8 +745,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			for (String k : keys) {
 				writer.newLine();
 				String saltString = this.salts.get(k);
-				String salt = saltString == null || saltString.equals("")
-						? ""
+				String salt = saltString == null || saltString.equals("") ? ""
 						: " salt=\"" + saltString + "\"";
 				writer.write("\t<entry name=\"" + k + "\"" + salt + ">"
 						+ super.get(k) + "</entry>");

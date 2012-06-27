@@ -1,6 +1,6 @@
 /*
  * Copyright 2011 - 2012 by the CloudRAID Team
- * see AUTHORS for more details.
+ * see AUTHORS for more details
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,16 +22,21 @@
 
 package de.dhbw_mannheim.cloudraid.core;
 
-import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * @author Markus Holtermann
  * 
  */
-public interface ICloudRAIDService {
+public interface ICoreAccess {
 
-	public ICoreAccess getSlot() throws InstantiationException;
+	public boolean putData(InputStream is, int fileid);
 
-	public IStorageConnector[] getStorageConnectors();
+	public boolean putData(InputStream is, int fileid, boolean update);
+
+	public OutputStream getData(int fileid);
+
+	public boolean deleteData(int fileid);
 
 }
