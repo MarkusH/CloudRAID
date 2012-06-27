@@ -28,7 +28,7 @@ import java.util.LinkedList;
  * The FileQueue containing files to be split or deleted.
  * 
  * @author Florian Bausch
- * 
+ * @deprecated
  */
 public class FileQueue {
 
