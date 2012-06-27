@@ -178,6 +178,8 @@ public interface IMetadataManager {
 	/**
 	 * Inserts a data set into the database.
 	 * 
+	 * @param id
+	 *            The id of the regarding file
 	 * @param path
 	 *            The path of a file.
 	 * @param hash
@@ -188,7 +190,8 @@ public interface IMetadataManager {
 	 *            The user id this file belongs to
 	 * @return true, if the data set could be inserted into the database.
 	 */
-	public boolean fileUpdate(String path, String hash, long lastMod, int userId);
+	public boolean fileUpdate(int id, String path, String hash, long lastMod,
+			int userId);
 
 	/**
 	 * Update the state of a file.
@@ -249,22 +252,5 @@ public interface IMetadataManager {
 	 * @return true, if the initialization could be executed.
 	 */
 	public boolean initialize();
-
-	/**
-	 * Inserts a data set into the database.
-	 * 
-	 * @deprecated Will be replaced by fileNew() and fileUpdate()
-	 * 
-	 * @param path
-	 *            The path of a file.
-	 * @param hash
-	 *            The hash of the file name.
-	 * @param lastMod
-	 *            The last modification date.
-	 * @param userId
-	 *            The user id this file belongs to
-	 * @return true, if the data set could be inserted into the database.
-	 */
-	public boolean insert(String path, String hash, long lastMod, int userId);
 
 }

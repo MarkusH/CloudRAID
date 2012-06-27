@@ -337,14 +337,16 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public boolean fileUpdate(String path, String hash, long lastMod, int userId) {
+	public boolean fileUpdate(int id, String path, String hash, long lastMod,
+			int userId) {
 		try {
-			fileUpdateStmnt.setString(1, hash);
-			fileUpdateStmnt.setString(2,
-					IMetadataManager.FILE_STATUS.UPLOADING.toString());
+			fileUpdateStmnt.setString(1, path);
+			fileUpdateStmnt.setString(2, hash);
 			fileUpdateStmnt.setTimestamp(3, new Timestamp(lastMod));
-			fileUpdateStmnt.setString(4, path);
+			fileUpdateStmnt.setString(4,
+					IMetadataManager.FILE_STATUS.UPLOADING.toString());
 			fileUpdateStmnt.setInt(5, userId);
+			fileUpdateStmnt.setInt(6, id);
 			fileUpdateStmnt.execute();
 			con.commit();
 			return true;
@@ -475,7 +477,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 			fileUpdateStatusStmnt = con
 					.prepareStatement("UPDATE cloudraid_files SET status = ? WHERE id = ? ;");
 			fileUpdateStmnt = con
-					.prepareStatement("UPDATE cloudraid_files SET hash_name = ? , last_mod = ? , status = ? WHERE path_name = ? AND user_id = ? ;");
+					.prepareStatement("UPDATE cloudraid_files SET path_name = ? , hash_name = ? , last_mod = ? , status = ? , user_id = ? WHERE id = ? ;");
 
 			findNameStatement = con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE hash_name = ? AND user_id = ?;");
@@ -486,47 +488,6 @@ public class HSQLMetadataManager implements IMetadataManager {
 			listFiles = con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE user_id = ?;");
 
-			return true;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			try {
-				con.rollback();
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-			return false;
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
-
-	@Override
-	public synchronized boolean insert(String path, String hash, long lastMod,
-			int userId) {
-		try {
-			fileGetStmnt.setString(1, path);
-			fileGetStmnt.setInt(2, userId);
-			ResultSet resSet = fileGetStmnt.executeQuery();
-
-			if (resSet.next()) {
-				fileUpdateStmnt.setString(1, hash);
-				fileUpdateStmnt.setTimestamp(2, new Timestamp(lastMod));
-				fileUpdateStmnt.setString(3,
-						IMetadataManager.FILE_STATUS.UPLOADED.toString());
-				fileUpdateStmnt.setString(4, path);
-				fileUpdateStmnt.setInt(5, userId);
-				fileUpdateStmnt.execute();
-			} else {
-				fileAddStmnt.setString(1, path);
-				fileAddStmnt.setString(2, hash);
-				fileAddStmnt.setTimestamp(3, new Timestamp(lastMod));
-				fileAddStmnt.setString(4,
-						IMetadataManager.FILE_STATUS.UPLOADED.toString());
-				fileAddStmnt.setInt(5, userId);
-				fileAddStmnt.execute();
-			}
-			con.commit();
 			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();

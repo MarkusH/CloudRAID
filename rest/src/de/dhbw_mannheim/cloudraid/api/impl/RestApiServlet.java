@@ -462,7 +462,6 @@ public class RestApiServlet extends HttpServlet {
 			resp.setStatusCode(404);
 			return;
 		}
-
 		int bufsize = Math.min(1024, req.getContentLength());
 		if (bufsize < 0) {
 			resp.setStatusCode(411);
@@ -470,6 +469,8 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		try {
+			int fileid = rs.getInt("id");
+
 			BufferedInputStream bis = new BufferedInputStream(
 					req.getInputStream(), bufsize);
 
@@ -485,7 +486,7 @@ public class RestApiServlet extends HttpServlet {
 			while ((readLength = bis.read(inputBytes)) >= 0) {
 				bos.write(inputBytes, 0, readLength);
 			}
-			if (database.fileUpdate(path, "", 0L, userid)) {
+			if (database.fileUpdate(fileid, path, "", 0L, userid)) {
 				resp.setStatusCode(200);
 				return;
 			}
@@ -494,6 +495,8 @@ public class RestApiServlet extends HttpServlet {
 		} catch (NoSuchElementException e) {
 			e.printStackTrace();
 		} catch (InvalidConfigValueException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		resp.setStatusCode(500);
