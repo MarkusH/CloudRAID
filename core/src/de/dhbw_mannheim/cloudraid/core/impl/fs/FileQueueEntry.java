@@ -28,7 +28,7 @@ import de.dhbw_mannheim.cloudraid.core.impl.fs.FileQueue.FileAction;
  * This class maps a filename to an according action.
  * 
  * @author Florian Bausch
- * 
+ * @deprecated
  */
 public class FileQueueEntry {
 

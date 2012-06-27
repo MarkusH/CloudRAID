@@ -33,7 +33,7 @@ import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
  * the {@link FileQueueEntry}.
  * 
  * @author Florian Bausch
- * 
+ * @deprecated
  */
 public class FileManager extends Thread {
 

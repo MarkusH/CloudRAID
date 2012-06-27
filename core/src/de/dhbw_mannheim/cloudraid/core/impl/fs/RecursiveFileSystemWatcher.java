@@ -36,7 +36,7 @@ import de.dhbw_mannheim.cloudraid.core.impl.fs.FileQueue.FileAction;
  * deleted files into the {@link FileQueue}.
  * 
  * @author Florian Bausch
- * 
+ * @deprecated
  */
 public class RecursiveFileSystemWatcher extends Thread {
 

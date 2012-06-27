@@ -28,7 +28,7 @@ import java.util.HashMap;
  * Handles the locking of files.
  * 
  * @author Florian Bausch
- * 
+ * @deprecated
  */
 public class FileLock {
 
