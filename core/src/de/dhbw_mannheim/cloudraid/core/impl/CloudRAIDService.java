@@ -31,7 +31,6 @@ import javax.naming.directory.InvalidAttributeValueException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
-import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
@@ -83,10 +82,12 @@ public class CloudRAIDService implements ICloudRAIDService {
 	 * {@link RecursiveFileSystemWatcher} is stopped too. The instance of
 	 * {@link ICloudRAIDConfig} will be saved.
 	 */
-	protected void shutdown() {
+	protected synchronized void shutdown() {
 		System.out.println("CloudRAIDService: shutdown: begin");
-		for (int i = 0; i < fileManagers.length; i++) {
-			fileManagers[i].interrupt();
+		if (fileManagers != null) {
+			for (int i = 0; i < fileManagers.length; i++) {
+				fileManagers[i].interrupt();
+			}
 		}
 		recursiveFileSystemWatcher.interrupt();
 		config.save();
@@ -112,13 +113,12 @@ public class CloudRAIDService implements ICloudRAIDService {
 	 * @throws InvalidAttributeValueException
 	 *             Thrown, if the watching directory for the
 	 *             {@link RecursiveFileSystemWatcher} is invalid.
-	 * @throws InvalidSyntaxException
 	 * @throws ClassNotFoundException
-	 * @throws BundleException
-	 * @throws ServiceNotFoundException
+	 * @throws InstantiationException
 	 */
-	protected void startup(BundleContext context) throws ConfigException,
-			InvalidAttributeValueException, ClassNotFoundException {
+	protected synchronized void startup(BundleContext context)
+			throws ConfigException, InvalidAttributeValueException,
+			ClassNotFoundException, InstantiationException {
 		System.out.println("CloudRAIDService: startup: begin");
 
 		initPaths();
@@ -136,6 +136,16 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 		System.out
 				.println("Trying to resolve and start the required bundles and services ...");
+		/*
+		 * First we iterate over all installed bundles. Second we iterate over
+		 * the IStorageConnectors defined in the configuration. We try to load
+		 * the given full qualified class name from the current bundle. On
+		 * success, the bundle gets started, which will register a service
+		 * providing an IStorageConnectors implementation. If the service can
+		 * then accessed, we continue with the next required connector. Finally,
+		 * the array storageConnectors contains the references to the 3 required
+		 * services.
+		 */
 		Bundle[] bundles = context.getBundles();
 		for (Bundle b : bundles) {
 			for (int i = 0; i < 3 && connectedServices < 3; i++) {
@@ -190,21 +200,28 @@ public class CloudRAIDService implements ICloudRAIDService {
 		} else {
 			System.err
 					.println("Couldn't resolve or start all required bundles!");
-			throw new ClassNotFoundException(
-					"Couldn't resolve or start all required bundles!");
+			return;
+			// throw new ClassNotFoundException(
+			// "Couldn't resolve or start all required bundles!");
 		}
-		recursiveFileSystemWatcher = new RecursiveFileSystemWatcher(
-				this.splitInputDir, config.getInt("filemanagement.intervall",
-						60000));
-		recursiveFileSystemWatcher.start();
 
-		int proc = config.getInt("filemanagement.count", 1);
-		System.out.println("Number FileManagers: " + proc);
-		fileManagers = new FileManager[proc];
-		for (int i = 0; i < proc; i++) {
-			fileManagers[i] = new FileManager(config, i);
-			fileManagers[i].start();
+		for (int i = 0; i < 3; i++) {
+			this.storageConnectors[i].create(i);
 		}
+
+		// recursiveFileSystemWatcher = new RecursiveFileSystemWatcher(
+		// this.splitInputDir, config.getInt("filemanagement.intervall",
+		// 60000));
+		// recursiveFileSystemWatcher.start();
+
+		// int proc = config.getInt("filemanagement.count", 1);
+		// System.out.println("Number FileManagers: " + proc);
+		// fileManagers = new FileManager[proc];
+		// for (int i = 0; i < proc; i++) {
+		// fileManagers[i] = new FileManager(config, i);
+		// fileManagers[i].start();
+		// }
+
 		System.out.println("CloudRAIDService: startup: end");
 	}
 
