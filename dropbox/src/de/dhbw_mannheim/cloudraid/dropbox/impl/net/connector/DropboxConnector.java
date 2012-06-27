@@ -64,6 +64,8 @@ public class DropboxConnector implements IStorageConnector {
 			+ ROOT_NAME + "/";
 	private final static String PUT_URL = "https://api-content.dropbox.com/1/files_put/"
 			+ ROOT_NAME + "/";
+	private final static String META_URL = "https://api.dropbox.com/1/metadata/"
+			+ ROOT_NAME + "/";
 
 	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 
@@ -194,8 +196,6 @@ public class DropboxConnector implements IStorageConnector {
 		if (response.getCode() == 406) {
 			System.err.println("Would delete too much files");
 			return false;
-		} else if (response.getCode() == 404) {
-			System.err.println("File does not exist.");
 		}
 		return true;
 	}
@@ -206,8 +206,6 @@ public class DropboxConnector implements IStorageConnector {
 
 	@Override
 	public void disconnect() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -230,33 +228,9 @@ public class DropboxConnector implements IStorageConnector {
 
 	@Override
 	public void loadVolumes() {
-
 	}
 
-	protected synchronized void setConfig(ICloudRAIDConfig config) {
-		this.config = config;
-	}
-
-	protected synchronized void shutdown() {
-		disconnect();
-	}
-
-	protected synchronized void startup(BundleContext context) {
-
-	}
-
-	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
-		this.config = null;
-	}
-
-	@Override
-	public boolean update(String resource) {
-		return false;
-	}
-
-	@Override
-	public boolean upload(String resource) {
-		System.out.println("PUT " + resource);
+	private boolean performeUpload(String resource) {
 		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
 		if (!f.exists()) {
 			System.err.println("File does not exist.");
@@ -284,7 +258,8 @@ public class DropboxConnector implements IStorageConnector {
 			e.printStackTrace();
 			return false;
 		}
-		OAuthRequest request = new OAuthRequest(PUT, PUT_URL + resource);
+		OAuthRequest request = new OAuthRequest(PUT, PUT_URL + resource
+				+ "?overwrite=true");
 		request.addHeader("Content-Type", MIME_MAP.getContentType(f));
 		this.service.signRequest(this.accessToken, request);
 		request.addPayload(fileBytes);
@@ -295,5 +270,47 @@ public class DropboxConnector implements IStorageConnector {
 			return false;
 		}
 		return true;
+	}
+
+	protected synchronized void setConfig(ICloudRAIDConfig config) {
+		this.config = config;
+	}
+
+	protected synchronized void shutdown() {
+		disconnect();
+	}
+
+	protected synchronized void startup(BundleContext context) {
+
+	}
+
+	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+		this.config = null;
+	}
+
+	@Override
+	public boolean update(String resource) {
+		System.out.println("Update " + resource);
+		OAuthRequest request = new OAuthRequest(GET, META_URL + resource);
+		this.service.signRequest(this.accessToken, request);
+		Response response = request.send();
+		System.out.println(response.getCode());
+		if (response.getCode() == 404) {
+			return false;
+		}
+		return performeUpload(resource);
+	}
+
+	@Override
+	public boolean upload(String resource) {
+		System.out.println("Update " + resource);
+		OAuthRequest request = new OAuthRequest(GET, META_URL + resource);
+		this.service.signRequest(this.accessToken, request);
+		Response response = request.send();
+		System.out.println(response.getCode());
+		if (response.getCode() == 404) {
+			return performeUpload(resource);
+		}
+		return false;
 	}
 }

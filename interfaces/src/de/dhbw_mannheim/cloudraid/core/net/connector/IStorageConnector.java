@@ -120,7 +120,8 @@ public interface IStorageConnector {
 	public void loadVolumes();
 
 	/**
-	 * Changes an <b>existing</b> file to a cloud service.
+	 * Changes an <b>existing</b> file to a cloud service. This method
+	 * <b>must</b> return false, if the file is not existent.
 	 * 
 	 * @param resource
 	 *            The resource to use
@@ -129,7 +130,8 @@ public interface IStorageConnector {
 	public boolean update(String resource);
 
 	/**
-	 * Sends a <b>new</b> file on a cloud service.
+	 * Sends a <b>new</b> file on a cloud service. This method <b>must</b>
+	 * return false, if the file already exists.
 	 * 
 	 * @param resource
 	 *            The resource to use

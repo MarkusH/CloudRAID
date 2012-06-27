@@ -111,16 +111,14 @@ public class SugarSyncConnector implements IStorageConnector {
 					"application/xml; charset=UTF-8");
 
 			// Create authentication request
-			StringBuilder authReqBuilder = new StringBuilder(
-					"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<authRequest><username>");
-			authReqBuilder.append(username).append("</username><password>");
-			authReqBuilder.append(password).append(
-					"</password>\n\t<accessKeyId>");
-			authReqBuilder.append(accessKeyId).append(
-					"</accessKeyId><privateAccessKey>");
-			authReqBuilder.append(privateAccessKey).append(
-					"</privateAccessKey></authRequest>");
-			String authReq = authReqBuilder.toString();
+			String authReq = String.format(
+					"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<authRequest><username>%s"
+							+ "</username><password>%s"
+							+ "</password>\n\t<accessKeyId>%s"
+							+ "</accessKeyId><privateAccessKey>%s"
+							+ "</privateAccessKey></authRequest>",
+					new Object[] { username, password, accessKeyId,
+							privateAccessKey });
 
 			con.connect();
 			con.getOutputStream().write(authReq.getBytes());
@@ -475,7 +473,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * @throws ParserConfigurationException
 	 *             Thrown, if the content cannot be parsed
 	 */
-	private String getBaseUrl() throws IOException, SAXException,
+	private synchronized String getBaseUrl() throws IOException, SAXException,
 			ParserConfigurationException {
 		if (baseURL == null) {
 			HttpsURLConnection con = SugarSyncConnector.getConnection(
@@ -485,6 +483,10 @@ public class SugarSyncConnector implements IStorageConnector {
 			// Build the XML tree.
 			con.connect();
 			Document doc = docBuilder.parse(con.getInputStream());
+			try {
+				con.getInputStream().close();
+			} catch (IOException ignore) {
+			}
 			con.disconnect();
 
 			Element node = (Element) doc.getDocumentElement()
