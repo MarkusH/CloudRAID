@@ -155,6 +155,7 @@ public class AmazonS3Connector implements IStorageConnector {
 				is = new InputSource();
 			} catch (ParserConfigurationException e) {
 				e.printStackTrace();
+				throw new InstantiationException(e.getMessage());
 			}
 		} catch (MissingConfigValueException e) {
 			e.printStackTrace();

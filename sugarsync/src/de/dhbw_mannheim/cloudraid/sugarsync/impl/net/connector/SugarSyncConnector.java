@@ -187,8 +187,8 @@ public class SugarSyncConnector implements IStorageConnector {
 						.newDocumentBuilder();
 				docBuilder.setErrorHandler(null);
 			} catch (ParserConfigurationException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
+				throw new InstantiationException(e.getMessage());
 			}
 		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
