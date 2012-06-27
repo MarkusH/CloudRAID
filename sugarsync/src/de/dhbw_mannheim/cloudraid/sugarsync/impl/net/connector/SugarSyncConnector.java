@@ -36,8 +36,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -192,11 +190,6 @@ public class SugarSyncConnector implements IStorageConnector {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			BundleContext ctx = FrameworkUtil.getBundle(this.getClass())
-					.getBundleContext();
-			ServiceReference<ICloudRAIDConfig> configServiceReference = ctx
-					.getServiceReference(ICloudRAIDConfig.class);
-			this.config = ctx.getService(configServiceReference);
 		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
 			throw new InstantiationException(e.getMessage());
@@ -677,7 +670,7 @@ public class SugarSyncConnector implements IStorageConnector {
 						con.setDoInput(true);
 						con.connect();
 						// Do the following steps to _really_ delete the file.
-						// If the following steps are missing, the files do net
+						// If the following steps are missing, the files do not
 						// get deleted.
 						InputStream is = con.getInputStream();
 						while (is.read() >= 0) {

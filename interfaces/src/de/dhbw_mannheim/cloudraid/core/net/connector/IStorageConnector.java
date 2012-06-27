@@ -50,7 +50,8 @@ public interface IStorageConnector {
 	 * @param connectorid
 	 *            The internal id of this connector.
 	 * 
-	 * @return Returns a new initialized instance of the <code>connector</code>.
+	 * @return Returns a new initialized instance of the
+	 *         {@link IStorageConnector} implementation.
 	 * @throws InstantiationException
 	 *             Thrown if not all required parameters are passed.
 	 */
@@ -92,7 +93,7 @@ public interface IStorageConnector {
 	 * 
 	 * @param resource
 	 *            Retrieve the given resource
-	 * @return An InputStream to the regarding file.
+	 * @return An InputStream from the regarding file.
 	 */
 	public InputStream get(String resource);
 
