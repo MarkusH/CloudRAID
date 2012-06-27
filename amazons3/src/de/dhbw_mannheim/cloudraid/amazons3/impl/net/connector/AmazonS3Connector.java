@@ -230,8 +230,8 @@ public class AmazonS3Connector implements IStorageConnector {
 	}
 
 	@Override
-	public String update(String resource) {
-		return null;
+	public boolean update(String resource) {
+		return false;
 	}
 
 	@Override

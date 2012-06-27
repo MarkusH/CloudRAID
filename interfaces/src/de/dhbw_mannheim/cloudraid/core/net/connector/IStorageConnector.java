@@ -89,7 +89,8 @@ public interface IStorageConnector {
 	public void deleteVolume(String name);
 
 	/**
-	 * Gets a file from a cloud service.
+	 * Gets a file from a cloud service. The method <b>returns <code>null</code>
+	 * </b>, if the resource is not available.
 	 * 
 	 * @param resource
 	 *            Retrieve the given resource
@@ -116,16 +117,16 @@ public interface IStorageConnector {
 	 * 
 	 * @param resource
 	 *            The resource to use
-	 * @return The link to the new file on the cloud service.
+	 * @return true, if the file could be changed; false, if not.
 	 */
-	public String update(String resource);
+	public boolean update(String resource);
 
 	/**
 	 * Sends a <b>new</b> file on a cloud service.
 	 * 
 	 * @param resource
 	 *            The resource to use
-	 * @return true, if the file could be changed; false, if not.
+	 * @return true, if the file could be created; false, if not.
 	 */
 	public boolean upload(String resource);
 
