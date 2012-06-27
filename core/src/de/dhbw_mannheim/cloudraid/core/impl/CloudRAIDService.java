@@ -23,10 +23,8 @@
 package de.dhbw_mannheim.cloudraid.core.impl;
 
 import java.io.File;
-import java.util.NoSuchElementException;
 
 import javax.management.ServiceNotFoundException;
-import javax.naming.directory.InvalidAttributeValueException;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -48,10 +46,6 @@ import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 public class CloudRAIDService implements ICloudRAIDService {
 
 	private ICloudRAIDConfig config = null;
-
-	private FileManager[] fileManagers = null;
-
-	private RecursiveFileSystemWatcher recursiveFileSystemWatcher = null;
 
 	private IStorageConnector[] storageConnectors = { null, null, null };
 	private String[] storageConnectorClassnames = { null, null, null };
@@ -84,41 +78,26 @@ public class CloudRAIDService implements ICloudRAIDService {
 	 */
 	protected synchronized void shutdown() {
 		System.out.println("CloudRAIDService: shutdown: begin");
-		if (fileManagers != null) {
-			for (int i = 0; i < fileManagers.length; i++) {
-				fileManagers[i].interrupt();
-			}
-		}
-		recursiveFileSystemWatcher.interrupt();
 		config.save();
 		System.out.println("CloudRAIDService: shutdown: end");
 	}
 
 	/**
-	 * During the {@link #startup(BundleContext) startup} this service starts
-	 * and initializes the following threads and components (in order):
-	 * <ul>
-	 * <li>A {@link RecursiveFileSystemWatcher} that permanently watches the
-	 * split input directory for new files</li>
-	 * <li>Multiple {@link FileManager} that handle new files, e.g. split and
-	 * upload them</li>
-	 * </ul>
+	 * During the {@link #startup(BundleContext) startup} this service reads the
+	 * three {@link IStorageConnector cloud storage connectors} to be used from
+	 * the configuration. The regarding bundles containing these classes are
+	 * loaded and hence their services registered.
 	 * 
 	 * @param context
 	 *            The {@link BundleContext} for this bundle
-	 * @throws NoSuchElementException
-	 *             Thrown, if a configuration value is not found
 	 * @throws ConfigException
-	 *             Thrown, if a config value is invalid
-	 * @throws InvalidAttributeValueException
-	 *             Thrown, if the watching directory for the
-	 *             {@link RecursiveFileSystemWatcher} is invalid.
-	 * @throws ClassNotFoundException
+	 *             Thrown, if a configuration value is invalid
 	 * @throws InstantiationException
+	 *             Thrown, if a {@link IStorageConnector} cannot be created /
+	 *             initialized.
 	 */
 	protected synchronized void startup(BundleContext context)
-			throws ConfigException, InvalidAttributeValueException,
-			ClassNotFoundException, InstantiationException {
+			throws ConfigException, InstantiationException {
 		System.out.println("CloudRAIDService: startup: begin");
 
 		initPaths();
@@ -209,26 +188,13 @@ public class CloudRAIDService implements ICloudRAIDService {
 			this.storageConnectors[i].create(i);
 		}
 
-		// recursiveFileSystemWatcher = new RecursiveFileSystemWatcher(
-		// this.splitInputDir, config.getInt("filemanagement.intervall",
-		// 60000));
-		// recursiveFileSystemWatcher.start();
-
-		// int proc = config.getInt("filemanagement.count", 1);
-		// System.out.println("Number FileManagers: " + proc);
-		// fileManagers = new FileManager[proc];
-		// for (int i = 0; i < proc; i++) {
-		// fileManagers[i] = new FileManager(config, i);
-		// fileManagers[i].start();
-		// }
-
 		System.out.println("CloudRAIDService: startup: end");
 	}
 
 	/**
 	 * @param config
 	 *            Reference to the still existing {@link ICloudRAIDConfig
-	 *            config} instance
+	 *            configuration} instance
 	 */
 	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
 		System.out.println("CloudRAIDService: unsetConfig: begin");
