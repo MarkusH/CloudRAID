@@ -251,11 +251,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		return null;
 	}
 
-	@Override
-	public String head(String resource) {
-		return null;
-	}
-
 	/**
 	 * @param volume
 	 *            The volume to get the directories from
@@ -294,17 +289,12 @@ public class UbuntuOneConnector implements IStorageConnector {
 	}
 
 	@Override
-	public String[] options(String resource) {
+	public String update(String resource) {
 		return null;
 	}
 
 	@Override
-	public String post(String resource) {
-		return null;
-	}
-
-	@Override
-	public boolean put(String resource) {
+	public boolean upload(String resource) {
 		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
 		int maxFilesize;
 		try {

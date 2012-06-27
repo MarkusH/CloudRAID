@@ -557,11 +557,6 @@ public class SugarSyncConnector implements IStorageConnector {
 		return null;
 	}
 
-	@Override
-	public String head(String resource) {
-		return null;
-	}
-
 	/**
 	 * Returns if a folder is empty and can be deleted.
 	 * 
@@ -603,17 +598,12 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	@Override
-	public String[] options(String resource) {
+	public String update(String resource) {
 		return null;
 	}
 
 	@Override
-	public String post(String resource) {
-		return null;
-	}
-
-	@Override
-	public boolean put(String resource) {
+	public boolean upload(String resource) {
 		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
 		int max_filesize;
 		try {

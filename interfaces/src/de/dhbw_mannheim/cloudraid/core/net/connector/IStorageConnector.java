@@ -107,44 +107,26 @@ public interface IStorageConnector {
 	public IVolumeModel getVolume(String name);
 
 	/**
-	 * Returns meta data for a resource.
-	 * 
-	 * @param resource
-	 *            The resource to use
-	 * @return The meta data.
-	 */
-	public String head(String resource);
-
-	/**
 	 * (Re)load all volumes
 	 */
 	public void loadVolumes();
 
 	/**
-	 * Returns the options available for a resource.
-	 * 
-	 * @param resource
-	 *            The resource to use
-	 * @return The options.
-	 */
-	public String[] options(String resource);
-
-	/**
-	 * Sends a file to a cloud service.
+	 * Changes an <b>existing</b> file to a cloud service.
 	 * 
 	 * @param resource
 	 *            The resource to use
 	 * @return The link to the new file on the cloud service.
 	 */
-	public String post(String resource);
+	public String update(String resource);
 
 	/**
-	 * Changes a file on a cloud service.
+	 * Sends a <b>new</b> file on a cloud service.
 	 * 
 	 * @param resource
 	 *            The resource to use
 	 * @return true, if the file could be changed; false, if not.
 	 */
-	public boolean put(String resource);
+	public boolean upload(String resource);
 
 }

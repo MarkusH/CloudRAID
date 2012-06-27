@@ -200,11 +200,6 @@ public class AmazonS3Connector implements IStorageConnector {
 	}
 
 	@Override
-	public String head(String resource) {
-		return null;
-	}
-
-	@Override
 	public void loadVolumes() {
 		Response response = sendRequest(Verb.GET, this.service.getS3Endpoint());
 		if (response.getCode() == 200) {
@@ -235,17 +230,12 @@ public class AmazonS3Connector implements IStorageConnector {
 	}
 
 	@Override
-	public String[] options(String resource) {
+	public String update(String resource) {
 		return null;
 	}
 
 	@Override
-	public String post(String resource) {
-		return null;
-	}
-
-	@Override
-	public boolean put(String resource) {
+	public boolean upload(String resource) {
 		return false;
 	}
 
