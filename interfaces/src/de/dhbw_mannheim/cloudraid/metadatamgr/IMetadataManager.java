@@ -101,6 +101,8 @@ public interface IMetadataManager {
 	/**
 	 * Changes the password for a specific user.
 	 * 
+	 * @param username
+	 *            The user name the new password belongs to.
 	 * @param password
 	 *            The new password.
 	 * @param userId
@@ -143,13 +145,11 @@ public interface IMetadataManager {
 	/**
 	 * Deletes a data set in the database defined by the path.
 	 * 
-	 * @param path
-	 *            The path of the file.
-	 * @param userId
-	 *            The user id this file belongs to
+	 * @param fileId
+	 *            The id of the file
 	 * @return The number of deleted records or -1
 	 */
-	public int fileDelete(String path, int userId);
+	public int fileDelete(int fileId);
 
 	/**
 	 * Checks, if the given file is available for the certain user
@@ -184,7 +184,7 @@ public interface IMetadataManager {
 	 *            The user id this file belongs to
 	 * @return true, if the data set could be inserted into the database.
 	 */
-	public boolean fileNew(String path, String hash, long lastMod, int userId);
+	public int fileNew(String path, String hash, long lastMod, int userId);
 
 	/**
 	 * Inserts a data set into the database.

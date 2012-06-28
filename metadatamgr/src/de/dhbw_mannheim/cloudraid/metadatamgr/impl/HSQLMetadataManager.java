@@ -305,10 +305,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public synchronized int fileDelete(String path, int userId) {
+	public synchronized int fileDelete(int fileId) {
 		try {
-			fileDeleteStmnt.setString(1, path);
-			fileDeleteStmnt.setInt(2, userId);
+			fileDeleteStmnt.setInt(1, fileId);
 			fileDeleteStmnt.execute();
 			return fileDeleteStmnt.getUpdateCount();
 		} catch (SQLException e) {
@@ -353,7 +352,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public boolean fileNew(String path, String hash, long lastMod, int userId) {
+	public int fileNew(String path, String hash, long lastMod, int userId) {
 		try {
 			fileAddStmnt.setString(1, path);
 			fileAddStmnt.setString(2, hash);
@@ -363,7 +362,11 @@ public class HSQLMetadataManager implements IMetadataManager {
 			fileAddStmnt.setInt(5, userId);
 			fileAddStmnt.execute();
 			con.commit();
-			return true;
+			ResultSet rs = fileAddStmnt.getGeneratedKeys();
+			if (rs != null) {
+				rs.next();
+				return rs.getInt(1); // The generated file ID
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			try {
@@ -374,7 +377,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 		} catch (NullPointerException e) {
 			e.printStackTrace();
 		}
-		return false;
+		return -1;
 	}
 
 	@Override
@@ -508,11 +511,13 @@ public class HSQLMetadataManager implements IMetadataManager {
 					.prepareStatement("SELECT * FROM cloudraid_users WHERE username = ? AND password = ?");
 
 			fileAddStmnt = con
-					.prepareStatement("INSERT INTO cloudraid_files VALUES (NULL, ?, ?, ?, ?, ? );");
+					.prepareStatement(
+							"INSERT INTO cloudraid_files VALUES (NULL, ?, ?, ?, ?, ? );",
+							Statement.RETURN_GENERATED_KEYS);
 			fileByIdStmnt = con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE id = ? ;");
 			fileDeleteStmnt = con
-					.prepareStatement("DELETE FROM cloudraid_files WHERE path_name = ? AND user_id = ? ;");
+					.prepareStatement("DELETE FROM cloudraid_files WHERE id = ? ;");
 			fileGetStmnt = con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE path_name = ? AND user_id = ? ;");
 			fileUpdateStatusStmnt = con

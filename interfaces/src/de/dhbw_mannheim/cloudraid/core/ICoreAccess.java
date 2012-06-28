@@ -23,7 +23,6 @@
 package de.dhbw_mannheim.cloudraid.core;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * @author Markus Holtermann
@@ -35,7 +34,7 @@ public interface ICoreAccess {
 
 	public boolean putData(InputStream is, int fileid, boolean update);
 
-	public OutputStream getData(int fileid);
+	public InputStream getData(int fileid);
 
 	public boolean deleteData(int fileid);
 

@@ -83,7 +83,7 @@ public class TestHSQLDatabaseConnector {
 	@Test
 	public void testInsert() {
 		// Insert first file
-		assertTrue(dbc.fileNew(PATH, HASH, TIME, user1Id));
+		assertTrue(dbc.fileNew(PATH, HASH, TIME, user1Id) >= 0);
 
 		assertEquals(PATH, dbc.getName(HASH, user1Id));
 		assertEquals(HASH, dbc.getHash(PATH, user1Id));
@@ -92,19 +92,19 @@ public class TestHSQLDatabaseConnector {
 		assertNull(dbc.getHash(PATH, user2Id));
 		assertEquals(-1L, dbc.getLastMod(PATH, user2Id));
 
-		// Update first file
-		assertTrue(dbc.fileNew(PATH, HASH, TIME2, user1Id));
+		// Update first file must fail!
+		assertTrue(dbc.fileNew(PATH, HASH, TIME2, user1Id) == -1);
 
 		assertEquals(PATH, dbc.getName(HASH, user1Id));
 		assertEquals(HASH, dbc.getHash(PATH, user1Id));
-		assertEquals(TIME2, dbc.getLastMod(PATH, user1Id));
+		assertEquals(TIME, dbc.getLastMod(PATH, user1Id));
 		assertNull(dbc.getName(HASH, user2Id));
 		assertNull(dbc.getHash(PATH, user2Id));
 		assertEquals(-1L, dbc.getLastMod(PATH, user2Id));
 
 		// Insert second file for both users
-		assertTrue(dbc.fileNew(PATH2, HASH2, TIME2, user1Id));
-		assertTrue(dbc.fileNew(PATH2, HASH2, TIME2, user2Id));
+		assertTrue(dbc.fileNew(PATH2, HASH2, TIME2, user1Id) >= 0);
+		assertTrue(dbc.fileNew(PATH2, HASH2, TIME2, user2Id) >= 0);
 
 		assertEquals(PATH2, dbc.getName(HASH2, user1Id)); // User 1
 		assertEquals(HASH2, dbc.getHash(PATH2, user1Id));
@@ -119,14 +119,15 @@ public class TestHSQLDatabaseConnector {
 		long time = System.currentTimeMillis();
 		String path = "path3";
 		String hash = "hash3";
-		assertTrue(dbc.fileNew(path, hash, time, user1Id));
-		assertEquals(dbc.fileDelete(path, user1Id), 1);
+		int id = dbc.fileNew(path, hash, time, user1Id);
+		assertTrue(id >= 0);
+		assertEquals(dbc.fileDelete(id), 1);
 
 		assertNull(dbc.getName(hash, user1Id));
 		assertNull(dbc.getHash(path, user1Id));
 		assertEquals(dbc.getLastMod(path, user1Id), -1L);
 
-		assertEquals(dbc.fileDelete(path, user1Id), 0);
+		assertEquals(dbc.fileDelete(id), 0);
 	}
 
 	@Test
@@ -150,9 +151,10 @@ public class TestHSQLDatabaseConnector {
 		assertNull(dbc.getHash(PATH, user1Id));
 		assertNull(dbc.getName(HASH, user1Id));
 		assertEquals(dbc.getLastMod(PATH, user1Id), -1L);
-		assertFalse(dbc.fileNew(PATH, HASH, TIME, user1Id));
+		int id = dbc.fileNew(PATH, HASH, TIME, user1Id);
+		assertFalse(id >= 0);
 		assertFalse(dbc.initialize());
-		assertEquals(dbc.fileDelete(PATH, user1Id), -1);
+		assertEquals(dbc.fileDelete(id), -1);
 
 		assertTrue(dbc.connect(config.getCloudRAIDHome() + DATABASE_FILE, "SA",
 				""));

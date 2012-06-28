@@ -38,9 +38,9 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import de.dhbw_mannheim.cloudraid.config.impl.Config;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
+import de.dhbw_mannheim.cloudraid.config.impl.Config;
 import de.dhbw_mannheim.cloudraid.core.impl.jni.RaidAccessInterface;
 
 /**

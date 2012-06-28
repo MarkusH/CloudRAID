@@ -410,7 +410,7 @@ public class RestApiServlet extends HttpServlet {
 			while ((readLength = bis.read(inputBytes)) >= 0) {
 				bos.write(inputBytes, 0, readLength);
 			}
-			if (database.fileNew(path, "", 0L, userid)) {
+			if (database.fileNew(path, "", 0L, userid) >= 0) {
 				resp.setStatusCode(201);
 				return;
 			}

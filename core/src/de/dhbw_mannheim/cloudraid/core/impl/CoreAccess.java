@@ -25,11 +25,11 @@ package de.dhbw_mannheim.cloudraid.core.impl;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
@@ -153,10 +153,10 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 				if (this.config.getBoolean("upload.asynchronous")) {
 					this.start();
+					this.uploadstate = true;
 				} else {
 					this.run();
 				}
-				this.uploadstate = true;
 			}
 		} catch (SQLException e) {
 			this.uploadstate = false;
@@ -178,13 +178,157 @@ public class CoreAccess extends Thread implements ICoreAccess {
 	}
 
 	@Override
-	public OutputStream getData(int fileid) {
+	public InputStream getData(int fileid) {
+		this.fileid = fileid;
+		int bufsize = 4096;
+		try {
+			// Retrieve the metadata from the database
+			ResultSet rs = this.metadata.fileById(this.fileid);
+			if (rs != null) {
+				this.path = rs.getString("path_name");
+				this.hash = rs.getString("hash_name");
+				this.userid = rs.getInt("user_id");
+				String status = rs.getString("status");
+
+				if (FILE_STATUS.valueOf(status) != FILE_STATUS.READY) {
+					throw new IllegalStateException(String.format(
+							"File %s has state %s but READY expected!", path,
+							status));
+				}
+
+				IStorageConnector[] storageConnectors = coreService
+						.getStorageConnectors();
+
+				for (int i = 0; i < 3; i++) {
+					InputStream is = storageConnectors[i].get(hash);
+					// Create the file
+					this.file = new File(
+							this.config.getString("merge.input.dir")
+									+ File.separator + hash + "." + i);
+
+					// Write data to file
+					BufferedInputStream bis = new BufferedInputStream(is,
+							bufsize);
+					BufferedOutputStream bos = new BufferedOutputStream(
+							new FileOutputStream(this.file), bufsize);
+					byte[] inputBytes = new byte[bufsize];
+					int readLength;
+					while ((readLength = bis.read(inputBytes)) >= 0) {
+						bos.write(inputBytes, 0, readLength);
+					}
+
+					try {
+						bis.close();
+					} catch (IOException ignore) {
+					}
+
+					try {
+						bos.close();
+					} catch (IOException ignore) {
+					}
+				}
+
+				// TODO: get Metadata
+
+				// for (int i = 0; i < 3; i++) {
+				// InputStream is = storageConnectors[i].getMetadata(hash);
+				// // Create the file
+				// this.file = new File(
+				// this.config.getString("merge.input.dir")
+				// + File.separator + hash + ".m);
+				//
+				// // Write data to file
+				// BufferedInputStream bis = new BufferedInputStream(is,
+				// bufsize);
+				// BufferedOutputStream bos = new BufferedOutputStream(
+				// new FileOutputStream(this.file), bufsize);
+				// byte[] inputBytes = new byte[bufsize];
+				// int readLength;
+				// while ((readLength = bis.read(inputBytes)) >= 0) {
+				// bos.write(inputBytes, 0, readLength);
+				// }
+				//
+				// // Update file state in database
+				// this.metadata.fileUpdateState(this.fileid,
+				// FILE_STATUS.UPLOADED);
+				//
+				// try {
+				// bis.close();
+				// } catch (IOException ignore) {
+				// }
+				//
+				// try {
+				// bos.close();
+				// } catch (IOException ignore) {
+				// }
+				// }
+				this.file = new File(this.config.getString("merge.output.dir")
+						+ File.separator + this.userid + File.separator
+						+ this.path);
+				RaidAccessInterface.mergeInterface(
+						this.config.getString("merge.input.dir"), this.hash,
+						this.file.getAbsolutePath(),
+						config.getString("file.password"));
+
+				// Get data from file
+				BufferedInputStream bis = new BufferedInputStream(
+						new FileInputStream(this.file), bufsize);
+				return bis;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (IllegalStateException e) {
+			e.printStackTrace();
+		} catch (MissingConfigValueException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return null;
 	}
-
 	@Override
 	public boolean deleteData(int fileid) {
-		return false;
+		this.fileid = fileid;
+		boolean state = false;
+		try {
+			// Retrieve the metadata from the database
+			ResultSet rs = this.metadata.fileById(this.fileid);
+			if (rs != null) {
+				String status = rs.getString("status");
+
+				if (FILE_STATUS.valueOf(status) != FILE_STATUS.READY) {
+					throw new IllegalStateException(String.format(
+							"File %s has state %s but READY expected!", path,
+							status));
+				}
+
+				this.metadata
+						.fileUpdateState(this.fileid, FILE_STATUS.DELETING);
+
+				IStorageConnector[] storageConnectors = coreService
+						.getStorageConnectors();
+
+				for (int i = 0; i < 3; i++) {
+					storageConnectors[i].delete(hash);
+				}
+				this.metadata.fileUpdateState(this.fileid, FILE_STATUS.DELETED);
+				this.metadata.fileDelete(fileid);
+				state = true;
+
+			}
+		} catch (SQLException e) {
+			state = false;
+			e.printStackTrace();
+		} catch (IllegalStateException e) {
+			state = false;
+			e.printStackTrace();
+		}
+		return state;
 	}
 
 	public void run() {
