@@ -582,7 +582,7 @@ public class RestApiServlet extends HttpServlet {
 		String username = req.getHeader("X-Username");
 		String password = req.getHeader("X-Password");
 		if (username == null || password == null) {
-			resp.setStatusCode(401);
+			resp.setStatusCode(400);
 			resp.addPayload("Username or password missing!");
 			return;
 		}
@@ -677,8 +677,23 @@ public class RestApiServlet extends HttpServlet {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
-		resp.setStatusCode(501);
-		resp.addPayload("Not implemented!");
+		HttpSession s = req.getSession();
+		int userId = (Integer) s.getAttribute("userid");
+		String username = req.getHeader("X-Username");
+		String password = req.getHeader("X-Password");
+		String confirm = req.getHeader("X-Confirm");
+		if (username == null || password == null || confirm == null
+				|| !password.equals(confirm)) {
+			resp.setStatusCode(400);
+			resp.addPayload("Username, password, or password confirmation missing or passwords do not match!");
+		}
+		if (database.changeUserPwd(username, password, userId)) {
+			resp.setStatusCode(200);
+			resp.addPayload("The password was changed successfully");
+		} else {
+			resp.setStatusCode(500);
+			resp.addPayload("Error while updating the user record");
+		}
 	}
 
 	/**
@@ -698,7 +713,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>200 - Success</li>
 	 *            <li>400 - User name and/or password missing/wrong.</li>
 	 *            <li>401 - Not logged in405Session id not submitted via cookie</li>
-	 *            <li>500 - Error while updating the userser record</li>
+	 *            <li>500 - Error while updating the user record</li>
 	 *            <li>503 - Session does not exist</li>
 	 *            </ul>
 	 * @param args

@@ -107,7 +107,7 @@ public interface IMetadataManager {
 	 *            The user id the new password belongs to.
 	 * @return true, if the password could be changed; false, if not.
 	 */
-	public boolean changeUserPwd(String password, int userId);
+	public boolean changeUserPwd(String username, String password, int userId);
 
 	/**
 	 * Creates a connection to a specific database.
