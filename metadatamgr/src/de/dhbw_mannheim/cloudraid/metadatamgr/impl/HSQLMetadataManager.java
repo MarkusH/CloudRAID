@@ -108,6 +108,11 @@ public class HSQLMetadataManager implements IMetadataManager {
 	/**
 	 * 
 	 */
+	private PreparedStatement changeUserPwdStatement = null;
+
+	/**
+	 * 
+	 */
 	private PreparedStatement listFiles = null;
 
 	/**
@@ -188,6 +193,42 @@ public class HSQLMetadataManager implements IMetadataManager {
 			e.printStackTrace();
 		}
 		return -1;
+	}
+
+	@Override
+	public synchronized boolean changeUserPwd(String password, int userId) {
+		Random rnd = new Random(System.nanoTime());
+		byte[] salt = new byte[8];
+		byte[] pwdigest;
+		rnd.nextBytes(salt);
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			digest.reset();
+			digest.update(salt);
+			pwdigest = digest.digest(password.getBytes("UTF-8"));
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return false;
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return false;
+		}
+		try {
+			changeUserPwdStatement.setInt(1, userId);
+			changeUserPwdStatement.setBytes(2, pwdigest);
+			changeUserPwdStatement.setBytes(3, salt);
+			changeUserPwdStatement.execute();
+			con.commit();
+		} catch (SQLException e) {
+			try {
+				con.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 
 	@Override
@@ -484,6 +525,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 
 			getUserSaltStatement = con
 					.prepareCall("SELECT salt FROM cloudraid_users WHERE username = ?");
+
+			changeUserPwdStatement = con
+					.prepareStatement("UPDATE cloudraid_users SET password = ?, salt = ? WHERE user_id = ? ;");
 
 			listFiles = con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE user_id = ?;");

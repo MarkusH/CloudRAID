@@ -99,6 +99,17 @@ public interface IMetadataManager {
 	public int authUser(String username, String password);
 
 	/**
+	 * Changes the password for a specific user.
+	 * 
+	 * @param password
+	 *            The new password.
+	 * @param userId
+	 *            The user id the new password belongs to.
+	 * @return true, if the password could be changed; false, if not.
+	 */
+	public boolean changeUserPwd(String password, int userId);
+
+	/**
 	 * Creates a connection to a specific database.
 	 * 
 	 * @param database
