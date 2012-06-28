@@ -812,7 +812,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     const int keyLength = ( *env )->GetStringLength ( env, _key );
 
     const int tmpLength = strlen ( ( char * ) tempInputDirPath );
-    int status, i;
+    int status, i, openfiles = 0;
     char *inputBaseName = NULL;
     rc4_key rc4key;
 
@@ -841,20 +841,26 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     {
         sprintf ( &inputBaseName[ tmpLength + 64 ], ".%c", i+0x30 );
         devices[i] = fopen ( inputBaseName, "rb" );
+        openfiles++;
     }
     if ( devices[0] == NULL )
     {
         status = OPENERR_DEV0;
-        goto end;
+        openfiles--;
     }
     if ( devices[1] == NULL )
     {
-        status = OPENERR_DEV1;
-        goto end;
+        status += OPENERR_DEV1;
+        openfiles--;
     }
     if ( devices[2] == NULL )
     {
-        status = OPENERR_DEV2;
+        status += OPENERR_DEV2;
+        openfiles--;
+    }
+
+    if ( openfiles <= 1 )
+    {
         goto end;
     }
 
