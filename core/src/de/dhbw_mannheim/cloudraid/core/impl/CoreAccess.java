@@ -330,10 +330,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 			}
 		} catch (SQLException e) {
-			state = false;
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
-			state = false;
 			e.printStackTrace();
 		}
 		this.coreService.ungetSlot(this);

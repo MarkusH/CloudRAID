@@ -23,6 +23,7 @@
 package de.dhbw_mannheim.cloudraid.api.impl.responses;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -60,7 +61,12 @@ public class PlainApiResponse implements IRestApiResponse {
 
 	@Override
 	public void addPayload(String payload) {
-		this.sb.append(payload).append("\n");
+		this.sb.append(payload);
+	}
+
+	@Override
+	public OutputStream getOutputStream() throws IOException {
+		return resp.getOutputStream();
 	}
 
 	@Override
@@ -71,7 +77,7 @@ public class PlainApiResponse implements IRestApiResponse {
 			// Add the table to the payload
 			this.addPayload(this.table.toString());
 
-			resp.getWriter().write(this.sb.toString());
+			resp.getOutputStream().write(this.sb.toString().getBytes());
 		}
 	}
 
