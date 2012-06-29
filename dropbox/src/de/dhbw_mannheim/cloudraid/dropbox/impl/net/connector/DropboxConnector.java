@@ -232,7 +232,14 @@ public class DropboxConnector implements IStorageConnector {
 	public void loadVolumes() {
 	}
 
-	private boolean performeUpload(String resource) {
+	/**
+	 * Uploads a file to the Dropbox servers.
+	 * 
+	 * @param resource
+	 *            The file file name in the split.output.dir
+	 * @return true, if the file could be uploaded; false, if not.
+	 */
+	private boolean performUpload(String resource) {
 		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
 		if (!f.exists()) {
 			System.err.println("File does not exist.");
@@ -284,7 +291,7 @@ public class DropboxConnector implements IStorageConnector {
 		if (response.getCode() == 404) {
 			return false;
 		}
-		return performeUpload(resource);
+		return performUpload(resource);
 	}
 
 	@Override
@@ -295,7 +302,7 @@ public class DropboxConnector implements IStorageConnector {
 		Response response = request.send();
 		System.out.println(response.getCode());
 		if (response.getCode() == 404) {
-			return performeUpload(resource);
+			return performUpload(resource);
 		}
 		return false;
 	}

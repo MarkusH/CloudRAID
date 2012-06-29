@@ -79,7 +79,6 @@ public class SugarSyncConnector implements IStorageConnector {
 		con.setRequestProperty("User-Agent", "CloudRAID");
 		con.setRequestProperty("Accept", "*/*");
 		con.setRequestProperty("Authorization", authToken);
-
 		return con;
 	}
 
@@ -116,14 +115,16 @@ public class SugarSyncConnector implements IStorageConnector {
 							+ "</password>\n\t<accessKeyId>%s"
 							+ "</accessKeyId><privateAccessKey>%s"
 							+ "</privateAccessKey></authRequest>",
-					new Object[]{username, password, accessKeyId,
-							privateAccessKey});
+					new Object[] { username, password, accessKeyId,
+							privateAccessKey });
 
 			con.connect();
-			con.getOutputStream().write(authReq.getBytes());
-			this.token = con.getHeaderField("Location");
-			con.disconnect();
-
+			try {
+				con.getOutputStream().write(authReq.getBytes());
+				this.token = con.getHeaderField("Location");
+			} finally {
+				con.disconnect();
+			}
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -225,11 +226,12 @@ public class SugarSyncConnector implements IStorageConnector {
 		con.setDoOutput(true);
 
 		con.connect();
-		con.getOutputStream().write(request.getBytes());
-		InputStream is = con.getInputStream();
-		System.out.println(con.getResponseCode() + ": "
-				+ con.getResponseMessage());
-		con.disconnect();
+		try {
+			con.getOutputStream().write(request.getBytes());
+			con.getOutputStream().close();
+		} finally {
+			con.disconnect();
+		}
 
 		String file = this.findFileInFolder(name, parent
 				+ "/contents?type=file")
@@ -238,17 +240,29 @@ public class SugarSyncConnector implements IStorageConnector {
 		con = SugarSyncConnector.getConnection(file, this.token, "PUT");
 		con.setDoOutput(true);
 		con.setRequestProperty("Content-Type", mime);
-
-		con.connect();
-		OutputStream os = con.getOutputStream();
-		is = new FileInputStream(f);
-		int i;
-		while ((i = is.read()) >= 0) {
-			os.write(i);
+		OutputStream os = null;
+		InputStream is = null;
+		try {
+			con.connect();
+			os = con.getOutputStream();
+			is = new FileInputStream(f);
+			int i;
+			while ((i = is.read()) >= 0) {
+				os.write(i);
+			}
+		} finally {
+			try {
+				if (os != null)
+					os.close();
+			} catch (IOException ignore) {
+			}
+			try {
+				if (is != null)
+					is.close();
+			} catch (IOException ignore) {
+			}
+			con.disconnect();
 		}
-		System.out.println(con.getResponseCode() + ": "
-				+ con.getResponseMessage());
-		con.disconnect();
 	}
 
 	/**
@@ -272,13 +286,17 @@ public class SugarSyncConnector implements IStorageConnector {
 		con.setDoInput(true);
 
 		con.connect();
-		con.getOutputStream().write(request.getBytes());
-		InputStream is = con.getInputStream();
-		int i;
-		while ((i = is.read()) >= 0) {
-			System.out.print((char) i);
+		try {
+			con.getOutputStream().write(request.getBytes());
+			InputStream is = con.getInputStream();
+			int i;
+			while ((i = is.read()) >= 0) {
+				System.out.print((char) i);
+			}
+			con.getInputStream().close();
+		} finally {
+			con.disconnect();
 		}
-		con.disconnect();
 	}
 
 	@Override
@@ -333,20 +351,15 @@ public class SugarSyncConnector implements IStorageConnector {
 			while (this.isFolderEmpty(parent)) {
 				String oldParent = parent;
 				parent = this.getParentFolder(parent);
-
 				con = SugarSyncConnector.getConnection(oldParent, this.token,
 						"DELETE");
-
 				con.connect();
-				System.out.println(con.getResponseCode() + ": "
-						+ con.getResponseMessage());
 				con.disconnect();
 			}
-			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
-			return true;
 		}
+		return true;
 	}
 
 	@Override
@@ -355,8 +368,6 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public void disconnect() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/**
@@ -376,15 +387,19 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private String findFileInFolder(String name, String parent)
 			throws SAXException, IOException, ParserConfigurationException {
-		Document doc;
+		Document doc = null;
 		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
 				this.token, "GET");
 		con.setDoInput(true);
 
 		// Build the XML tree.
 		con.connect();
-		doc = docBuilder.parse(con.getInputStream());
-		con.disconnect();
+		try {
+			doc = docBuilder.parse(con.getInputStream());
+			con.getInputStream().close();
+		} finally {
+			con.disconnect();
+		}
 		NodeList nl = doc.getDocumentElement().getElementsByTagName("file");
 		for (int i = 0; i < nl.getLength(); i++) {
 			String displayName = ((Element) nl.item(i))
@@ -415,15 +430,19 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private String findFolderInFolder(String name, String parent)
 			throws ParserConfigurationException, SAXException, IOException {
-		Document doc;
+		Document doc = null;
 		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
 				this.token, "GET");
 		con.setDoInput(true);
 
 		// Build the XML tree.
 		con.connect();
-		doc = docBuilder.parse(con.getInputStream());
-		con.disconnect();
+		try {
+			doc = docBuilder.parse(con.getInputStream());
+			con.getInputStream().close();
+		} finally {
+			con.disconnect();
+		}
 		NodeList nl = doc.getDocumentElement().getElementsByTagName(
 				"collection");
 		for (int i = 0; i < nl.getLength(); i++) {
@@ -478,18 +497,19 @@ public class SugarSyncConnector implements IStorageConnector {
 	private synchronized String getBaseUrl() throws IOException, SAXException,
 			ParserConfigurationException {
 		if (baseURL == null) {
+			Document doc = null;
 			HttpsURLConnection con = SugarSyncConnector.getConnection(
 					USER_INFO_URL, this.token, "GET");
 			con.setDoInput(true);
 
 			// Build the XML tree.
 			con.connect();
-			Document doc = docBuilder.parse(con.getInputStream());
 			try {
+				doc = docBuilder.parse(con.getInputStream());
 				con.getInputStream().close();
-			} catch (IOException ignore) {
+			} finally {
+				con.disconnect();
 			}
-			con.disconnect();
 
 			Element node = (Element) doc.getDocumentElement()
 					.getElementsByTagName("syncfolders").item(0);
@@ -513,13 +533,18 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private String getParentFolder(String folder) throws IOException,
 			SAXException {
+		Document doc = null;
 		HttpsURLConnection con = SugarSyncConnector.getConnection(folder,
 				this.token, "GET");
 		con.setDoInput(true);
 
 		con.connect();
-		Document doc = this.docBuilder.parse(con.getInputStream());
-		con.disconnect();
+		try {
+			doc = this.docBuilder.parse(con.getInputStream());
+			con.getInputStream().close();
+		} finally {
+			con.disconnect();
+		}
 
 		return doc.getDocumentElement().getElementsByTagName("parent").item(0)
 				.getTextContent();
@@ -580,13 +605,18 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private boolean isFolderEmpty(String folder) throws IOException,
 			SAXException {
+		Document doc = null;
 		HttpsURLConnection con = SugarSyncConnector.getConnection(folder
 				+ "/contents", this.token, "GET");
 		con.setDoInput(true);
 
 		con.connect();
-		Document doc = this.docBuilder.parse(con.getInputStream());
-		con.disconnect();
+		try {
+			doc = this.docBuilder.parse(con.getInputStream());
+			con.getInputStream().close();
+		} finally {
+			con.disconnect();
+		}
 
 		if (!doc.getDocumentElement().hasAttribute("end")
 				|| !doc.getDocumentElement().getAttribute("end").equals("0"))
@@ -596,8 +626,12 @@ public class SugarSyncConnector implements IStorageConnector {
 		con.setDoInput(true);
 
 		con.connect();
-		doc = this.docBuilder.parse(con.getInputStream());
-		con.disconnect();
+		try {
+			doc = this.docBuilder.parse(con.getInputStream());
+			con.getInputStream().close();
+		} finally {
+			con.disconnect();
+		}
 
 		return !doc.getDocumentElement().getElementsByTagName("displayName")
 				.item(0).getTextContent().equals("Magic Briefcase");
@@ -609,64 +643,112 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public boolean update(String resource) {
+		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
+		int maxFilesize;
+		try {
+			maxFilesize = this.config.getInt("filesize.max", null);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		if (!f.exists()) {
+			System.err.println("File does not exist");
+		} else if (f.length() > maxFilesize) {
+			System.err.println("File too big");
+		} else {
+			String parent;
+			if (resource.contains("/")) {
+				parent = this.getResourceURL(
+						resource.substring(0, resource.lastIndexOf("/") + 1),
+						true);
+			} else {
+				parent = this.getResourceURL("", true);
+			}
+
+			try {
+				String fileName = resource
+						.substring(resource.lastIndexOf("/") + 1);
+				String resourceURL = this.findFileInFolder(fileName, parent
+						+ "/contents?type=file");
+				if (resourceURL != null) {
+					System.err.println("The file already exists. DELETE it. "
+							+ resourceURL);
+					HttpsURLConnection con = SugarSyncConnector.getConnection(
+							resourceURL, this.token, "DELETE");
+					con.setDoInput(true);
+					con.connect();
+					// Do the following steps to _really_ delete the file.
+					// If the following steps are missing, the files do not
+					// get deleted.
+					try {
+						InputStream is = con.getInputStream();
+						while (is.read() >= 0) {
+						}
+						con.getInputStream().close();
+					} finally {
+						con.disconnect();
+					}
+					this.createFile(fileName, f, parent);
+					return true;
+				} else {
+					System.err.println("No file found for update.");
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SAXException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ParserConfigurationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		return false;
 	}
 
 	@Override
 	public boolean upload(String resource) {
 		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
-		int max_filesize;
+		int maxFilesize;
 		try {
-			max_filesize = this.config.getInt("filesize.max", null);
-			if (f.length() > max_filesize) {
-				System.err.println("File too big");
-			}
+			maxFilesize = this.config.getInt("filesize.max", null);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
-		if (f.length() > max_filesize) {
-			System.err.println("File too big");
-		} else if (!f.exists()) {
+		if (!f.exists()) {
 			System.err.println("File does not exist");
+		} else if (f.length() > maxFilesize) {
+			System.err.println("File too big");
 		} else {
-			try {
-				String parent;
-				if (resource.contains("/")) {
-					parent = this.getResourceURL(resource.substring(0,
-							resource.lastIndexOf("/") + 1), true);
-				} else {
-					parent = this.getResourceURL("", true);
-				}
+			String parent;
+			if (resource.contains("/")) {
+				parent = this.getResourceURL(
+						resource.substring(0, resource.lastIndexOf("/") + 1),
+						true);
+			} else {
+				parent = this.getResourceURL("", true);
+			}
 
+			try {
 				String fileName = resource
 						.substring(resource.lastIndexOf("/") + 1);
 				String resourceURL = this.findFileInFolder(fileName, parent
 						+ "/contents?type=file");
-				try {
-					if (resourceURL != null) {
-						System.err
-								.println("The file already exists. DELETE it. "
-										+ resourceURL);
-						HttpsURLConnection con = SugarSyncConnector
-								.getConnection(resourceURL, this.token,
-										"DELETE");
-						con.setDoInput(true);
-						con.connect();
-						// Do the following steps to _really_ delete the file.
-						// If the following steps are missing, the files do not
-						// get deleted.
-						InputStream is = con.getInputStream();
-						while (is.read() >= 0) {
-						}
-						con.disconnect();
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
+				if (resourceURL != null) {
+					System.err.println("The file already exists. DELETE it. "
+							+ resourceURL);
+					return false;
 				}
-
 				this.createFile(fileName, f, parent);
-			} catch (Exception e) {
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			} catch (SAXException e) {
+				e.printStackTrace();
+				return false;
+			} catch (ParserConfigurationException e) {
 				e.printStackTrace();
 				return false;
 			}
