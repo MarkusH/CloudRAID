@@ -187,12 +187,18 @@ public class DropboxConnector implements IStorageConnector {
 		return null;
 	}
 
-	@Override
-	public boolean delete(String resource) {
-		System.out.println("DELETE " + resource);
+	/**
+	 * Deletes a file from the Dropbox servers.
+	 * 
+	 * @param resource
+	 *            The hash of the file
+	 * @return true, if the file could be deleted; false, if not.
+	 */
+	private boolean performDelete(String resource, String extension) {
+		System.out.println("DELETE " + resource + "." + extension);
 		// This request has to be sent as "POST" not as "DELETE"
 		OAuthRequest request = new OAuthRequest(POST, DELETE_URL + resource
-				+ "." + this.id);
+				+ "." + extension);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode() + " " + response.getBody());
@@ -204,6 +210,18 @@ public class DropboxConnector implements IStorageConnector {
 	}
 
 	@Override
+	public boolean delete(String resource) {
+		boolean ret = performDelete(resource, String.valueOf(this.id));
+		if (ret) {
+			if (performDelete(resource, "m")) {
+				System.err
+						.println("The data file has been removed. But unfortunately the meta data file has not been remove!");
+			}
+		}
+		return ret;
+	}
+
+	@Override
 	public void deleteVolume(String name) {
 	}
 
@@ -211,15 +229,30 @@ public class DropboxConnector implements IStorageConnector {
 	public void disconnect() {
 	}
 
-	@Override
-	public InputStream get(String resource) {
-		System.out.println("GET " + resource);
+	/**
+	 * Gets a file from the Dropbox servers.
+	 * 
+	 * @param resource
+	 *            The hash in the merge.input.dir
+	 * @return the {@link Response} of the GET request on success, else null.
+	 */
+	private Response performGet(String resource, String extension) {
+		System.out.println("GET " + resource + "." + extension);
 		OAuthRequest request = new OAuthRequest(GET, GET_URL + resource + "."
-				+ this.id);
+				+ extension);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
 		if (response.getCode() == 404) {
+			return null;
+		}
+		return response;
+	}
+
+	@Override
+	public InputStream get(String resource) {
+		Response response = performGet(resource, String.valueOf(this.id));
+		if (response == null) {
 			return null;
 		}
 		return response.getStream();
@@ -227,9 +260,11 @@ public class DropboxConnector implements IStorageConnector {
 
 	@Override
 	public String getMetadata(String resource) {
-		// TODO implementation
-
-		return ""; // TODO return null on error
+		Response response = performGet(resource, "m");
+		if (response == null) {
+			return null;
+		}
+		return response.getBody();
 	}
 
 	@Override
@@ -245,11 +280,11 @@ public class DropboxConnector implements IStorageConnector {
 	 * Uploads a file to the Dropbox servers.
 	 * 
 	 * @param resource
-	 *            The file file name in the split.output.dir
+	 *            The hash in the split.output.dir
 	 * @return true, if the file could be uploaded; false, if not.
 	 */
-	private boolean performUpload(String resource) {
-		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
+	private boolean performUpload(String resource, String extension) {
+		File f = new File(splitOutputDir + "/" + resource + "." + extension);
 		if (!f.exists()) {
 			System.err.println("File does not exist.");
 			return false;
@@ -277,7 +312,7 @@ public class DropboxConnector implements IStorageConnector {
 			return false;
 		}
 		OAuthRequest request = new OAuthRequest(PUT, PUT_URL + resource + "."
-				+ this.id + "?overwrite=true");
+				+ extension + "?overwrite=true");
 		request.addHeader("Content-Type", MIME_MAP.getContentType(f));
 		this.service.signRequest(this.accessToken, request);
 		request.addPayload(fileBytes);
@@ -292,29 +327,55 @@ public class DropboxConnector implements IStorageConnector {
 
 	@Override
 	public boolean update(String resource) {
-		System.out.println("Update " + resource);
+		System.out.println("Update " + resource + "." + this.id);
 		OAuthRequest request = new OAuthRequest(GET, META_URL + resource + "."
 				+ this.id);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
+		boolean ret;
 		if (response.getCode() == 404) {
-			return false;
+			ret = false;
 		}
-		return performUpload(resource);
+		ret = performUpload(resource, String.valueOf(this.id));
+		if (ret) {
+			System.out.println("Upload (and overwrite) " + resource + ".m");
+			// If the upload of the data file succeeded, the meta data file must
+			// be uploaded
+			ret = performUpload(resource, "m");
+			if (!ret) {
+				// If the meta data cannot be uploaded we will remove the data
+				// file
+				delete(resource);
+			}
+		}
+		return ret;
 	}
 
 	@Override
 	public boolean upload(String resource) {
-		System.out.println("Update " + resource);
+		System.out.println("Upload " + resource + "." + this.id);
 		OAuthRequest request = new OAuthRequest(GET, META_URL + resource + "."
 				+ this.id);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
+		boolean ret = false;
 		if (response.getCode() == 404) {
-			return performUpload(resource);
+			ret = performUpload(resource, String.valueOf(this.id));
+			if (ret) {
+				System.out.println("Upload (and overwrite) " + resource + ".m");
+				// If the upload of the data file succeeded, the meta data file
+				// must be uploaded
+				ret = performUpload(resource, "m");
+				if (!ret) {
+					// If the meta data cannot be uploaded we will remove the
+					// data file
+					delete(resource);
+				}
+			}
 		}
-		return false;
+		return ret;
 	}
+
 }
