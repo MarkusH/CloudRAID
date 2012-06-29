@@ -24,20 +24,66 @@ package de.dhbw_mannheim.cloudraid.core;
 
 import java.io.InputStream;
 
+import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
+
 /**
  * @author Markus Holtermann
  * 
  */
 public interface ICoreAccess {
 
+	/**
+	 * This function <b>must</b> release itself from the {@link ICoreAccess}
+	 * slots in the {@link ICloudRAIDService}.
+	 * 
+	 * @param is
+	 *            InputStream providing the data
+	 * @param fileid
+	 *            The id for this file from the {@link IMetadataManager}
+	 * @return True on success, else false.
+	 * 
+	 * @see #putData(InputStream, int, boolean)
+	 */
 	public boolean putData(InputStream is, int fileid);
 
+	/**
+	 * This function <b>must</b> release itself from the {@link ICoreAccess}
+	 * slots in the {@link ICloudRAIDService}.
+	 * 
+	 * @param is
+	 *            InputStream providing the data
+	 * @param fileid
+	 *            The id for this file from the {@link IMetadataManager}
+	 * @param update
+	 *            <code>true</code> to overwrite an existing file.
+	 * @return True on success, else false.
+	 */
 	public boolean putData(InputStream is, int fileid, boolean update);
 
+	/**
+	 * This function <b>must not</b> release itself from the {@link ICoreAccess}
+	 * slots in the {@link ICloudRAIDService}.
+	 * 
+	 * @param fileid
+	 *            The id for this file from the {@link IMetadataManager}
+	 * @return Returns an InputStream providing the merged file or null in case
+	 *         of an error.
+	 */
 	public InputStream getData(int fileid);
 
+	/**
+	 * This function <b>must</b> release itself from the {@link ICoreAccess}
+	 * slots in the {@link ICloudRAIDService}.
+	 * 
+	 * @param fileid
+	 *            The id for this file from the {@link IMetadataManager}
+	 * @return True on success, else false.
+	 */
 	public boolean deleteData(int fileid);
 
+	/**
+	 * Reset the internal states
+	 */
 	public void reset();
 
 }

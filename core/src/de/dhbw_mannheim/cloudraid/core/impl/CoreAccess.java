@@ -228,43 +228,50 @@ public class CoreAccess extends Thread implements ICoreAccess {
 					}
 				}
 
-				// TODO: get Metadata
+				// Elements 0 - 2 are taken from the connectors, 3 will be the
+				// final one
+				String metadata[] = { null, null, null, null };
+				for (int i = 0; i < 3; i++) {
+					metadata[i] = storageConnectors[i].getMetadata(hash);
+				}
 
-				// for (int i = 0; i < 3; i++) {
-				// InputStream is = storageConnectors[i].getMetadata(hash);
-				// // Create the file
-				// this.file = new File(
-				// this.config.getString("merge.input.dir")
-				// + File.separator + hash + ".m);
-				//
-				// // Write data to file
-				// BufferedInputStream bis = new BufferedInputStream(is,
-				// bufsize);
-				// BufferedOutputStream bos = new BufferedOutputStream(
-				// new FileOutputStream(this.file), bufsize);
-				// byte[] inputBytes = new byte[bufsize];
-				// int readLength;
-				// while ((readLength = bis.read(inputBytes)) >= 0) {
-				// bos.write(inputBytes, 0, readLength);
-				// }
-				//
-				// // Update file state in database
-				// this.metadata.fileUpdateState(this.fileid,
-				// FILE_STATUS.UPLOADED);
-				//
-				// try {
-				// bis.close();
-				// } catch (IOException ignore) {
-				// }
-				//
-				// try {
-				// bos.close();
-				// } catch (IOException ignore) {
-				// }
-				// }
+				// Find at least two common meta data strings to verify
+				// integrity. First, check for (0 AND (1 OR 2)), if that fails
+				// check for (1 AND 2)
+				if (metadata[0] != null
+						&& (metadata[1] != null
+								&& metadata[0].equals(metadata[1]) || metadata[2] != null
+								&& metadata[0].equals(metadata[2]))) {
+					metadata[3] = metadata[0];
+				} else {
+					if (metadata[1] != null && metadata[2] != null
+							&& metadata[1].equals(metadata[2])) {
+						metadata[3] = metadata[1];
+					}
+				}
+				if (metadata[3] == null) {
+					// We don't have any meta data
+					throw new IllegalStateException(
+							"No meta data available to merge the files.");
+				}
+
+				// Create the meta data file
+				File metadatafile = new File(
+						this.config.getString("merge.input.dir")
+								+ File.separator + hash + ".m");
+				BufferedOutputStream bos = new BufferedOutputStream(
+						new FileOutputStream(metadatafile), bufsize);
+				bos.write(metadata[3].getBytes());
+				try {
+					bos.close();
+				} catch (IOException ignore) {
+				}
+
 				this.file = new File(this.config.getString("merge.output.dir")
 						+ File.separator + this.userid + File.separator
 						+ this.path);
+				this.file.getParentFile().mkdirs();
+
 				RaidAccessInterface.mergeInterface(
 						this.config.getString("merge.input.dir"), this.hash,
 						this.file.getAbsolutePath(),
@@ -291,6 +298,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		}
 		return null;
 	}
+
 	@Override
 	public boolean deleteData(int fileid) {
 		this.fileid = fileid;
@@ -328,6 +336,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			state = false;
 			e.printStackTrace();
 		}
+		this.coreService.ungetSlot(this);
 		return state;
 	}
 

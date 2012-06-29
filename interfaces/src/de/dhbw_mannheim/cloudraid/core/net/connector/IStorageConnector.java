@@ -77,7 +77,7 @@ public interface IStorageConnector {
 	 * 
 	 * @param resource
 	 *            Delete the given resource
-	 * @return true, if the file could be deleted; false, if not.
+	 * @return true, if the file could be deleted or even does not exist; false, if not.
 	 */
 	public boolean delete(String resource);
 
