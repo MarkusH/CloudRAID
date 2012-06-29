@@ -212,14 +212,17 @@ public class HSQLMetadataManager implements IMetadataManager {
 			changeUserPwdStatement.setString(3, username);
 			changeUserPwdStatement.setInt(4, userId);
 			changeUserPwdStatement.execute();
+			if (changeUserPwdStatement.getUpdateCount() == 0) {
+				return false;
+			}
 			con.commit();
 		} catch (SQLException e) {
+			e.printStackTrace();
 			try {
 				con.rollback();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
-			e.printStackTrace();
 			return false;
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();

@@ -50,7 +50,7 @@ import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager.FILE_STATUS;
 
 /**
- * @author Markus Holtermann
+ * @author Markus Holtermann, Florian Bausch
  * 
  */
 public class RestApiServlet extends HttpServlet {
