@@ -191,12 +191,13 @@ public class DropboxConnector implements IStorageConnector {
 	public boolean delete(String resource) {
 		System.out.println("DELETE " + resource);
 		// This request has to be sent as "POST" not as "DELETE"
-		OAuthRequest request = new OAuthRequest(POST, DELETE_URL + resource);
+		OAuthRequest request = new OAuthRequest(POST, DELETE_URL + resource
+				+ "." + this.id);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode() + " " + response.getBody());
 		if (response.getCode() == 406) {
-			System.err.println("Would delete too much files");
+			System.err.println("Would delete too many files");
 			return false;
 		}
 		return true;
@@ -213,7 +214,8 @@ public class DropboxConnector implements IStorageConnector {
 	@Override
 	public InputStream get(String resource) {
 		System.out.println("GET " + resource);
-		OAuthRequest request = new OAuthRequest(GET, GET_URL + resource);
+		OAuthRequest request = new OAuthRequest(GET, GET_URL + resource + "."
+				+ this.id);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
@@ -274,8 +276,8 @@ public class DropboxConnector implements IStorageConnector {
 			e.printStackTrace();
 			return false;
 		}
-		OAuthRequest request = new OAuthRequest(PUT, PUT_URL + resource
-				+ "?overwrite=true");
+		OAuthRequest request = new OAuthRequest(PUT, PUT_URL + resource + "."
+				+ this.id + "?overwrite=true");
 		request.addHeader("Content-Type", MIME_MAP.getContentType(f));
 		this.service.signRequest(this.accessToken, request);
 		request.addPayload(fileBytes);
@@ -291,7 +293,8 @@ public class DropboxConnector implements IStorageConnector {
 	@Override
 	public boolean update(String resource) {
 		System.out.println("Update " + resource);
-		OAuthRequest request = new OAuthRequest(GET, META_URL + resource);
+		OAuthRequest request = new OAuthRequest(GET, META_URL + resource + "."
+				+ this.id);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
@@ -304,7 +307,8 @@ public class DropboxConnector implements IStorageConnector {
 	@Override
 	public boolean upload(String resource) {
 		System.out.println("Update " + resource);
-		OAuthRequest request = new OAuthRequest(GET, META_URL + resource);
+		OAuthRequest request = new OAuthRequest(GET, META_URL + resource + "."
+				+ this.id);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
