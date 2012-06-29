@@ -520,6 +520,13 @@ public class SugarSyncConnector implements IStorageConnector {
 		return this.baseURL;
 	}
 
+	@Override
+	public String getMetadata(String resource) {
+		// TODO implementation
+
+		return ""; // TODO return null on error
+	}
+
 	/**
 	 * Returns the parent folder of a folder
 	 * 

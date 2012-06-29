@@ -224,6 +224,13 @@ public class DropboxConnector implements IStorageConnector {
 	}
 
 	@Override
+	public String getMetadata(String resource) {
+		// TODO implementation
+
+		return ""; // TODO return null on error
+	}
+
+	@Override
 	public IVolumeModel getVolume(String name) {
 		return null;
 	}

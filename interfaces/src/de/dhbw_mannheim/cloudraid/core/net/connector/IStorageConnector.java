@@ -107,6 +107,16 @@ public interface IStorageConnector {
 	public InputStream get(String resource);
 
 	/**
+	 * Gets the RAID meta data for a file from a cloud service. The method
+	 * <b>returns <code>null</code> </b>, if the resource is not available.
+	 * 
+	 * @param resource
+	 *            Retrieve the given resource
+	 * @return A string containing the RAID meta data.
+	 */
+	public String getMetadata(String resource);
+
+	/**
 	 * Get a specific volume
 	 * 
 	 * @param name

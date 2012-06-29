@@ -192,6 +192,13 @@ public class AmazonS3Connector implements IStorageConnector {
 	}
 
 	@Override
+	public String getMetadata(String resource) {
+		// TODO implementation
+
+		return ""; // TODO return null on error
+	}
+
+	@Override
 	public IVolumeModel getVolume(String name) {
 		if (this.volumes.containsKey(name)) {
 			return this.volumes.get(name);
