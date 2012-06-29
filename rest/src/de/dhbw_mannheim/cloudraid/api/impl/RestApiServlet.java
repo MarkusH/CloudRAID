@@ -33,6 +33,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -66,6 +67,7 @@ public class RestApiServlet extends HttpServlet {
 	private static final long serialVersionUID = 1967811240645738359L;
 
 	private ICloudRAIDConfig config;
+	private Pattern userpattern;
 
 	/**
 	 * A reference to the database that is used
@@ -117,6 +119,8 @@ public class RestApiServlet extends HttpServlet {
 		this.database = database;
 
 		this.config = config;
+
+		this.userpattern = Pattern.compile("[a-zA-Z0-9]");
 	}
 
 	@Override
@@ -580,6 +584,11 @@ public class RestApiServlet extends HttpServlet {
 			return;
 		}
 		String username = req.getHeader("X-Username");
+		if (!this.userpattern.matcher(username).matches()) {
+			resp.setStatusCode(500);
+			resp.addPayload("Invalid characters in username. Only a-z, A-Z and 0-9 allowed.");
+			return;
+		}
 		String password = req.getHeader("X-Password");
 		if (username == null || password == null) {
 			resp.setStatusCode(400);
