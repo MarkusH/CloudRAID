@@ -213,9 +213,9 @@ public class DropboxConnector implements IStorageConnector {
 	public boolean delete(String resource) {
 		boolean ret = performDelete(resource, String.valueOf(this.id));
 		if (ret) {
-			if (performDelete(resource, "m")) {
+			if (!performDelete(resource, "m")) {
 				System.err
-						.println("The data file has been removed. But unfortunately the meta data file has not been remove!");
+						.println("The data file has been removed. But unfortunately the meta data file has not been removed!");
 			}
 		}
 		return ret;

@@ -22,10 +22,12 @@
 
 package de.dhbw_mannheim.cloudraid.sugarsync.impl.net.connector;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 
@@ -306,60 +308,14 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public boolean delete(String resource) {
-		String parent;
-		if (resource.contains("/"))
-			parent = this
-					.getResourceURL(resource.substring(0,
-							resource.lastIndexOf("/") + 1), false);
-		else
-			parent = this.getResourceURL("", false);
-
-		if (parent == null) {
-			return true;
-		}
-
-		String resourceURL;
-		try {
-			resourceURL = this.findFileInFolder(
-					resource.substring(resource.lastIndexOf("/") + 1), parent
-							+ "/contents?type=file");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return true;
-		}
-
-		HttpsURLConnection con = null;
-		try {
-			con = SugarSyncConnector.getConnection(resourceURL, this.token,
-					"DELETE");
-			con.connect();
-			con.disconnect();
-		} catch (Exception e) {
-			e.printStackTrace();
-			int returnCode = -1;
-			try {
-				returnCode = con.getResponseCode();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			if (!(returnCode == 404 || returnCode == 204)) {
-				return false;
+		boolean ret = performDelete(resource, String.valueOf(this.id));
+		if (ret) {
+			if (!performDelete(resource, "m")) {
+				System.err
+						.println("The data file has been removed. But unfortunately the meta data file has not been removed!");
 			}
 		}
-
-		try {
-			while (this.isFolderEmpty(parent)) {
-				String oldParent = parent;
-				parent = this.getParentFolder(parent);
-				con = SugarSyncConnector.getConnection(oldParent, this.token,
-						"DELETE");
-				con.connect();
-				con.disconnect();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return true;
+		return ret;
 	}
 
 	@Override
@@ -459,28 +415,7 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public InputStream get(String resource) {
-		try {
-			String parent;
-			if (resource.contains("/"))
-				parent = this.getResourceURL(
-						resource.substring(0, resource.lastIndexOf("/") + 1),
-						false);
-			else
-				parent = this.getResourceURL("", false);
-			String resourceURL = this.findFileInFolder(
-					resource.substring(resource.lastIndexOf("/") + 1), parent
-							+ "/contents?type=file");
-
-			HttpsURLConnection con;
-			con = SugarSyncConnector.getConnection(resourceURL + "/data",
-					this.token, "GET");
-			con.setDoInput(true);
-
-			return con.getInputStream();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+		return performGet(resource, String.valueOf(this.id));
 	}
 
 	/**
@@ -522,9 +457,26 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	@Override
 	public String getMetadata(String resource) {
-		// TODO implementation
-
-		return ""; // TODO return null on error
+		InputStream is = performGet(resource, "m");
+		if (is == null) {
+			return null;
+		}
+		BufferedReader br = new BufferedReader(new InputStreamReader(is));
+		StringBuilder sb = new StringBuilder();
+		char c;
+		try {
+			while ((c = (char) br.read()) != 0) {
+				sb.append(c);
+			}
+		} catch (IOException e) {
+			return null;
+		} finally {
+			try {
+				is.close();
+			} catch (IOException ignore) {
+			}
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -648,9 +600,121 @@ public class SugarSyncConnector implements IStorageConnector {
 	public void loadVolumes() {
 	}
 
-	@Override
-	public boolean update(String resource) {
-		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
+	/**
+	 * Executes the actual deletion of a file.
+	 * 
+	 * @param resource
+	 *            The resource name.
+	 * @param extension
+	 *            The extension of the file.
+	 * @return true, if the deletion was successful; false, if not.
+	 */
+	private boolean performDelete(String resource, String extension) {
+		resource += "." + extension;
+		// Find URL to parent directory.
+		String parent;
+		if (resource.contains("/"))
+			parent = this
+					.getResourceURL(resource.substring(0,
+							resource.lastIndexOf("/") + 1), false);
+		else
+			parent = this.getResourceURL("", false);
+
+		if (parent == null) {
+			return true;
+		}
+
+		// Find URL of resource in parent directory
+		String resourceURL;
+		try {
+			resourceURL = this.findFileInFolder(
+					resource.substring(resource.lastIndexOf("/") + 1), parent
+							+ "/contents?type=file");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return true;
+		}
+
+		HttpsURLConnection con = null;
+		try {
+			con = SugarSyncConnector.getConnection(resourceURL, this.token,
+					"DELETE");
+			con.connect();
+			con.disconnect();
+		} catch (Exception e) {
+			e.printStackTrace();
+			int returnCode = -1;
+			try {
+				returnCode = con.getResponseCode();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			if (!(returnCode == 404 || returnCode == 204)) {
+				return false;
+			}
+		}
+
+		try {
+			while (this.isFolderEmpty(parent)) {
+				String oldParent = parent;
+				parent = this.getParentFolder(parent);
+				con = SugarSyncConnector.getConnection(oldParent, this.token,
+						"DELETE");
+				con.connect();
+				con.disconnect();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return true;
+	}
+
+	/**
+	 * Executes the actual get to the SugarSync servers.
+	 * 
+	 * @param resource
+	 *            The resource name.
+	 * @param extension
+	 *            The extension of the resource.
+	 * @return The InputStream that reads from the server.
+	 */
+	private InputStream performGet(String resource, String extension) {
+		resource += "." + extension;
+		try {
+			String parent;
+			if (resource.contains("/"))
+				parent = this.getResourceURL(
+						resource.substring(0, resource.lastIndexOf("/") + 1),
+						false);
+			else
+				parent = this.getResourceURL("", false);
+			String resourceURL = this.findFileInFolder(
+					resource.substring(resource.lastIndexOf("/") + 1), parent
+							+ "/contents?type=file");
+
+			HttpsURLConnection con;
+			con = SugarSyncConnector.getConnection(resourceURL + "/data",
+					this.token, "GET");
+			con.setDoInput(true);
+
+			return con.getInputStream();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * Executes the actual update of a resource to the SugarSync servers.
+	 * 
+	 * @param resource
+	 *            The resource name.
+	 * @param extension
+	 *            The extension of the resource.
+	 * @return true, if the update was successful; false, if not.
+	 */
+	private boolean performUpdate(String resource, String extension) {
+		File f = new File(splitOutputDir + "/" + resource + "." + extension);
 		int maxFilesize;
 		try {
 			maxFilesize = this.config.getInt("filesize.max", null);
@@ -714,9 +778,17 @@ public class SugarSyncConnector implements IStorageConnector {
 		return false;
 	}
 
-	@Override
-	public boolean upload(String resource) {
-		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
+	/**
+	 * Executes the actual file upload to the SugarSync servers.
+	 * 
+	 * @param resource
+	 *            The resource name.
+	 * @param extension
+	 *            The extension of the resource.
+	 * @return true, if the upload was successful; false, if not.
+	 */
+	private boolean performUpload(String resource, String extension) {
+		File f = new File(splitOutputDir + "/" + resource + "." + extension);
 		int maxFilesize;
 		try {
 			maxFilesize = this.config.getInt("filesize.max", null);
@@ -762,5 +834,33 @@ public class SugarSyncConnector implements IStorageConnector {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean update(String resource) {
+		boolean ret = performUpdate(resource, String.valueOf(this.id));
+		if (ret) {
+			// Upload metadata after successful data update.
+			ret = performUpdate(resource, "m");
+			if (!ret) {
+				// If the metadata could not be updated, remove the data file.
+				delete(resource);
+			}
+		}
+		return ret;
+	}
+
+	@Override
+	public boolean upload(String resource) {
+		boolean ret = performUpload(resource, String.valueOf(this.id));
+		if (ret) {
+			// Upload metadata after successful data upload.
+			ret = performUpload(resource, "m");
+			if (!ret) {
+				// If the metadata could not be uploaded, remove the data file.
+				delete(resource);
+			}
+		}
+		return ret;
 	}
 }
