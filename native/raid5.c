@@ -56,6 +56,12 @@
 #define METADATA_MISS_MISSING 0x20
 #define METADATA_MEMORY_ERROR 0x80
 
+#if DEBUG==1
+#define DEBUGPRINT(...) fprintf (stderr, "%s:%s():%d: %s\n", __FILE__, __func__, __LINE__, __VA_ARGS__)
+#else
+#define DEBUGPRINT(...)
+#endif
+
 /**
  * This function is used to merge two input char arrays to the output array.
  *
@@ -240,7 +246,7 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 {
     unsigned char *chars = NULL, *out = NULL, parity_pos = 2, *hash = NULL;
     size_t rlen, *out_len = NULL, l = 0, min = -1, max = 0;
-    int status;
+    int status = 0;
 
     /* sha context
        the last element [3] is for the input file */
@@ -253,39 +259,44 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
     raid5md metadata;
     metadata.version = RAID5_METADATA_VERSION;
 
-    chars = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
-    out = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
-    out_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
+    chars = ( unsigned char* ) calloc ( 2 * RAID5_BLOCKSIZE, sizeof ( unsigned char ) );
+    out = ( unsigned char* ) calloc ( 3 * RAID5_BLOCKSIZE, sizeof ( unsigned char ) );
+    out_len = ( size_t* ) calloc ( 3, sizeof ( size_t ) );
     if ( chars == NULL )
     {
         status = MEMERR_BUF;
+        DEBUGPRINT("MEMERR_BUF");
         goto end;
     }
     if ( out == NULL )
     {
         status = MEMERR_DEV;
+        DEBUGPRINT("MEMERR_DEF");
         goto end;
     }
     if ( out_len == NULL )
     {
         status = MEMERR_DEV;
+        DEBUGPRINT("MEMERR_DEV");
         goto end;
     }
 
     /* create the sha256 context */
     for ( i = 0; i < 4; i++ )
     {
-        sha256_resblock[i] = malloc ( 32 );
+        sha256_resblock[i] = calloc ( 32, sizeof ( unsigned char ) );
         if ( sha256_resblock[i] == NULL )
         {
             status = MEMERR_SHA;
+            DEBUGPRINT("MEMERR_DEV");
             goto end;
         }
 
-        sha256_buf[i] = ( char* ) malloc ( SHA256_BLOCKSIZE + 72 );
+        sha256_buf[i] = ( char* ) calloc ( SHA256_BLOCKSIZE + 72, sizeof ( unsigned char ) );
         if ( sha256_buf[i] == NULL )
         {
             status = MEMERR_SHA;
+            DEBUGPRINT("MEMERR_SHA");
             goto end;
         }
         sha256_init_ctx ( &sha256_ctx[i] );
@@ -363,10 +374,11 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
     if ( ferror ( in ) )
     {
         status = READERR_IN;
+        DEBUGPRINT("READERR_IN");
         goto end;
     }
 
-    hash = ( unsigned char* ) malloc ( 65 );
+    hash = ( unsigned char* ) calloc ( 65, sizeof ( unsigned char ) );
     for ( i = 0; i < 4; i++ )
     {
         if ( sha256_len[i] == SHA256_BLOCKSIZE )
@@ -392,6 +404,7 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
     }
     metadata.missing = max - min;
     status = write_metadata ( meta, &metadata );
+    DEBUGPRINT("write_metadata");
     if ( status != 0 )
     {
         status = METADATA_ERROR;
@@ -488,9 +501,9 @@ DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key 
         }
     }
 
-    in = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * RAID5_BLOCKSIZE * 3 );
-    in_len = ( size_t* ) malloc ( sizeof ( size_t ) * 3 );
-    buf = ( unsigned char* ) malloc ( sizeof ( unsigned char ) * 2 * RAID5_BLOCKSIZE );
+    in = ( unsigned char* ) calloc ( 3 * RAID5_BLOCKSIZE, sizeof ( unsigned char ) );
+    in_len = ( size_t* ) calloc ( 3, sizeof ( size_t ) );
+    buf = ( unsigned char* ) calloc ( 2 * RAID5_BLOCKSIZE, sizeof ( unsigned char ) );
     if ( in == NULL )
     {
         status = MEMERR_DEV;
@@ -654,7 +667,7 @@ DLLEXPORT int create_metadata ( FILE *devices[], raid5md *md )
         return 1;
     }
 
-    ascii = ( unsigned char * ) malloc ( 65 );
+    ascii = ( unsigned char * ) calloc ( 65, sizeof ( unsigned char ) );
     if ( ascii == NULL )
     {
         return 1;
@@ -827,7 +840,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
      *  - extension: 2 bytes for .i
      *  - \0:        1 byte
      */
-    inputBaseName = ( char* ) malloc ( tmpLength + 64 + 2 + 1 );
+    inputBaseName = ( char* ) calloc ( tmpLength + 64 + 2 + 1, sizeof ( unsigned char ) );
     if ( inputBaseName == NULL )
     {
         status = OPENERR_IN;
@@ -932,7 +945,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
 
     void *resblock = NULL;
     char *inputPath = NULL, *outputBaseName = NULL, retvalue[65];
-    int status;
+    int status = 0;
     unsigned char i;
     const int tmpLength = strlen ( tempOutputDirPath );
     rc4_key rc4key;
@@ -943,20 +956,26 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     FILE *meta = NULL;
 
     /* generate the complete absolute input path */
-    inputPath = malloc ( strlen ( inputBasePath ) + strlen ( inputFilePath ) + 1 );
+    inputPath = calloc ( strlen ( inputBasePath ) + strlen ( inputFilePath ) + 1, sizeof ( unsigned char ) );
     if ( inputPath == NULL )
     {
         status = OPENERR_IN;
+        DEBUGPRINT("OPENERR_IN");
         goto end;
     }
+    DEBUGPRINT(inputPath);
     memcpy ( inputPath, inputBasePath, strlen ( inputBasePath ) );
+    DEBUGPRINT(inputPath);
     memcpy ( &inputPath[strlen ( inputBasePath )], inputFilePath, strlen ( inputFilePath ) );
+    DEBUGPRINT(inputPath);
 
     /* open input file */
     fp = fopen ( inputPath, "rb" );
     if ( fp == NULL )
     {
         status = OPENERR_IN;
+        DEBUGPRINT(inputPath);
+        DEBUGPRINT("OPENERR_IN");
         goto end;
     }
 
@@ -966,11 +985,12 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
      *  - extension: 2 bytes for .i
      *  - \0:        1 byte
      */
-    outputBaseName = ( char* ) malloc ( tmpLength + 64 + 2 + 1 );
-    resblock = malloc ( 32 );
+    outputBaseName = ( char* ) calloc ( tmpLength + 64 + 2 + 1, sizeof ( unsigned char ) );
+    resblock = calloc ( 32, sizeof ( unsigned char ) );
     if ( outputBaseName == NULL || resblock == NULL )
     {
         status = OPENERR_IN;
+        DEBUGPRINT("OPENERR_IN");
         goto end;
     }
     memcpy ( outputBaseName, tempOutputDirPath, tmpLength );
@@ -987,16 +1007,19 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     if ( devices[0] == NULL )
     {
         status = OPENERR_DEV0;
+        DEBUGPRINT("OPENERR_DEV0");
         goto end;
     }
     if ( devices[1] == NULL )
     {
         status = OPENERR_DEV1;
+        DEBUGPRINT("OPENERR_DEV1");
         goto end;
     }
     if ( devices[2] == NULL )
     {
         status = OPENERR_DEV2;
+        DEBUGPRINT("OPENERR_DEV2");
         goto end;
     }
 
@@ -1005,6 +1028,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     if ( meta == NULL )
     {
         status = METADATA_ERROR;
+        DEBUGPRINT("METADATA_ERROR");
         goto end;
     }
 
@@ -1013,17 +1037,26 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
 
     /* Invoke the native split method. */
     status = split_file ( fp, devices, meta, &rc4key );
+    DEBUGPRINT("split_file");
 
 end:
     if ( status == SUCCESS_SPLIT )
     {
+        DEBUGPRINT("SUCCESS_SPLIT");
+        DEBUGPRINT(retvalue);
         memcpy ( retvalue, &outputBaseName[ tmpLength ], 64 );
+        DEBUGPRINT(retvalue);
         retvalue[64] = '\0';
+        DEBUGPRINT(retvalue);
     }
     else
     {
+        DEBUGPRINT("!SUCCESS_SPLIT");
+        DEBUGPRINT(retvalue);
         retvalue[0] = status;
+        DEBUGPRINT(retvalue);
         retvalue[1] = '\0';
+        DEBUGPRINT(retvalue);
     }
     /* Close the files. */
     if ( fp != NULL )
