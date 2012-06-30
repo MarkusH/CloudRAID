@@ -24,15 +24,14 @@ package de.dhbw_mannheim.cloudraid.api.impl;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
@@ -41,14 +40,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
+
 import de.dhbw_mannheim.cloudraid.api.impl.RestApiUrlMapping.MatchResult;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.IRestApiResponse;
-import de.dhbw_mannheim.cloudraid.api.impl.responses.JsonApiResponse;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.PlainApiResponse;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
-import de.dhbw_mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
+import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
+import de.dhbw_mannheim.cloudraid.core.ICoreAccess;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
-import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager.FILE_STATUS;
 
 /**
  * @author Markus Holtermann, Florian Bausch
@@ -72,13 +74,15 @@ public class RestApiServlet extends HttpServlet {
 	/**
 	 * A reference to the database that is used
 	 */
-	private IMetadataManager database = null;
+	private IMetadataManager metadata = null;
+
+	private ICloudRAIDService coreService = null;
 
 	/**
 	 * Initializes all URL mappings and stores a reference to the
 	 * {@link IMetadataManager}
 	 * 
-	 * @param database
+	 * @param metadata
 	 *            The {@link IMetadataManager} that will be used for all
 	 *            database requests
 	 * @param config
@@ -89,10 +93,10 @@ public class RestApiServlet extends HttpServlet {
 	 *             Thrown if the function cannot be accessed
 	 * @throws NoSuchMethodException
 	 *             Thrown if no such function can be found
+	 * @throws InstantiationException
 	 */
-	public RestApiServlet(IMetadataManager database, ICloudRAIDConfig config)
-			throws IllegalArgumentException, SecurityException,
-			NoSuchMethodException {
+	public RestApiServlet() throws IllegalArgumentException, SecurityException,
+			NoSuchMethodException, InstantiationException {
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "DELETE",
 				RestApiServlet.class, "fileDelete"));
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "GET",
@@ -116,9 +120,30 @@ public class RestApiServlet extends HttpServlet {
 		mappings.add(new RestApiUrlMapping("^/user/del/$", "DELETE",
 				RestApiServlet.class, "userDelete"));
 
-		this.database = database;
+		BundleContext ctx = FrameworkUtil.getBundle(RestApiServlet.class)
+				.getBundleContext();
 
-		this.config = config;
+		ServiceReference<IMetadataManager> srm = ctx
+				.getServiceReference(IMetadataManager.class);
+		this.metadata = ctx.getService(srm);
+		if (this.metadata == null) {
+			throw new InstantiationException(
+					"No running metadata manager found");
+		}
+
+		ServiceReference<ICloudRAIDConfig> src = ctx
+				.getServiceReference(ICloudRAIDConfig.class);
+		this.config = ctx.getService(src);
+		if (this.config == null) {
+			throw new InstantiationException("No running config found");
+		}
+
+		ServiceReference<ICloudRAIDService> srcore = ctx
+				.getServiceReference(ICloudRAIDService.class);
+		this.coreService = ctx.getService(srcore);
+		if (this.coreService == null) {
+			throw new InstantiationException("No core service found");
+		}
 
 		this.userpattern = Pattern.compile("[a-zA-Z0-9]");
 	}
@@ -158,15 +183,8 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	protected void doRequest(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
-		String mime = req.getHeader("Accept");
 		IRestApiResponse r;
-		if (JsonApiResponse.MIMETYPE.startsWith(mime)) {
-			r = new JsonApiResponse();
-		} else if (PlainApiResponse.MIMETYPE.startsWith(mime)) {
-			r = new PlainApiResponse();
-		} else {
-			r = new PlainApiResponse();
-		}
+		r = new PlainApiResponse();
 		r.setResponseObject(resp);
 
 		MatchResult mr = null;
@@ -228,32 +246,22 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = database.fileGet(path, userid);
-		if (rs != null) {
-			try {
-				int id = rs.getInt("id");
-				if (database.fileUpdateState(id, FILE_STATUS.DELETING)) {
-					String hash = rs.getString("hash_name");
-					File f = new File(config.getString("split.input.dir", null)
-							+ File.separator + ".del_" + id + "_" + hash);
-					f.getParentFile().mkdirs();
-					if (f.createNewFile()) {
-						resp.setStatusCode(200);
-						return;
-					}
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			} catch (NoSuchElementException e) {
-				e.printStackTrace();
-			} catch (InvalidConfigValueException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else {
+		ResultSet rs = metadata.fileGet(path, userid);
+		if (rs == null) {
 			resp.setStatusCode(404);
 			return;
+		}
+		try {
+			int fileid = rs.getInt("id");
+			ICoreAccess slot = this.coreService.getSlot();
+			if (slot.deleteData(fileid)) {
+				resp.setStatusCode(200);
+				return;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
 		}
 		resp.setStatusCode(500);
 	}
@@ -287,21 +295,57 @@ public class RestApiServlet extends HttpServlet {
 		if (!this.validateSession(req, resp)) {
 			return;
 		}
+
+		String path = args.get(0);
 		HttpSession s = req.getSession();
-		ResultSet rs = database.fileGet(args.get(0),
-				(Integer) s.getAttribute("userid"));
-		try {
-			if (rs == null) {
-				resp.setStatusCode(404);
-				return;
-			}
-			resp.addPayload(rs.getString("hash_name"));
-		} catch (SQLException e) {
-			resp.setStatusCode(500);
-			e.printStackTrace();
+		int userid = (Integer) s.getAttribute("userid");
+		ResultSet rs = metadata.fileGet(path, userid);
+		if (rs == null) {
+			resp.setStatusCode(404);
 			return;
 		}
-		resp.setStatusCode(200);
+		ICoreAccess slot = null;
+		int statusCode = 500;
+		try {
+			slot = this.coreService.getSlot();
+			int fileid = rs.getInt("id");
+			int bufsize = 4096;
+
+			InputStream is = slot.getData(fileid);
+			BufferedInputStream bis = new BufferedInputStream(
+					is, bufsize);
+			BufferedOutputStream bos = new BufferedOutputStream(
+					resp.getOutputStream(), bufsize);
+			byte[] inputBytes = new byte[bufsize];
+			int readLength;
+			while ((readLength = bis.read(inputBytes)) > 0) {
+				bos.write(inputBytes, 0, readLength);
+				System.out.println(Arrays.toString(Arrays.copyOfRange(inputBytes, 0, readLength)));
+			}
+
+			try {
+				bis.close();
+			} catch (IOException ignore) {
+			}
+
+			//try {
+			//	bos.close();
+			//} catch (IOException ignore) {
+			//}
+
+			statusCode = 200;
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (slot != null) {
+				this.coreService.ungetSlot(slot);
+			}
+		}
+		resp.setStatusCode(statusCode);
 	}
 
 	/**
@@ -334,7 +378,7 @@ public class RestApiServlet extends HttpServlet {
 			return;
 		}
 		HttpSession s = req.getSession();
-		ResultSet rs = database.fileGet(args.get(0),
+		ResultSet rs = metadata.fileGet(args.get(0),
 				(Integer) s.getAttribute("userid"));
 		try {
 			if (rs == null) {
@@ -386,45 +430,31 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = database.fileGet(path, userid);
+		ResultSet rs = metadata.fileGet(path, userid);
 		if (rs != null) {
 			resp.setStatusCode(409);
 			return;
 		}
 
-		int bufsize = Math.min(1024, req.getContentLength());
-		if (bufsize < 0) {
+		if (req.getContentLength() < 0) {
 			resp.setStatusCode(411);
 			return;
 		}
 
 		try {
-			BufferedInputStream bis = new BufferedInputStream(
-					req.getInputStream(), bufsize);
-
-			File f = new File(config.getString("split.input.dir", null)
-					+ File.separator + userid + File.separator + path);
-			f.getParentFile().mkdirs();
-
-			BufferedOutputStream bos = new BufferedOutputStream(
-					new FileOutputStream(f), bufsize);
-
-			byte[] inputBytes = new byte[bufsize];
-			int readLength;
-			while ((readLength = bis.read(inputBytes)) >= 0) {
-				bos.write(inputBytes, 0, readLength);
-			}
-			if (database.fileNew(path, "", 0L, userid) >= 0) {
+			ICoreAccess slot = this.coreService.getSlot();
+			int fileid = this.metadata.fileNew(path, "", 0L, userid);
+			if (fileid >= 0) {
+				slot.putData(req.getInputStream(), fileid);
 				resp.setStatusCode(201);
 				return;
 			}
+		} catch (InstantiationException e) {
+			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (NoSuchElementException e) {
-			e.printStackTrace();
-		} catch (InvalidConfigValueException e) {
-			e.printStackTrace();
 		}
+
 		resp.setStatusCode(500);
 	}
 
@@ -461,48 +491,30 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = database.fileGet(path, userid);
+		ResultSet rs = metadata.fileGet(path, userid);
 		if (rs == null) {
 			resp.setStatusCode(404);
 			return;
 		}
-		int bufsize = Math.min(1024, req.getContentLength());
-		if (bufsize < 0) {
+		if (req.getContentLength() < 0) {
 			resp.setStatusCode(411);
 			return;
 		}
 
 		try {
-			int fileid = rs.getInt("id");
-
-			BufferedInputStream bis = new BufferedInputStream(
-					req.getInputStream(), bufsize);
-
-			File f = new File(config.getString("split.input.dir", null)
-					+ File.separator + userid + File.separator + path);
-			f.getParentFile().mkdirs();
-
-			BufferedOutputStream bos = new BufferedOutputStream(
-					new FileOutputStream(f), bufsize);
-
-			byte[] inputBytes = new byte[bufsize];
-			int readLength;
-			while ((readLength = bis.read(inputBytes)) >= 0) {
-				bos.write(inputBytes, 0, readLength);
-			}
-			if (database.fileUpdate(fileid, path, "", 0L, userid)) {
-				resp.setStatusCode(200);
+			ICoreAccess slot = this.coreService.getSlot();
+			int fileid = this.metadata.fileNew(path, "", 0L, userid);
+			if (fileid >= 0) {
+				slot.putData(req.getInputStream(), fileid, true);
+				resp.setStatusCode(201);
 				return;
 			}
+		} catch (InstantiationException e) {
+			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (NoSuchElementException e) {
-			e.printStackTrace();
-		} catch (InvalidConfigValueException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
+
 		resp.setStatusCode(500);
 	}
 
@@ -531,7 +543,7 @@ public class RestApiServlet extends HttpServlet {
 		}
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = database.fileList(userid);
+		ResultSet rs = metadata.fileList(userid);
 		if (rs == null) {
 			resp.addPayload("No files uploaded yet.");
 		} else {
@@ -595,7 +607,7 @@ public class RestApiServlet extends HttpServlet {
 			resp.addPayload("Username or password missing!");
 			return;
 		}
-		if (database.addUser(username, password)) {
+		if (metadata.addUser(username, password)) {
 			resp.setStatusCode(200);
 			resp.addPayload("User created");
 		} else {
@@ -640,7 +652,7 @@ public class RestApiServlet extends HttpServlet {
 			resp.setStatusCode(503);
 			return;
 		}
-		int id = database.authUser(username, password);
+		int id = metadata.authUser(username, password);
 		if (id > -1) {
 			session.setAttribute("auth", true);
 			session.setAttribute("username", username);
@@ -696,7 +708,7 @@ public class RestApiServlet extends HttpServlet {
 			resp.setStatusCode(400);
 			resp.addPayload("Username, password, or password confirmation missing or passwords do not match!");
 		}
-		if (database.changeUserPwd(username, password, userId)) {
+		if (metadata.changeUserPwd(username, password, userId)) {
 			resp.setStatusCode(200);
 			resp.addPayload("The password was changed successfully");
 		} else {

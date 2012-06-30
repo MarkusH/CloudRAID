@@ -34,7 +34,8 @@ public interface ICoreAccess {
 
 	/**
 	 * This function <b>must</b> release itself from the {@link ICoreAccess}
-	 * slots in the {@link ICloudRAIDService}.
+	 * slots in the {@link ICloudRAIDService}. A calling function <b>must
+	 * not</b> release the slot!
 	 * 
 	 * @param is
 	 *            InputStream providing the data
@@ -48,7 +49,8 @@ public interface ICoreAccess {
 
 	/**
 	 * This function <b>must</b> release itself from the {@link ICoreAccess}
-	 * slots in the {@link ICloudRAIDService}.
+	 * slots in the {@link ICloudRAIDService}. A calling function <b>must
+	 * not</b> release the slot!
 	 * 
 	 * @param is
 	 *            InputStream providing the data
@@ -62,7 +64,8 @@ public interface ICoreAccess {
 
 	/**
 	 * This function <b>must not</b> release itself from the {@link ICoreAccess}
-	 * slots in the {@link ICloudRAIDService}.
+	 * slots in the {@link ICloudRAIDService}. A calling function <b>must</b>
+	 * release the slot!
 	 * 
 	 * @param fileid
 	 *            The id for this file from the {@link IMetadataManager}

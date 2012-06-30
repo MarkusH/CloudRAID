@@ -30,6 +30,7 @@ import org.osgi.service.http.NamespaceException;
 
 import de.dhbw_mannheim.cloudraid.api.impl.responses.IRestApiResponse;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
 
 /**
@@ -65,29 +66,9 @@ public class RestApiComponent {
 	}
 
 	/**
-	 * 
-	 */
-	private ICloudRAIDConfig config = null;
-
-	/**
-	 * 
-	 */
-	private IMetadataManager metadata = null;
-
-	/**
 	 * Service that handles all the request. Injected by the component.xml
 	 */
 	private HttpService httpService = null;
-
-	/**
-	 * @param config
-	 */
-	protected synchronized void setConfig(ICloudRAIDConfig config) {
-		System.out.println("RestApiComponent: setConfig: begin");
-		this.config = config;
-		System.out.println("RestApiComponent: setConfig: " + this.config);
-		System.out.println("RestApiComponent: setConfig: end");
-	}
 
 	/**
 	 * @param httpService
@@ -98,17 +79,6 @@ public class RestApiComponent {
 		System.out.println("RestApiComponent: setHttpService: "
 				+ this.httpService);
 		System.out.println("RestApiComponent: setHttpService: end");
-	}
-
-	/**
-	 * @param metadataService
-	 */
-	protected synchronized void setMetadata(IMetadataManager metadataService) {
-		System.out.println("RestApiComponent: setMetadataMgr: begin");
-		this.metadata = metadataService;
-		System.out
-				.println("RestApiComponent: setMetadataMgr: " + this.metadata);
-		System.out.println("RestApiComponent: setMetadataMgr: end");
 	}
 
 	/**
@@ -126,13 +96,14 @@ public class RestApiComponent {
 	 * @throws NoSuchMethodException
 	 * @throws SecurityException
 	 * @throws IllegalArgumentException
+	 * @throws InstantiationException
 	 */
 	protected void startup() throws IllegalArgumentException,
-			SecurityException, NoSuchMethodException {
+			SecurityException, NoSuchMethodException, InstantiationException {
 		System.out.println("RestApiComponent: startup: begin");
 		try {
 			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
-			RestApiServlet servlet = new RestApiServlet(metadata, config);
+			RestApiServlet servlet = new RestApiServlet();
 			httpService.registerServlet(SERVLET_ALIAS, servlet, null, null);
 		} catch (ServletException e) {
 			e.printStackTrace();
@@ -149,8 +120,6 @@ public class RestApiComponent {
 		System.out.println("RestApiComponent: unsetConfig: begin");
 		System.out.println("RestApiComponent: unsetConfig: " + config);
 		httpService.unregister(SERVLET_ALIAS);
-		this.config = null;
-		System.out.println("RestApiComponent: unsetConfig: " + this.config);
 		System.out.println("RestApiComponent: unsetConfig: end");
 	}
 
@@ -176,10 +145,15 @@ public class RestApiComponent {
 		System.out.println("RestApiComponent: unsetMetadataMgr: "
 				+ metadataService);
 		httpService.unregister(SERVLET_ALIAS);
-		this.metadata = null;
-		System.out.println("RestApiComponent: unsetMetadataMgr: "
-				+ this.metadata);
 		System.out.println("RestApiComponent: unsetMetadataMgr: end");
+	}
+
+	protected synchronized void unsetCloudRAIDService(ICloudRAIDService core) {
+		System.out.println("RestApiComponent: unsetCloudRAIDService: begin");
+		System.out.println("RestApiComponent: unsetCloudRAIDService: "
+				+ core);
+		httpService.unregister(SERVLET_ALIAS);
+		System.out.println("RestApiComponent: unsetCloudRAIDService: end");
 	}
 
 }

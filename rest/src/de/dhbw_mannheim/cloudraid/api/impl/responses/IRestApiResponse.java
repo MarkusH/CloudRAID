@@ -23,6 +23,7 @@
 package de.dhbw_mannheim.cloudraid.api.impl.responses;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -76,4 +77,6 @@ public interface IRestApiResponse {
 	 * @param sc
 	 */
 	public void setStatusCode(int sc);
+
+	public OutputStream getOutputStream() throws IOException;
 }

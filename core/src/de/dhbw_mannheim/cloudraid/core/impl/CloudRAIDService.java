@@ -161,6 +161,7 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 		for (int i = 0; i < 3; i++) {
 			this.storageConnectors[i].create(i, this.config);
+			this.storageConnectors[i].connect();
 		}
 
 		System.out.println("CloudRAIDService: startup: end");

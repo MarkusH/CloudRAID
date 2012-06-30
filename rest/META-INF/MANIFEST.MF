@@ -7,6 +7,7 @@ Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: de.dhbw_mannheim.cloudraid.config,
  de.dhbw_mannheim.cloudraid.config.exceptions,
+ de.dhbw_mannheim.cloudraid.core,
  de.dhbw_mannheim.cloudraid.metadatamgr,
  javax.servlet,
  javax.servlet.http;version="2.5.0",

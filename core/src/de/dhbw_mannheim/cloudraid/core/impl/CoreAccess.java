@@ -330,10 +330,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 			}
 		} catch (SQLException e) {
-			state = false;
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
-			state = false;
 			e.printStackTrace();
 		}
 		this.coreService.ungetSlot(this);
@@ -346,7 +344,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		try {
 			// perform the splitting process
 			this.hash = RaidAccessInterface.splitInterface(
-					this.file.getParent(), this.file.getName(),
+					config.getString("split.input.dir"), this.userid + File.separator
+					+ this.path,
 					config.getString("split.output.dir"),
 					config.getString("file.password"));
 			// Update state to split
@@ -364,7 +363,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				// iterate over all connectors and upload the files with
 				// extension .0, .1 and .2 AND the .m file to all connectors
 				for (int i = 0; i < 3; i++) {
-					storageConnectors[i].update(hash);
+					storageConnectors[i].update(this.hash);
 				}
 			} else {
 				// iterate over all connectors and upload the files with

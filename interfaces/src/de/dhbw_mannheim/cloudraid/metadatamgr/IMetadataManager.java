@@ -182,7 +182,8 @@ public interface IMetadataManager {
 	 *            The last modification date.
 	 * @param userId
 	 *            The user id this file belongs to
-	 * @return true, if the data set could be inserted into the database.
+	 * @return The generated ID of the new file. An ID <code>= 0</code> defines
+	 *         success. On error <code>-1</code> must be returned.
 	 */
 	public int fileNew(String path, String hash, long lastMod, int userId);
 

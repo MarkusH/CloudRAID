@@ -26,13 +26,10 @@ import static org.scribe.model.Verb.GET;
 import static org.scribe.model.Verb.POST;
 import static org.scribe.model.Verb.PUT;
 
-import java.awt.Desktop;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.util.Scanner;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -89,25 +86,27 @@ public class DropboxConnector implements IStorageConnector {
 		service = new ServiceBuilder().provider(DropBoxApi.class)
 				.apiKey(this.appKey).apiSecret(this.appSecret).build();
 		if (this.accessTokenValue == null || this.accessTokenSecret == null) {
-			Scanner in = new Scanner(System.in);
 			Token requestToken = service.getRequestToken();
+			System.out
+					.println("Please go to "
+							+ service.getAuthorizationUrl(requestToken)
+							+ " , authorize the app and then press enter in this window.");
 			try {
-				Desktop.getDesktop().browse(
-						new URI(service.getAuthorizationUrl(requestToken)));
-				System.out
-						.println("Please authorize the app and then press enter in this window.");
-			} catch (Exception e) {
-				System.out
-						.println("Please go to "
-								+ service.getAuthorizationUrl(requestToken)
-								+ " , authorize the app and then press enter in this window.");
+				Thread.sleep(9000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
 			}
-			in.nextLine();
 			Verifier verifier = new Verifier("");
-			System.out.println();
 			this.accessToken = service.getAccessToken(requestToken, verifier);
 			this.accessTokenSecret = this.accessToken.getSecret();
 			this.accessTokenValue = this.accessToken.getToken();
+			this.config.put(
+					String.format("connector.%d.accessTokenValue", this.id),
+					this.accessTokenValue, true);
+			this.config.put(
+					String.format("connector.%d.accessTokenSecret", this.id),
+					this.accessTokenSecret, true);
+			this.config.save();
 			System.out.println("Your secret access token: "
 					+ this.accessTokenSecret);
 			System.out.println("Your public access token: "
