@@ -184,7 +184,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public boolean delete() {
+	public synchronized boolean delete() {
 		boolean res = false;
 		if (CONFIG_FILE.exists()) {
 			res = CONFIG_FILE.delete();
@@ -255,7 +255,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public boolean getBoolean(String key) throws MissingConfigValueException {
+	public synchronized boolean getBoolean(String key) throws MissingConfigValueException {
 		try {
 			return this.getBoolean(key, null);
 		} catch (Exception e) {
@@ -282,22 +282,22 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public String getCloudRAIDHome() {
+	public synchronized String getCloudRAIDHome() {
 		return CLOUDRAID_HOME;
 	}
 
 	@Override
-	public String getConfigPath() {
+	public synchronized String getConfigPath() {
 		return CONFIG_PATH;
 	}
 
 	@Override
-	public HashMap<String, String> getDefaultData() {
+	public synchronized HashMap<String, String> getDefaultData() {
 		return defaultData;
 	}
 
 	@Override
-	public double getDouble(String key) throws MissingConfigValueException {
+	public synchronized double getDouble(String key) throws MissingConfigValueException {
 		try {
 			return this.getDouble(key, null);
 		} catch (Exception e) {
@@ -324,7 +324,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public float getFloat(String key) throws MissingConfigValueException {
+	public synchronized float getFloat(String key) throws MissingConfigValueException {
 		try {
 			return this.getFloat(key, null);
 		} catch (Exception e) {
@@ -351,7 +351,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public int getInt(String key) throws MissingConfigValueException {
+	public synchronized int getInt(String key) throws MissingConfigValueException {
 		try {
 			return this.getInt(key, null);
 		} catch (Exception e) {
@@ -378,7 +378,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public long getLong(String key) throws MissingConfigValueException {
+	public synchronized long getLong(String key) throws MissingConfigValueException {
 		try {
 			return this.getLong(key, null);
 		} catch (Exception e) {
@@ -406,7 +406,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public String getString(String key) throws MissingConfigValueException {
+	public synchronized String getString(String key) throws MissingConfigValueException {
 		try {
 			return this.getString(key, null);
 		} catch (Exception e) {
@@ -441,7 +441,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	 *            The length that the salt should have
 	 * @return Returns a salt as byte array of length <code>length</code>
 	 */
-	private byte[] getXMLSaveSalt(int length) {
+	private synchronized byte[] getXMLSaveSalt(int length) {
 		byte[] b = new byte[length];
 		byte[] allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#-_+"
 				.getBytes();
@@ -454,7 +454,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public ICloudRAIDConfig init(String password) {
+	public synchronized ICloudRAIDConfig init(String password) {
 		this.password = password.getBytes();
 
 		try {
@@ -480,7 +480,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	 * @return <code>true</code> if the algorithm exists, otherwise
 	 *         <code>false</code>.
 	 */
-	private boolean isAlgorithmsAvailable(String algorithm) {
+	private synchronized boolean isAlgorithmsAvailable(String algorithm) {
 		// TODO automatically detect if the chosen algorithm is available
 
 		// Provider[] providers = Security.getProviders();
@@ -607,7 +607,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public ICloudRAIDConfig reload() {
+	public synchronized ICloudRAIDConfig reload() {
 		this.clear();
 		this.salts.clear();
 
@@ -698,7 +698,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public void save() {
+	public synchronized void save() {
 		try {
 			if (!CONFIG_FILE.getParentFile().exists()) {
 				CONFIG_FILE.getParentFile().mkdirs();
@@ -759,7 +759,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public void setCloudRAIDHome(String path) {
+	public synchronized void setCloudRAIDHome(String path) {
 		if (path.endsWith(File.separator)) {
 			CLOUDRAID_HOME = path;
 		} else {
@@ -769,7 +769,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public void setConfigPath(String path) {
+	public synchronized void setConfigPath(String path) {
 		CONFIG_PATH = path;
 		CONFIG_FILE = new File(CONFIG_PATH);
 	}
