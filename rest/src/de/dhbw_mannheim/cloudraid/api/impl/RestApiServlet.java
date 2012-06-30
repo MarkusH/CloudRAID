@@ -25,10 +25,12 @@ package de.dhbw_mannheim.cloudraid.api.impl;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
 
@@ -309,14 +311,16 @@ public class RestApiServlet extends HttpServlet {
 			int fileid = rs.getInt("id");
 			int bufsize = 4096;
 
+			InputStream is = slot.getData(fileid);
 			BufferedInputStream bis = new BufferedInputStream(
-					slot.getData(fileid), bufsize);
+					is, bufsize);
 			BufferedOutputStream bos = new BufferedOutputStream(
 					resp.getOutputStream(), bufsize);
 			byte[] inputBytes = new byte[bufsize];
 			int readLength;
-			while ((readLength = bis.read(inputBytes)) >= 0) {
+			while ((readLength = bis.read(inputBytes)) > 0) {
 				bos.write(inputBytes, 0, readLength);
+				System.out.println(Arrays.toString(Arrays.copyOfRange(inputBytes, 0, readLength)));
 			}
 
 			try {
@@ -324,10 +328,10 @@ public class RestApiServlet extends HttpServlet {
 			} catch (IOException ignore) {
 			}
 
-			try {
-				bos.close();
-			} catch (IOException ignore) {
-			}
+			//try {
+			//	bos.close();
+			//} catch (IOException ignore) {
+			//}
 
 			statusCode = 200;
 		} catch (InstantiationException e) {

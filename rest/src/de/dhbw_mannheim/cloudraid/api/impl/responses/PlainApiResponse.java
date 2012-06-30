@@ -44,24 +44,28 @@ public class PlainApiResponse implements IRestApiResponse {
 	 */
 	private HttpServletResponse resp = null;
 
-	/**
-	 * 
-	 */
-	private StringBuffer sb = new StringBuffer();
-
-	/**
-	 * 
-	 */
-	private StringBuffer table = new StringBuffer();
-
 	@Override
 	public void addField(String name, String payload) {
-		this.sb.append(name).append(": ").append(payload).append("\n");
+		if (this.resp != null) {
+			String s = name + ": " + payload + "\n";
+			try {
+				this.resp.getOutputStream().write(s.getBytes());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
 	public void addPayload(String payload) {
-		this.sb.append(payload);
+		if (this.resp != null) {
+			String s = "payload: " + payload + "\n";
+			try {
+				this.resp.getOutputStream().write(s.getBytes());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override
@@ -72,12 +76,11 @@ public class PlainApiResponse implements IRestApiResponse {
 	@Override
 	public void send() throws IOException {
 		if (this.resp != null) {
-			resp.setContentType(MIMETYPE);
-
 			// Add the table to the payload
-			this.addPayload(this.table.toString());
+			// this.addPayload(this.table.toString());
 
-			resp.getOutputStream().write(this.sb.toString().getBytes());
+			// resp.getOutputStream().write(this.sb.toString().getBytes());
+			resp.getOutputStream().flush();
 		}
 	}
 
@@ -91,6 +94,7 @@ public class PlainApiResponse implements IRestApiResponse {
 	@Override
 	public void setResponseObject(HttpServletResponse resp) {
 		this.resp = resp;
+		this.resp.setContentType(MIMETYPE);
 	}
 
 	@Override
@@ -102,12 +106,18 @@ public class PlainApiResponse implements IRestApiResponse {
 
 	@Override
 	public void addRow(Map<String, Object> map) {
+		StringBuffer table = new StringBuffer();
 		for (Map.Entry<String, Object> e : map.entrySet()) {
-			this.table.append("\""
+			table.append("\""
 					+ e.getValue().toString().replace("\\", "\\\\")
 							.replace("\"", "\\\"") + "\",");
 		}
-		this.table.setLength(this.table.length() - 1);
-		this.table.append("\n");
+		table.setLength(table.length() - 1);
+		table.append("\n");
+		try {
+			this.resp.getOutputStream().write(table.toString().getBytes());
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 	}
 }
