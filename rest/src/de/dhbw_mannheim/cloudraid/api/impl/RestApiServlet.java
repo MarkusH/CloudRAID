@@ -97,6 +97,8 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	public RestApiServlet() throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException, InstantiationException {
+		mappings.add(new RestApiUrlMapping("^/api/info/$", "GET",
+				RestApiServlet.class, "apiInfo"));
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "DELETE",
 				RestApiServlet.class, "fileDelete"));
 		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "GET",
@@ -170,6 +172,27 @@ public class RestApiServlet extends HttpServlet {
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		this.doRequest(req, resp);
+	}
+
+	/**
+	 * View to get the API information. Method must be <code>GET</code> and path
+	 * pattern <code>^/api/info/$</code>.
+	 * 
+	 * @param req
+	 *            The request. Needs no HTTP header attributes.
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            </ul>
+	 * @param args
+	 *            No arguments.
+	 */
+	public void apiInfo(HttpServletRequest req, IRestApiResponse resp,
+			ArrayList<String> args) {
+		// TODO: implement.
+		resp.setStatusCode(501);
+		resp.addPayload("Not implemented.");
 	}
 
 	/**
@@ -312,15 +335,15 @@ public class RestApiServlet extends HttpServlet {
 			int bufsize = 4096;
 
 			InputStream is = slot.getData(fileid);
-			BufferedInputStream bis = new BufferedInputStream(
-					is, bufsize);
+			BufferedInputStream bis = new BufferedInputStream(is, bufsize);
 			BufferedOutputStream bos = new BufferedOutputStream(
 					resp.getOutputStream(), bufsize);
 			byte[] inputBytes = new byte[bufsize];
 			int readLength;
 			while ((readLength = bis.read(inputBytes)) > 0) {
 				bos.write(inputBytes, 0, readLength);
-				System.out.println(Arrays.toString(Arrays.copyOfRange(inputBytes, 0, readLength)));
+				System.out.println(Arrays.toString(Arrays.copyOfRange(
+						inputBytes, 0, readLength)));
 			}
 
 			try {
@@ -328,10 +351,10 @@ public class RestApiServlet extends HttpServlet {
 			} catch (IOException ignore) {
 			}
 
-			//try {
-			//	bos.close();
-			//} catch (IOException ignore) {
-			//}
+			// try {
+			// bos.close();
+			// } catch (IOException ignore) {
+			// }
 
 			statusCode = 200;
 		} catch (InstantiationException e) {
