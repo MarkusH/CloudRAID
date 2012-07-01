@@ -201,10 +201,16 @@ public class UbuntuOneConnector implements IStorageConnector {
 
 	@Override
 	public boolean delete(String resource) {
-		Response response = sendRequest(Verb.DELETE,
-				this.service.getFileStorageEndpoint() + "/~/Ubuntu%20One/"
-						+ OAuthEncoder.encode(resource));
-		return (response.getCode() == 200 || response.getCode() == 404);
+		Response response = sendRequest(
+				Verb.DELETE,
+				this.service.getFileStorageEndpoint()
+						+ "/~/Ubuntu%20One/"
+						+ OAuthEncoder.encode(resource + "."
+								+ String.valueOf(this.id)));
+		boolean ret = (response.getCode() == 200 || response.getCode() == 404);
+		sendRequest(Verb.DELETE, this.service.getFileStorageEndpoint()
+				+ "/~/Ubuntu%20One/" + OAuthEncoder.encode(resource + ".m"));
+		return ret;
 	}
 
 	@Override
@@ -221,15 +227,13 @@ public class UbuntuOneConnector implements IStorageConnector {
 
 	@Override
 	public void disconnect() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public InputStream get(String resource) {
 		Response response = sendRequest(Verb.GET,
 				this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
-						+ resource);
+						+ resource + "." + this.id);
 		if (response.getCode() == 200) {
 			return response.getStream();
 		} else {
@@ -239,9 +243,14 @@ public class UbuntuOneConnector implements IStorageConnector {
 
 	@Override
 	public String getMetadata(String resource) {
-		// TODO implementation
-
-		return ""; // TODO return null on error
+		Response response = sendRequest(Verb.GET,
+				this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
+						+ resource + ".m");
+		if (response.getCode() == 200) {
+			return response.getBody();
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -357,12 +366,59 @@ public class UbuntuOneConnector implements IStorageConnector {
 
 	@Override
 	public boolean update(String resource) {
-		return false;
+		InputStream is = get(resource);
+		if (is == null) {
+			return false;
+		}
+		try {
+			is.close();
+		} catch (IOException ignore) {
+		}
+		if (performUpload(resource, String.valueOf(this.id))) {
+			if (performUpload(resource, "m")) {
+				return true;
+			} else {// TODO: check
+				delete(resource);
+				return false;
+			}
+		} else {
+			return false;
+		}
 	}
 
 	@Override
 	public boolean upload(String resource) {
-		File f = new File(splitOutputDir + "/" + resource + "." + this.id);
+		InputStream is = get(resource);
+		if (is != null) {
+			try {
+				is.close();
+			} catch (IOException ignore) {
+			}
+			return false;
+		}
+		if (performUpload(resource, String.valueOf(this.id))) {
+			if (performUpload(resource, "m")) {
+				return true;
+			} else { // TODO: check
+				delete(resource);
+				return false;
+			}
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Executes the actual upload to the UbuntuOne severs.
+	 * 
+	 * @param resource
+	 *            The resource.
+	 * @param extension
+	 *            The resource's extension.
+	 * @return true, if the upload succeeded; false, if not.
+	 */
+	private boolean performUpload(String resource, String extension) {
+		File f = new File(splitOutputDir + "/" + resource + "." + extension);
 		int maxFilesize;
 		try {
 			maxFilesize = this.config.getInt("filesize.max", null);
@@ -377,13 +433,19 @@ public class UbuntuOneConnector implements IStorageConnector {
 			System.err.println("File too big.");
 		} else {
 			byte[] fileBytes = new byte[(int) f.length()];
-			InputStream fis;
+			InputStream fis = null;
 			try {
 				fis = new FileInputStream(f);
 				fis.read(fileBytes);
 			} catch (IOException e) {
 				e.printStackTrace();
 				return false;
+			} finally {
+				try {
+					if (fis != null)
+						fis.close();
+				} catch (IOException ignore) {
+				}
 			}
 			Response response = sendRequest(Verb.PUT,
 					this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"

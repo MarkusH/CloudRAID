@@ -67,6 +67,11 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 1967811240645738359L;
 
+	/**
+	 * Indicates the version of the API.
+	 */
+	private static final String API_VERSION = "0.1";
+
 	private ICloudRAIDConfig config;
 	private Pattern userpattern;
 
@@ -189,9 +194,8 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	public void apiInfo(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
-		// TODO: implement.
-		resp.setStatusCode(501);
-		resp.addPayload("Not implemented.");
+		resp.setStatusCode(200);
+		resp.addPayload("Version:" + API_VERSION + "\n");
 	}
 
 	/**
