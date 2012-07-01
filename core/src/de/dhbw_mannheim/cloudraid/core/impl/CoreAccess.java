@@ -105,6 +105,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 	public boolean putData(InputStream is, int fileid, boolean update) {
 		this.fileid = fileid;
 		this.update = update;
+		BufferedInputStream bis = null;
+		BufferedOutputStream bos = null;
 		try {
 			// Retrieve the metadata from the database
 			ResultSet rs = this.metadata.fileById(this.fileid);
@@ -128,9 +130,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				this.file.getParentFile().mkdirs();
 
 				// Write data to file
-				BufferedInputStream bis = new BufferedInputStream(is, bufsize);
-				BufferedOutputStream bos = new BufferedOutputStream(
-						new FileOutputStream(this.file), bufsize);
+				bis = new BufferedInputStream(is, bufsize);
+				bos = new BufferedOutputStream(new FileOutputStream(this.file),
+						bufsize);
 				byte[] inputBytes = new byte[bufsize];
 				int readLength;
 				while ((readLength = bis.read(inputBytes)) >= 0) {
@@ -140,16 +142,6 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				// Update file state in database
 				this.metadata
 						.fileUpdateState(this.fileid, FILE_STATUS.UPLOADED);
-
-				try {
-					bis.close();
-				} catch (IOException ignore) {
-				}
-
-				try {
-					bos.close();
-				} catch (IOException ignore) {
-				}
 
 				if (this.config.getBoolean("upload.asynchronous")) {
 					this.start();
@@ -173,6 +165,17 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		} catch (IllegalStateException e) {
 			this.uploadstate = false;
 			e.printStackTrace();
+		} finally {
+			try {
+				if (bis != null)
+					bis.close();
+			} catch (IOException ignore) {
+			}
+			try {
+				if (bos != null)
+					bos.close();
+			} catch (IOException ignore) {
+			}
 		}
 		return this.uploadstate;
 	}
@@ -344,8 +347,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		try {
 			// perform the splitting process
 			this.hash = RaidAccessInterface.splitInterface(
-					config.getString("split.input.dir"), this.userid + File.separator
-					+ this.path,
+					config.getString("split.input.dir"), this.userid
+							+ File.separator + this.path,
 					config.getString("split.output.dir"),
 					config.getString("file.password"));
 			// Update state to split

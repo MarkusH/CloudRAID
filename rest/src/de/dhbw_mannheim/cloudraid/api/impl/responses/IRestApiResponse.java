@@ -78,5 +78,19 @@ public interface IRestApiResponse {
 	 */
 	public void setStatusCode(int sc);
 
+	/**
+	 * @return Returns the output stream of the underlying
+	 *         {@link HttpServletResponse}.
+	 * @throws IOException
+	 */
 	public OutputStream getOutputStream() throws IOException;
+
+	/**
+	 * Set the content length to <code>len</code>
+	 * 
+	 * @param len
+	 */
+	public void setContentLength(int len);
+
+	public void flush() throws IOException;
 }

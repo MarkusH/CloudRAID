@@ -30,7 +30,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
 
@@ -329,32 +328,27 @@ public class RestApiServlet extends HttpServlet {
 		}
 		ICoreAccess slot = null;
 		int statusCode = 500;
+		BufferedInputStream bis = null;
+		BufferedOutputStream bos = null;
 		try {
 			slot = this.coreService.getSlot();
 			int fileid = rs.getInt("id");
 			int bufsize = 4096;
 
 			InputStream is = slot.getData(fileid);
-			BufferedInputStream bis = new BufferedInputStream(is, bufsize);
-			BufferedOutputStream bos = new BufferedOutputStream(
-					resp.getOutputStream(), bufsize);
+			bis = new BufferedInputStream(is, bufsize);
+			bos = new BufferedOutputStream(resp.getOutputStream(), bufsize);
 			byte[] inputBytes = new byte[bufsize];
 			int readLength;
-			while ((readLength = bis.read(inputBytes)) > 0) {
+			int written = 0;
+			while ((readLength = bis.read(inputBytes)) != -1) {
 				bos.write(inputBytes, 0, readLength);
-				System.out.println(Arrays.toString(Arrays.copyOfRange(
-						inputBytes, 0, readLength)));
+				written += readLength;
+				System.err.println("Written " + readLength + " Bytes");
+				System.err.flush();
 			}
-
-			try {
-				bis.close();
-			} catch (IOException ignore) {
-			}
-
-			// try {
-			// bos.close();
-			// } catch (IOException ignore) {
-			// }
+			resp.setContentLength(written);
+			resp.flush();
 
 			statusCode = 200;
 		} catch (InstantiationException e) {
@@ -364,6 +358,17 @@ public class RestApiServlet extends HttpServlet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
+			try {
+				if (bis != null)
+					bis.close();
+			} catch (IOException ignore) {
+			}
+			try {
+				if (bos != null)
+					bos.close();
+			} catch (IOException ignore) {
+			}
+
 			if (slot != null) {
 				this.coreService.ungetSlot(slot);
 			}

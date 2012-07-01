@@ -120,4 +120,18 @@ public class PlainApiResponse implements IRestApiResponse {
 			e1.printStackTrace();
 		}
 	}
+
+	@Override
+	public void setContentLength(int len) {
+		if (this.resp != null) {
+			this.resp.setContentLength(len);
+		}
+	}
+
+	@Override
+	public void flush() throws IOException {
+		if (this.resp != null) {
+			this.resp.getOutputStream().flush();
+		}
+	}
 }
