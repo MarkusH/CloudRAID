@@ -64,6 +64,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 	private File file;
 	private String hash;
 	private boolean uploadstate;
+	private String status;
 
 	public CoreAccess() throws InstantiationException {
 		// unset/initialize the values for this instance
@@ -111,14 +112,12 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			// Retrieve the metadata from the database
 			ResultSet rs = this.metadata.fileById(this.fileid);
 			if (rs != null) {
-				this.path = rs.getString("path_name");
-				this.userid = rs.getInt("user_id");
-				String status = rs.getString("status");
+				setByResultSet(rs);
 
-				if (FILE_STATUS.valueOf(status) != FILE_STATUS.UPLOADING) {
+				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.UPLOADING) {
 					throw new IllegalStateException(String.format(
 							"File %s has state %s but UPLOADING expected!",
-							path, status));
+							this.path, this.status));
 				}
 
 				int bufsize = 4096;
@@ -188,26 +187,23 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			// Retrieve the metadata from the database
 			ResultSet rs = this.metadata.fileById(this.fileid);
 			if (rs != null) {
-				this.path = rs.getString("path_name");
-				this.hash = rs.getString("hash_name");
-				this.userid = rs.getInt("user_id");
-				String status = rs.getString("status");
+				setByResultSet(rs);
 
-				if (FILE_STATUS.valueOf(status) != FILE_STATUS.READY) {
+				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
 					throw new IllegalStateException(String.format(
-							"File %s has state %s but READY expected!", path,
-							status));
+							"File %s has state %s but READY expected!", this.path,
+							this.status));
 				}
 
 				IStorageConnector[] storageConnectors = coreService
 						.getStorageConnectors();
 
 				for (int i = 0; i < 3; i++) {
-					InputStream is = storageConnectors[i].get(hash);
+					InputStream is = storageConnectors[i].get(this.hash);
 					// Create the file
 					this.file = new File(
 							this.config.getString("merge.input.dir")
-									+ File.separator + hash + "." + i);
+									+ File.separator + this.hash + "." + i);
 
 					// Write data to file
 					BufferedInputStream bis = new BufferedInputStream(is,
@@ -235,7 +231,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				// final one
 				String metadata[] = { null, null, null, null };
 				for (int i = 0; i < 3; i++) {
-					metadata[i] = storageConnectors[i].getMetadata(hash);
+					metadata[i] = storageConnectors[i].getMetadata(this.hash);
 				}
 
 				// Find at least two common meta data strings to verify
@@ -261,7 +257,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				// Create the meta data file
 				File metadatafile = new File(
 						this.config.getString("merge.input.dir")
-								+ File.separator + hash + ".m");
+								+ File.separator + this.hash + ".m");
 				BufferedOutputStream bos = new BufferedOutputStream(
 						new FileOutputStream(metadatafile), bufsize);
 				bos.write(metadata[3].getBytes());
@@ -310,12 +306,12 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			// Retrieve the metadata from the database
 			ResultSet rs = this.metadata.fileById(this.fileid);
 			if (rs != null) {
-				String status = rs.getString("status");
+				setByResultSet(rs);
 
-				if (FILE_STATUS.valueOf(status) != FILE_STATUS.READY) {
+				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
 					throw new IllegalStateException(String.format(
-							"File %s has state %s but READY expected!", path,
-							status));
+							"File %s has state %s but READY expected!", this.path,
+							this.status));
 				}
 
 				this.metadata
@@ -325,7 +321,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 						.getStorageConnectors();
 
 				for (int i = 0; i < 3; i++) {
-					storageConnectors[i].delete(hash);
+					storageConnectors[i].delete(this.hash);
 				}
 				this.metadata.fileUpdateState(this.fileid, FILE_STATUS.DELETED);
 				this.metadata.fileDelete(fileid);
@@ -362,7 +358,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 			this.metadata
 					.fileUpdateState(this.fileid, FILE_STATUS.DISTRIBUTING);
-			if (update) {
+			if (this.update) {
 				// iterate over all connectors and upload the files with
 				// extension .0, .1 and .2 AND the .m file to all connectors
 				for (int i = 0; i < 3; i++) {
@@ -372,7 +368,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				// iterate over all connectors and upload the files with
 				// extension .0, .1 and .2 AND the .m file to all connectors
 				for (int i = 0; i < 3; i++) {
-					storageConnectors[i].upload(hash);
+					storageConnectors[i].upload(this.hash);
 				}
 			}
 			this.metadata.fileUpdateState(this.fileid, FILE_STATUS.DISTRIBUTED);
@@ -399,6 +395,14 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		this.file = null;
 		this.hash = null;
 		this.uploadstate = false;
+		this.status = null;
+	}
+
+	private void setByResultSet(ResultSet rs) throws SQLException {
+		this.path = rs.getString("path_name");
+		this.hash = rs.getString("hash_name");
+		this.userid = rs.getInt("user_id");
+		this.status = rs.getString("status");
 	}
 
 }
