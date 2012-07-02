@@ -195,7 +195,7 @@ public class RestApiServlet extends HttpServlet {
 	public void apiInfo(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		resp.setStatusCode(200);
-		resp.addPayload("Version:" + API_VERSION + "\n");
+		resp.writeField("Version", API_VERSION);
 	}
 
 	/**
@@ -215,9 +215,9 @@ public class RestApiServlet extends HttpServlet {
 
 		MatchResult mr = null;
 		for (RestApiUrlMapping mapping : mappings) {
-			System.out.println(mapping);
 			mr = mapping.match(req);
 			if (null != mr) {
+				System.out.println(mapping);
 				try {
 					mr.getFunction().invoke(this, req, r, mr.getArgs());
 				} catch (IllegalArgumentException e) {
@@ -348,10 +348,9 @@ public class RestApiServlet extends HttpServlet {
 			while ((readLength = bis.read(inputBytes)) != -1) {
 				bos.write(inputBytes, 0, readLength);
 				written += readLength;
-				System.err.println("Written " + readLength + " Bytes");
-				System.err.flush();
 			}
 			resp.setContentLength(written);
+			resp.setContentType("application/octet-stream");
 			resp.flush();
 
 			statusCode = 200;
@@ -372,10 +371,6 @@ public class RestApiServlet extends HttpServlet {
 					bos.close();
 			} catch (IOException ignore) {
 			}
-
-			if (slot != null) {
-				this.coreService.ungetSlot(slot);
-			}
 		}
 		resp.setStatusCode(statusCode);
 	}
@@ -395,7 +390,7 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>200 - Success</li>
 	 *            <li>401 - Not logged in</li>
 	 *            <li>404 - File not found</li>
-	 *            <li>405 - Session id not submitteded via cookie</li>
+	 *            <li>405 - Session id not submitted via cookie</li>
 	 *            <li>500 - Error getting the file information</li>
 	 *            <li>503 - Session does not exist</li>
 	 *            </ul>
@@ -417,10 +412,10 @@ public class RestApiServlet extends HttpServlet {
 				resp.setStatusCode(404);
 				return;
 			}
-			resp.addField("path", rs.getString("path_name"));
-			resp.addField("hash", rs.getString("hash_name"));
-			resp.addField("last modification", rs.getString("last_mod"));
-			resp.addField("status", rs.getString("status"));
+			resp.writeField("path", rs.getString("path_name"));
+			resp.writeField("hash", rs.getString("hash_name"));
+			resp.writeField("last modification", rs.getString("last_mod"));
+			resp.writeField("status", rs.getString("status"));
 		} catch (SQLException e) {
 			resp.setStatusCode(500);
 			e.printStackTrace();
@@ -577,7 +572,7 @@ public class RestApiServlet extends HttpServlet {
 		int userid = (Integer) s.getAttribute("userid");
 		ResultSet rs = metadata.fileList(userid);
 		if (rs == null) {
-			resp.addPayload("No files uploaded yet.");
+			resp.writeLine("No files uploaded yet.");
 		} else {
 			try {
 				LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
@@ -624,27 +619,27 @@ public class RestApiServlet extends HttpServlet {
 			ArrayList<String> args) {
 		if (this.validateSession(req, resp)) {
 			resp.setStatusCode(403);
-			resp.addPayload("Already logged in!");
+			resp.writeLine("Already logged in!");
 			return;
 		}
 		String username = req.getHeader("X-Username");
 		if (!this.userpattern.matcher(username).matches()) {
 			resp.setStatusCode(500);
-			resp.addPayload("Invalid characters in username. Only a-z, A-Z and 0-9 allowed.");
+			resp.writeLine("Invalid characters in username. Only a-z, A-Z and 0-9 allowed.");
 			return;
 		}
 		String password = req.getHeader("X-Password");
 		if (username == null || password == null) {
 			resp.setStatusCode(400);
-			resp.addPayload("Username or password missing!");
+			resp.writeLine("Username or password missing!");
 			return;
 		}
 		if (metadata.addUser(username, password)) {
 			resp.setStatusCode(200);
-			resp.addPayload("User created");
+			resp.writeLine("User created");
 		} else {
 			resp.setStatusCode(500);
-			resp.addPayload("An error occured");
+			resp.writeLine("An error occured");
 		}
 	}
 
@@ -694,7 +689,7 @@ public class RestApiServlet extends HttpServlet {
 		} else {
 			session.invalidate();
 			resp.setStatusCode(403);
-			resp.addPayload("Credentials invalid!");
+			resp.writeLine("Credentials invalid!");
 			return;
 		}
 	}
@@ -738,14 +733,14 @@ public class RestApiServlet extends HttpServlet {
 		if (username == null || password == null || confirm == null
 				|| !password.equals(confirm)) {
 			resp.setStatusCode(400);
-			resp.addPayload("Username, password, or password confirmation missing or passwords do not match!");
+			resp.writeLine("Username, password, or password confirmation missing or passwords do not match!");
 		}
 		if (metadata.changeUserPwd(username, password, userId)) {
 			resp.setStatusCode(200);
-			resp.addPayload("The password was changed successfully");
+			resp.writeLine("The password was changed successfully");
 		} else {
 			resp.setStatusCode(500);
-			resp.addPayload("Error while updating the user record");
+			resp.writeLine("Error while updating the user record");
 		}
 	}
 
@@ -778,7 +773,7 @@ public class RestApiServlet extends HttpServlet {
 			return;
 		}
 		resp.setStatusCode(501);
-		resp.addPayload("Not implemented!");
+		resp.writeLine("Not implemented!");
 	}
 
 	/**
@@ -834,17 +829,17 @@ public class RestApiServlet extends HttpServlet {
 		HttpSession session = req.getSession(false);
 		if (session == null) {
 			resp.setStatusCode(503);
-			resp.addPayload("Session does not exist!");
+			resp.writeLine("Session does not exist!");
 			return false;
 		}
 		if (!req.isRequestedSessionIdFromCookie()) {
 			resp.setStatusCode(405);
-			resp.addPayload("Session not submitted via Cookie!");
+			resp.writeLine("Session not submitted via Cookie!");
 			return false;
 		}
 		if (!((Boolean) session.getAttribute("auth"))) {
 			resp.setStatusCode(401);
-			resp.addPayload("Not logged in!");
+			resp.writeLine("Not logged in!");
 			return false;
 		}
 		return true;

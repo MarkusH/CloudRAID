@@ -191,39 +191,51 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
 					throw new IllegalStateException(String.format(
-							"File %s has state %s but READY expected!", this.path,
-							this.status));
+							"File %s has state %s but READY expected!",
+							this.path, this.status));
 				}
 
 				IStorageConnector[] storageConnectors = coreService
 						.getStorageConnectors();
 
+				// Retrieve the data from the three cloud storages. Take care,
+				// that a missing resource on a cloud storage provider is NOT
+				// written to an empty file
 				for (int i = 0; i < 3; i++) {
-					InputStream is = storageConnectors[i].get(this.hash);
-					// Create the file
-					this.file = new File(
-							this.config.getString("merge.input.dir")
-									+ File.separator + this.hash + "." + i);
-
-					// Write data to file
-					BufferedInputStream bis = new BufferedInputStream(is,
-							bufsize);
-					BufferedOutputStream bos = new BufferedOutputStream(
-							new FileOutputStream(this.file), bufsize);
-					byte[] inputBytes = new byte[bufsize];
-					int readLength;
-					while ((readLength = bis.read(inputBytes)) >= 0) {
-						bos.write(inputBytes, 0, readLength);
-					}
-
+					BufferedInputStream bis = null;
+					BufferedOutputStream bos = null;
 					try {
-						bis.close();
-					} catch (IOException ignore) {
-					}
+						InputStream is = storageConnectors[i].get(this.hash);
+						if (is == null) {
+							continue;
+						}
+						// Create the file
+						this.file = new File(
+								this.config.getString("merge.input.dir")
+										+ File.separator + this.hash + "." + i);
 
-					try {
-						bos.close();
-					} catch (IOException ignore) {
+						// Write data to file
+						bis = new BufferedInputStream(is, bufsize);
+						bos = new BufferedOutputStream(new FileOutputStream(
+								this.file), bufsize);
+						byte[] inputBytes = new byte[bufsize];
+						int readLength;
+						while ((readLength = bis.read(inputBytes)) >= 0) {
+							bos.write(inputBytes, 0, readLength);
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							if (bis != null)
+								bis.close();
+						} catch (IOException ignore) {
+						}
+						try {
+							if (bos != null)
+								bos.close();
+						} catch (IOException ignore) {
+						}
 					}
 				}
 
@@ -258,12 +270,19 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				File metadatafile = new File(
 						this.config.getString("merge.input.dir")
 								+ File.separator + this.hash + ".m");
-				BufferedOutputStream bos = new BufferedOutputStream(
-						new FileOutputStream(metadatafile), bufsize);
-				bos.write(metadata[3].getBytes());
+				BufferedOutputStream bos = null;
 				try {
-					bos.close();
-				} catch (IOException ignore) {
+					bos = new BufferedOutputStream(new FileOutputStream(
+							metadatafile), bufsize);
+					bos.write(metadata[3].getBytes());
+				} catch (IOException e) {
+					e.printStackTrace();
+				} finally {
+					try {
+						if (bos != null)
+							bos.close();
+					} catch (IOException ignore) {
+					}
 				}
 
 				this.file = new File(this.config.getString("merge.output.dir")
@@ -286,13 +305,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		} catch (IllegalStateException e) {
 			e.printStackTrace();
 		} catch (MissingConfigValueException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
@@ -310,8 +324,8 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
 					throw new IllegalStateException(String.format(
-							"File %s has state %s but READY expected!", this.path,
-							this.status));
+							"File %s has state %s but READY expected!",
+							this.path, this.status));
 				}
 
 				this.metadata
@@ -333,7 +347,6 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		} catch (IllegalStateException e) {
 			e.printStackTrace();
 		}
-		this.coreService.ungetSlot(this);
 		return state;
 	}
 
@@ -383,7 +396,6 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			e.printStackTrace();
 		}
 		this.uploadstate = true;
-		this.coreService.ungetSlot(this);
 	}
 
 	@Override

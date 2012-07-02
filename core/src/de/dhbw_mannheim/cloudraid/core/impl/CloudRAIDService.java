@@ -24,8 +24,6 @@ package de.dhbw_mannheim.cloudraid.core.impl;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -45,12 +43,8 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 	private ICloudRAIDConfig config = null;
 
-	private IStorageConnector[] storageConnectors = {null, null, null};
-	private String[] storageConnectorClassnames = {null, null, null};
-
-	private Queue<ICoreAccess> availableSlots = new LinkedList<ICoreAccess>();
-	private Queue<ICoreAccess> freeSlots = new LinkedList<ICoreAccess>();
-	private Queue<ICoreAccess> usedSlots = new LinkedList<ICoreAccess>();
+	private IStorageConnector[] storageConnectors = { null, null, null };
+	private String[] storageConnectorClassnames = { null, null, null };
 
 	private String splitInputDir;
 
@@ -200,18 +194,7 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 	@Override
 	public synchronized ICoreAccess getSlot() throws InstantiationException {
-		ICoreAccess slot;
-		if (this.freeSlots.size() > 0) {
-			slot = this.freeSlots.poll();
-			this.usedSlots.add(slot);
-		} else {
-			// TODO replace with service!
-			slot = new CoreAccess();
-			this.availableSlots.add(slot);
-			this.usedSlots.add(slot);
-		}
-		slot.reset();
-		return slot;
+		return new CoreAccess();
 	}
 
 	@Override
@@ -225,16 +208,4 @@ public class CloudRAIDService implements ICloudRAIDService {
 		return this.storageConnectors;
 	}
 
-	public void ungetSlot(ICoreAccess slot) {
-		if (!this.availableSlots.contains(slot)) {
-			this.availableSlots.add(slot);
-		}
-		if (this.usedSlots.remove(slot)) {
-			this.freeSlots.add(slot);
-		} else {
-			if (!this.freeSlots.contains(slot)) {
-				this.freeSlots.add(slot);
-			}
-		}
-	}
 }

@@ -34,32 +34,21 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class PlainApiResponse implements IRestApiResponse {
 
-	/**
-	 * 
-	 */
-	public static String MIMETYPE = "text/plain; charset=utf-8";
+	public static String DEFAULT_MIMETYPE = "text/plain; charset=utf-8";
+	private String mime = null;
 
-	/**
-	 * 
-	 */
 	private HttpServletResponse resp = null;
 
 	@Override
-	public void addField(String name, String payload) {
-		if (this.resp != null) {
-			String s = name + ": " + payload + "\n";
-			try {
-				this.resp.getOutputStream().write(s.getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+	public void writeField(String name, String value) {
+		writeLine(name + ":" + value);
 	}
 
 	@Override
-	public void addPayload(String payload) {
+	public void writeLine(String line) {
 		if (this.resp != null) {
-			String s = "payload: " + payload + "\n";
+			String s = line + "\n";
+			System.err.println(s);
 			try {
 				this.resp.getOutputStream().write(s.getBytes());
 			} catch (IOException e) {
@@ -70,17 +59,17 @@ public class PlainApiResponse implements IRestApiResponse {
 
 	@Override
 	public OutputStream getOutputStream() throws IOException {
-		return resp.getOutputStream();
+		if (this.resp != null) {
+			return this.resp.getOutputStream();
+		}
+		return null;
 	}
 
 	@Override
 	public void send() throws IOException {
 		if (this.resp != null) {
-			// Add the table to the payload
-			// this.addPayload(this.table.toString());
-
-			// resp.getOutputStream().write(this.sb.toString().getBytes());
-			resp.getOutputStream().flush();
+			this.resp.setContentType(this.mime);
+			this.resp.getOutputStream().flush();
 		}
 	}
 
@@ -94,7 +83,7 @@ public class PlainApiResponse implements IRestApiResponse {
 	@Override
 	public void setResponseObject(HttpServletResponse resp) {
 		this.resp = resp;
-		this.resp.setContentType(MIMETYPE);
+		this.mime = DEFAULT_MIMETYPE;
 	}
 
 	@Override
@@ -129,9 +118,27 @@ public class PlainApiResponse implements IRestApiResponse {
 	}
 
 	@Override
+	public void setContentType(String type) {
+		if (this.resp != null) {
+			this.mime = type;
+		}
+	}
+
+	@Override
 	public void flush() throws IOException {
 		if (this.resp != null) {
 			this.resp.getOutputStream().flush();
+		}
+	}
+
+	@Override
+	public void write(String content) {
+		if (this.resp != null) {
+			try {
+				this.resp.getOutputStream().write(content.getBytes());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 }

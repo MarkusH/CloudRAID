@@ -77,7 +77,8 @@ public interface IStorageConnector {
 	 * 
 	 * @param resource
 	 *            Delete the given resource
-	 * @return true, if the file could be deleted or even does not exist; false, if not.
+	 * @return true, if the file could be deleted or even does not exist; false,
+	 *         if not.
 	 */
 	public boolean delete(String resource);
 
@@ -97,12 +98,14 @@ public interface IStorageConnector {
 	public void disconnect();
 
 	/**
-	 * Gets a file from a cloud service. The method <b>returns <code>null</code>
-	 * </b>, if the resource is not available.
+	 * Gets a file from a cloud service. The method <b>must return
+	 * <code>null</code> </b>, if the resource is not available, e.g. the file
+	 * is missing on the cloud storage.
 	 * 
 	 * @param resource
 	 *            Retrieve the given resource
-	 * @return An InputStream from the regarding file.
+	 * @return An InputStream from the regarding file or <code>null</code> for a
+	 *         missing resource
 	 */
 	public InputStream get(String resource);
 

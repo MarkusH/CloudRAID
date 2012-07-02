@@ -50,7 +50,7 @@ public class RestApiComponent {
 	 */
 	public static void error404(HttpServletRequest req, IRestApiResponse resp) {
 		resp.setStatusCode(404);
-		resp.addPayload("No page matching " + req.getPathInfo());
+		resp.writeLine("No page matching " + req.getPathInfo());
 	}
 
 	/**
@@ -61,8 +61,8 @@ public class RestApiComponent {
 	public static void error500(HttpServletRequest req, IRestApiResponse resp,
 			String msg) {
 		resp.setStatusCode(500);
-		resp.addPayload("Servererror for page " + req.getPathInfo());
-		resp.addField("msg", msg);
+		resp.writeLine("Servererror for page " + req.getPathInfo());
+		resp.writeField("msg", msg);
 	}
 
 	/**

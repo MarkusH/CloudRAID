@@ -43,13 +43,19 @@ public interface IRestApiResponse {
 	 * @param name
 	 * @param payload
 	 */
-	public void addField(String name, String payload);
+	public void writeField(String name, String value);
 
 	/**
 	 * @param payload
 	 *            the content to set
 	 */
-	public void addPayload(String payload);
+	public void writeLine(String line);
+
+	/**
+	 * @param payload
+	 *            the content to set
+	 */
+	public void write(String content);
 
 	/**
 	 * @param map
@@ -93,4 +99,6 @@ public interface IRestApiResponse {
 	public void setContentLength(int len);
 
 	public void flush() throws IOException;
+
+	public void setContentType(String type);
 }
