@@ -529,8 +529,9 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		try {
+			int fileid = rs.getInt("id");
 			ICoreAccess slot = this.coreService.getSlot();
-			int fileid = this.metadata.fileNew(path, "", 0L, userid);
+			this.metadata.fileUpdate(fileid, path, "", 0L, userid);
 			if (fileid >= 0) {
 				slot.putData(req.getInputStream(), fileid, true);
 				resp.setStatusCode(201);
@@ -539,6 +540,8 @@ public class RestApiServlet extends HttpServlet {
 		} catch (InstantiationException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 
