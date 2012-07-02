@@ -58,21 +58,27 @@
 
 #if DEBUG>=1
 #define DEBUGPRINT(...) fprintf (stderr, "%s:%s():%d: %s\n", __FILE__, __func__, __LINE__, __VA_ARGS__)
-#define DEBUGPRINTF(format, ...) fprintf (stderr, format, ##__VA_ARGS__)
+#define DEBUG1(format, ...) fprintf (stderr, "DEBUG1: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
 #endif
 
 #if DEBUG>=2
-#define DEBUG2(format, ...) fprintf (stderr, format, ##__VA_ARGS__)
+#define DEBUG2(format, ...) fprintf (stderr, "DEBUG2: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
 #endif
 
 #if DEBUG>=3
-#define DEBUG3(format, ...) fprintf (stderr, format, ##__VA_ARGS__)
+#define DEBUG3(format, ...) fprintf (stderr, "DEBUG3: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
 #endif
 
 #if DEBUG<1
 #define DEBUGPRINT(...)
-#define DEBUGPRINTF(...)
+#define DEBUG1(...)
+#endif
+
+#if DEBUG<2
 #define DEBUG2(...)
+#endif
+
+#if DEBUG<3
 #define DEBUG3(...)
 #endif
 
@@ -182,6 +188,7 @@ void merge_byte_block ( const unsigned char *in, const size_t in_len[], const un
             }
             else
             {
+                DEBUG3("Unknown state for merge: dead device: %d, parity on %d", dead_device, parity_pos);
                 *out_len = -1;
             }
         }
@@ -219,6 +226,7 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
     int i, partial;
     if ( in_len > RAID5_BLOCKSIZE )
     {
+        DEBUG3("The input length for this block is larger than the RAID5 blocksize. Hence using the secondary device file too.");
         partial = in_len - RAID5_BLOCKSIZE; /* in case of in in_len == 2 * RAID5_BLOCKSIZE, partial == RAID5_BLOCKSIZE */
         memcpy ( &out[0], &in[0], RAID5_BLOCKSIZE ); /* Copy the first part of the read bytes */
         memcpy ( &out[RAID5_BLOCKSIZE], &in[RAID5_BLOCKSIZE], partial ); /* Copy the second part of the read bytes */
@@ -236,6 +244,7 @@ void split_byte_block ( const unsigned char *in, const size_t in_len, unsigned c
     }
     else
     {
+        DEBUG3("The input length for this block is smaller or equal to the RAID5 blocksize. No need for the secondary device file.");
         memcpy ( &out[0], &in[0], in_len ); /* Copy the first part of the read bytes */
         for ( i = 0; i < in_len; i++ )
         {
@@ -322,10 +331,12 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
     }
 
     rlen = fread ( chars, sizeof ( unsigned char ), 2 * RAID5_BLOCKSIZE, in );
+    DEBUG3("Read %d bytes", rlen);
     while ( rlen > 0 )
     {
 #if ENCRYPT_DATA == 1
         /* encrypt the input file */
+        DEBUG1("Encryption enabled");
         rc4 ( chars, rlen, key );
 #endif
         if ( sha256_len[3] == SHA256_BLOCKSIZE )
@@ -339,6 +350,7 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
             sha256_len[3] += rlen;
         }
         split_byte_block ( chars, rlen, out, out_len );
+        DEBUG3("Split %d input bytes into %d (%d/%d/%d) for devices %d/%d/%d", rlen, out_len[0]+out_len[1]+out_len[2], out_len[0], out_len[1], out_len[2], ( parity_pos + 1 ) % 3, ( parity_pos + 2 ) % 3, parity_pos);
         fwrite ( &out[0], sizeof ( unsigned char ), out_len[0], devices[ ( parity_pos + 1 ) % 3] );
         if ( out_len[1] > 0 )
         {
@@ -388,6 +400,7 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
 
         parity_pos = ( parity_pos + 1 ) % 3;
         rlen = fread ( chars, sizeof ( char ), 2 * RAID5_BLOCKSIZE, in );
+        DEBUG3("Read %d bytes", rlen);
     }
     if ( ferror ( in ) )
     {
@@ -415,10 +428,16 @@ DLLEXPORT int split_file ( FILE *in, FILE *devices[], FILE *meta, rc4_key *key )
         set_metadata_hash ( &metadata, i, hash );
         if ( i < 3 )
         {
+            DEBUG2("The hash for device file %d is %s", i, hash);
             l = ftell ( devices[i] );
             min = ( min <= l ) ? min : l;
             max = ( max >= l ) ? max : l;
         }
+#if DEBUG>=2
+        if (i == 3) {
+            DEBUG2("The hash for the input file is %s", hash);
+        }
+#endif
     }
     metadata.missing = max - min;
     status = write_metadata ( meta, &metadata );
@@ -496,18 +515,21 @@ DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key 
 
     if ( ( mds & METADATA_MISS_DEV0 ) == 0 && ( mds & METADATA_MISS_DEV1 ) == 0 )
     {
+        DEBUG2("dead device is 2");
         dead_device = 2;
     }
     else
     {
         if ( ( mds & METADATA_MISS_DEV1 ) == 0 && ( mds & METADATA_MISS_DEV2 ) == 0 )
         {
+            DEBUG2("dead device is 0");
             dead_device = 0;
         }
         else
         {
             if ( ( mds & METADATA_MISS_DEV2 ) == 0 && ( mds & METADATA_MISS_DEV0 ) == 0 )
             {
+                DEBUG2("dead device is 1");
                 dead_device = 1;
             }
             else
@@ -545,6 +567,7 @@ DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key 
     in_len[0] = ( devices[ ( parity_pos + 1 ) % 3] ) ? fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] ) : 0;
     in_len[1] = ( devices[ ( parity_pos + 2 ) % 3] ) ? fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] ) : 0;
     in_len[2] = ( devices[parity_pos] ) ? fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] ) : 0;
+    DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], ( parity_pos + 1 ) % 3, ( parity_pos + 2 ) % 3, parity_pos);
     while ( in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0 )
     {
         /*
@@ -569,6 +592,7 @@ DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key 
         }
         /* Call the merge */
         merge_byte_block ( in, in_len, parity_pos, dead_device, l, buf, &out_len );
+        DEBUG3("Merged %d bytes into %d", in_len[0] + in_len[1] + in_len[2], out_len);
         if ( out_len == -1 )
         {
             status = READERR_IN;
@@ -577,6 +601,7 @@ DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key 
         }
 #if ENCRYPT_DATA == 1
         /* encrypt the input file */
+        DEBUG1("Encryption enabled");
         rc4 ( buf, out_len, key );
 #endif
 
@@ -586,6 +611,7 @@ DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key 
         in_len[0] = ( devices[ ( parity_pos + 1 ) % 3] ) ? fread ( &in[0], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 1 ) % 3] ) : 0;
         in_len[1] = ( devices[ ( parity_pos + 2 ) % 3] ) ? fread ( &in[RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[ ( parity_pos + 2 ) % 3] ) : 0;
         in_len[2] = ( devices[parity_pos] ) ? fread ( &in[2 * RAID5_BLOCKSIZE], sizeof ( char ), RAID5_BLOCKSIZE, devices[parity_pos] ) : 0;
+        DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], ( parity_pos + 1 ) % 3, ( parity_pos + 2 ) % 3, parity_pos);
     }
     if ( devices[0] && ferror ( devices[0] ) )
     {
@@ -606,6 +632,7 @@ DLLEXPORT int merge_file ( FILE *out, FILE *devices[], FILE *meta, rc4_key *key 
         goto end;
     }
     status = SUCCESS_MERGE;
+    DEBUG1("Merge finished with status %d", status);
 
 end:
     if ( buf != NULL )
@@ -880,6 +907,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     for ( i = 0; i < 3; i++ )
     {
         sprintf ( &inputBaseName[ tmpLength + 64 ], ".%c", i+0x30 );
+        DEBUG1("Merge input path for device file %d is %s", i, inputBaseName);
         devices[i] = fopen ( inputBaseName, "rb" );
         openfiles++;
     }
@@ -902,13 +930,15 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
         openfiles--;
     }
 
-    if ( openfiles <= 1 )
+    if ( openfiles < 2 )
     {
         DEBUGPRINT("To few devices available for merge");
+        DEBUG2("Only %d device files available out of 3", openfiles);
         goto end;
     }
 
     sprintf ( &inputBaseName[ tmpLength + 64 ], ".m" );
+    DEBUG1("Merge input path for meta data file is %s", inputBaseName);
     meta = fopen ( inputBaseName, "rb" );
     if ( meta == NULL )
     {
@@ -917,6 +947,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
         goto end;
     }
 
+    DEBUG1("Merge output path is %s", outputFilePath);
     fp = fopen ( outputFilePath, "wb" );
     if ( fp == NULL )
     {
@@ -930,6 +961,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
 
     /* Invoke the native merge method. */
     status = merge_file ( fp, devices, meta, &rc4key );
+    DEBUG1("Merge finished with status %d", status);
 
 end:
     /* Close the files. */
@@ -1000,6 +1032,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     memcpy ( &inputPath[strlen ( inputBasePath )], inputFilePath, strlen ( inputFilePath ) );
 
     /* open input file */
+    DEBUG1("Split input path is %s", inputPath);
     fp = fopen ( inputPath, "rb" );
     if ( fp == NULL )
     {
@@ -1031,6 +1064,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     for ( i = 0; i < 3; i++ )
     {
         sprintf ( &outputBaseName[ tmpLength + 64 ], ".%c", i+0x30 );
+        DEBUG1("Split output path for device file %d is %s", i, outputBaseName);
         devices[i] = fopen ( outputBaseName, "wb" );
     }
     if ( devices[0] == NULL )
@@ -1053,6 +1087,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     }
 
     sprintf ( &outputBaseName[ tmpLength + 64 ], ".m" );
+    DEBUG1("Split output path for meta data file is %s", outputBaseName);
     meta = fopen ( outputBaseName, "wb" );
     if ( meta == NULL )
     {
@@ -1066,15 +1101,19 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
 
     /* Invoke the native split method. */
     status = split_file ( fp, devices, meta, &rc4key );
+    DEBUG1("Split finished with status %d", status);
 
 end:
     if ( status == SUCCESS_SPLIT )
     {
+        DEBUGPRINT("Split succeeded.");
         memcpy ( retvalue, &outputBaseName[ tmpLength ], 64 );
+        DEBUG2("Hash is %s", retvalue);
         retvalue[64] = '\0';
     }
     else
     {
+        DEBUGPRINT("Split failed.");
         retvalue[0] = status;
         retvalue[1] = '\0';
     }
