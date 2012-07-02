@@ -359,6 +359,7 @@ public class DropboxConnector implements IStorageConnector {
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
+		System.out.println(response.getBody());
 		boolean ret = false;
 		if (response.getCode() == 404) {
 			ret = performUpload(resource, String.valueOf(this.id));
