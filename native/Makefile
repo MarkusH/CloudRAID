@@ -45,7 +45,7 @@ clean:
 test:
 	mkdir -p ./testing/
 	${CC} test_sha256.c ${CFLAGS} ${LIB} -o ./testing/test_sha256
-	${CC} test_raid5.c -DCHECKING=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5
+	${CC} test_raid5.c -DCHECKING=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5
 
 run-test:
 	./testing/test_sha256

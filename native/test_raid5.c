@@ -28,11 +28,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+
 #ifndef BENCHSIZE
 #define BENCHSIZE 13056
 #endif
 
-int main ( void )
+int main(void)
 {
     int i;
     int status;
@@ -66,166 +67,146 @@ int main ( void )
     rc4_key rc4key;
 
 #if BENCHMARK != 1
-    printf ( "Running test for RAID5:\n\n" );
+    printf("Running test for RAID5:\n\n");
 #endif
 
     /** Create test file **/
-    fp[0] = fopen ( filename[0], "wb" );
-    if ( !fp[0] )
-    {
-        printf ( "Cannot write test file!\n" );
+    fp[0] = fopen(filename[0], "wb");
+    if(!fp[0]) {
+        fprintf(stderr, "Cannot write test file!\n");
         return 1;
     }
-    for ( i = 0; i < BENCHSIZE; i++ )
-    {
+    for(i = 0; i < BENCHSIZE; i++) {
         /* Every device becomes the parity twice. dev2 three
            times but the third time only 512+256 Bytes
            (3/4 BLOCKSIZE).
            2 * BLOCKSIZE * 6 + 3/4 BLOCKSIZE = 13056 */
-        fprintf ( fp[0], "%c", ( i*i + i ) % 256 );
+        fprintf(fp[0], "%c", (i * i + i) % 256);
     }
-    fclose ( fp[0] );
+    fclose(fp[0]);
 
     /** Open test file for split **/
-    fp[0] = fopen ( filename[0], "rb" );
-    if ( !fp[0] )
-    {
-        printf ( "Cannot read test file!\n" );
+    fp[0] = fopen(filename[0], "rb");
+    if(!fp[0]) {
+        fprintf(stderr, "Cannot read test file!\n");
         return 1;
     }
 
     /** Create device and metadata files **/
-    for ( i = 1; i <= 3; i++ )
-    {
-        fp[i] = fopen ( filename[i], "wb" );
-        if ( !fp[i] )
-        {
-            printf ( "Cannot create device file %d!\n", i - 1 );
+    for(i = 1; i <= 3; i++) {
+        fp[i] = fopen(filename[i], "wb");
+        if(!fp[i]) {
+            fprintf(stderr, "Cannot create device file %d!\n", i - 1);
             return 1;
         }
     }
 
-    fp[4] = fopen ( filename[5], "wb" );
-    if ( !fp[4] )
-    {
-        printf ( "Cannot create metadata file!\n" );
+    fp[4] = fopen(filename[5], "wb");
+    if(!fp[4]) {
+        fprintf(stderr, "Cannot create metadata file!\n");
         return 1;
     }
 
-    prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
+    prepare_key((unsigned char *) "password", 8, &rc4key);
 
     /** perform the split **/
 #if BENCHMARK != 1
-    printf ( "Start split ... " );
-    fflush ( stdout );
+    printf("Start split ... ");
+    fflush(stdout);
 #endif
 #if BENCHMARK == 1
-    gettimeofday ( &start, NULL );
+    gettimeofday(&start, NULL);
 #endif
-    split_file ( fp[0], &fp[1], fp[4], &rc4key );
+    split_file(fp[0], &fp[1], fp[4], &rc4key);
 #if BENCHMARK == 1
-    gettimeofday ( &end, NULL );
+    gettimeofday(&end, NULL);
 #endif
 #if BENCHMARK != 1
-    printf ( "Done\n" );
-    fflush ( stdout );
+    printf("Done\n");
+    fflush(stdout);
 #endif
 #if BENCHMARK == 1
-    elapsed_split = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
+    elapsed_split = ((end.tv_sec - start.tv_sec) * 1000000.0f + end.tv_usec - start.tv_usec) / 1000.0f;
 #endif
 
     /** Close the input file **/
-    fclose ( fp[0] );
+    fclose(fp[0]);
 
     /** Close and reopen device and metadata files for merge **/
-    for ( i = 1; i <= 3; i++ )
-    {
-        fclose ( fp[i] );
-        if ( i == 1 )
-        {
-            rename ( filename[i] , filename[6] );
+    for(i = 1; i <= 3; i++) {
+        fclose(fp[i]);
+        if(i == FILEID) {
+            rename(filename[FILEID], filename[6]);
+            fprintf(stderr, "renamed %s to %s\n", filename[FILEID], filename[6]);
         }
-        fp[i] = fopen ( filename[i], "rb" );
-        if ( !fp[i] )
-        {
+        fp[i] = fopen(filename[i], "rb");
+        if(!fp[i]) {
 #if BENCHMARK != 1
-            printf ( "Cannot open device file %d!\n", i - 1 );
+            fprintf(stderr, "Cannot open device file %d!\n", i - 1);
 #endif
         }
     }
 
-    fclose ( fp[4] );
-    fp[4] = fopen ( filename[5], "rb" );
-    if ( !fp[4] )
-    {
-        printf ( "Cannot open metadata file!\n" );
+    fclose(fp[4]);
+    fp[4] = fopen(filename[5], "rb");
+    if(!fp[4]) {
+        fprintf(stderr, "Cannot open metadata file!\n");
         return 1;
     }
 
     /** Open output file for merge **/
-    fp[0] = fopen ( filename[4], "wb" );
-    if ( !fp[0] )
-    {
-        printf ( "Cannot write output file!\n" );
+    fp[0] = fopen(filename[4], "wb");
+    if(!fp[0]) {
+        fprintf(stderr, "Cannot write output file!\n");
         return 1;
     }
 
-    prepare_key ( ( unsigned char * ) "password", 8, &rc4key );
+    prepare_key((unsigned char *) "password", 8, &rc4key);
     /** perform the merge **/
 #if BENCHMARK != 1
-    printf ( "Start merge ... " );
-    fflush ( stdout );
+    printf("Start merge ... ");
+    fflush(stdout);
 #endif
 #if BENCHMARK == 1
-    gettimeofday ( &start, NULL );
+    gettimeofday(&start, NULL);
 #endif
-    merge_file ( fp[0], &fp[1], fp[4], &rc4key );
+    merge_file(fp[0], &fp[1], fp[4], &rc4key);
 #if BENCHMARK == 1
-    gettimeofday ( &end, NULL );
+    gettimeofday(&end, NULL);
 #endif
 #if BENCHMARK != 1
-    printf ( "Done\n" );
-    fflush ( stdout );
+    printf("Done\n");
+    fflush(stdout);
 #endif
 #if BENCHMARK == 1
-    elapsed_merge = ( ( end.tv_sec-start.tv_sec ) * 1000000.0f + end.tv_usec - start.tv_usec ) / 1000.0f;
+    elapsed_merge = ((end.tv_sec - start.tv_sec) * 1000000.0f + end.tv_usec - start.tv_usec) / 1000.0f;
 #endif
 
     /** Close ALL files **/
-    for ( i = 0; i <= 3; i++ )
-    {
-        if ( fp[i] )
-        {
-            fclose ( fp[i] );
+    for(i = 0; i <= 3; i++) {
+        if(fp[i]) {
+            fclose(fp[i]);
         }
     }
 
     status = 0;
-    for ( i = 0; i <= 6; i++ )
-    {
-        if ( i == 1 )
-        {
+    for(i = 0; i <= 6; i++) {
+        if(i == 1) {
             continue;
         }
 #if CHECKING == 1
-        printf ( "Checking file %s ... ", filename[i] );
-        ascii = check_sha256_sum ( filename[i], ( unsigned char* ) assumed[i] );
+        printf("Checking file %s ... ", filename[i]);
+        ascii = check_sha256_sum(filename[i], (unsigned char *) assumed[i]);
 
-        if ( ascii == NULL )
-        {
-            printf ( "CORRECT!\n" );
-        }
-        else
-        {
-            if ( memcmp ( ascii, assumed[i], 64 ) == 0 )
-            {
-                printf ( "Memory Error!\n" );
-            }
-            else
-            {
-                printf ( "FALSE!\n" );
-                printf ( "%-12s%s\n%-12s%s\n", "Calculated:" , ascii, "Assumed:", assumed[i] );
-                free ( ascii );
+        if(ascii == NULL) {
+            printf("CORRECT!\n");
+        } else {
+            if(memcmp(ascii, assumed[i], 64) == 0) {
+                fprintf(stdout, "Memory Error!\n");
+            } else {
+                fprintf(stdout, "FALSE!\n");
+                printf("%-12s%s\n%-12s%s\n", "Calculated:" , ascii, "Assumed:", assumed[i]);
+                free(ascii);
             }
             status++;
         }
@@ -233,7 +214,7 @@ int main ( void )
         /*remove ( filename[i] );*/
     }
 #if BENCHMARK == 1
-    printf ( "\"split\";\"%.3f\";\"merge\";\"%.3f\";\"bytes\";\"%d\"\n", elapsed_split, elapsed_merge , BENCHSIZE );
+    printf("\"split\";\"%.3f\";\"merge\";\"%.3f\";\"bytes\";\"%d\"\n", elapsed_split, elapsed_merge , BENCHSIZE);
 #endif
     return status;
 }
