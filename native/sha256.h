@@ -53,8 +53,7 @@ extern "C"
     /**
      * Structure to save state of computation between the single steps.
      */
-    struct sha256_ctx
-    {
+    struct sha256_ctx {
         uint32_t state[8];
 
         uint32_t total[2];
@@ -65,7 +64,7 @@ extern "C"
     /*
      * Initialize structure containing state of computation.
      */
-    void sha256_init_ctx ( struct sha256_ctx *ctx );
+    void sha256_init_ctx(struct sha256_ctx *ctx);
 
     /**
      * Starting with the result of former calls of this function (or the
@@ -73,8 +72,8 @@ extern "C"
      * starting at BUFFER.
      * It is necessary that LEN is a multiple of 64!!!
      */
-    void sha256_process_block ( const void *buffer, size_t len,
-                                           struct sha256_ctx *ctx );
+    void sha256_process_block(const void *buffer, size_t len,
+                              struct sha256_ctx *ctx);
 
     /**
      * Starting with the result of former calls of this function (or the
@@ -82,8 +81,8 @@ extern "C"
      * starting at BUFFER.
      * It is NOT required that LEN is a multiple of 64.
      */
-    void sha256_process_bytes ( const void *buffer, size_t len,
-                                           struct sha256_ctx *ctx );
+    void sha256_process_bytes(const void *buffer, size_t len,
+                              struct sha256_ctx *ctx);
 
     /**
      * Process the remaining bytes in the buffer and put result from CTX
@@ -91,7 +90,7 @@ extern "C"
      * endian byte order, so that a byte-wise output yields to the wanted
      * ASCII representation of the message digest.
      */
-    void *sha256_finish_ctx ( struct sha256_ctx *ctx, void *resbuf );
+    void *sha256_finish_ctx(struct sha256_ctx *ctx, void *resbuf);
 
 
     /**
@@ -99,7 +98,7 @@ extern "C"
      * always in little endian byte order, so that a byte-wise output yields
      * to the wanted ASCII representation of the message digest.
      */
-    void *sha256_read_ctx ( const struct sha256_ctx *ctx, void *resbuf );
+    void *sha256_read_ctx(const struct sha256_ctx *ctx, void *resbuf);
 
 
     /**
@@ -107,7 +106,7 @@ extern "C"
      * resulting message digest number will be written into the 32 bytes
      * beginning at RESBLOCK.
      */
-    int sha256_stream ( FILE *stream, void *resblock );
+    int sha256_stream(FILE *stream, void *resblock);
 
     /**
      * Compute SHA256 message digest for LEN bytes beginning at BUFFER. The
@@ -115,15 +114,15 @@ extern "C"
      * output yields to the wanted ASCII representation of the message
      * digest.
      */
-    void *sha256_buffer ( const char *buffer, size_t len, void *resblock );
+    void *sha256_buffer(const char *buffer, size_t len, void *resblock);
 
     /**
      * Convert the RESBLOCK to an 65 character String, including the terminating NUL!
      */
-    DLLEXPORT void ascii_from_resbuf ( unsigned char *ascii, void *resblock );
-    DLLEXPORT int build_sha256_sum ( char *filename, unsigned char *hash );
-    DLLEXPORT int build_sha256_sum_file ( FILE *filename, unsigned char *hash );
-    DLLEXPORT unsigned char *check_sha256_sum ( char *filename, unsigned char *hash );
+    DLLEXPORT void ascii_from_resbuf(unsigned char *ascii, void *resblock);
+    DLLEXPORT int build_sha256_sum(char *filename, unsigned char *hash);
+    DLLEXPORT int build_sha256_sum_file(FILE *filename, unsigned char *hash);
+    DLLEXPORT unsigned char *check_sha256_sum(char *filename, unsigned char *hash);
 
 #ifdef __cplusplus
 }

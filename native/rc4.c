@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 
-DLLEXPORT void swap_byte ( unsigned char *a, unsigned char *b )
+DLLEXPORT void swap_byte(unsigned char *a, unsigned char *b)
 {
     unsigned char swapByte;
 
@@ -16,7 +16,7 @@ DLLEXPORT void swap_byte ( unsigned char *a, unsigned char *b )
     *b = swapByte;
 }
 
-DLLEXPORT void prepare_key ( const unsigned char *key_data_ptr, int key_data_len, rc4_key *key )
+DLLEXPORT void prepare_key(const unsigned char *key_data_ptr, int key_data_len, rc4_key *key)
 {
     unsigned char index1;
     unsigned char index2;
@@ -24,24 +24,22 @@ DLLEXPORT void prepare_key ( const unsigned char *key_data_ptr, int key_data_len
     short counter;
 
     state = &key->state[0];
-    for ( counter = 0; counter < 256; counter++ )
-    {
+    for(counter = 0; counter < 256; counter++) {
         state[counter] = counter;
     }
     key->x = 0;
     key->y = 0;
     index1 = 0;
     index2 = 0;
-    for ( counter = 0; counter < 256; counter++ )
-    {
-        index2 = ( key_data_ptr[index1] + state[counter] + index2 ) % 256;
-        swap_byte ( &state[counter], &state[index2] );
+    for(counter = 0; counter < 256; counter++) {
+        index2 = (key_data_ptr[index1] + state[counter] + index2) % 256;
+        swap_byte(&state[counter], &state[index2]);
 
-        index1 = ( index1 + 1 ) % key_data_len;
+        index1 = (index1 + 1) % key_data_len;
     }
 }
 
-void rc4 ( unsigned char *buffer_ptr, int buffer_len, rc4_key *key )
+void rc4(unsigned char *buffer_ptr, int buffer_len, rc4_key *key)
 {
     unsigned char x;
     unsigned char y;
@@ -53,16 +51,16 @@ void rc4 ( unsigned char *buffer_ptr, int buffer_len, rc4_key *key )
     y = key->y;
 
     state = &key->state[0];
-    for ( counter = 0; counter < buffer_len; counter ++ )
-    {
-        x = ( x + 1 ) % 256;
-        y = ( state[x] + y ) % 256;
-        swap_byte ( &state[x], &state[y] );
+    for(counter = 0; counter < buffer_len; counter ++) {
+        x = (x + 1) % 256;
+        y = (state[x] + y) % 256;
+        swap_byte(&state[x], &state[y]);
 
-        xorIndex = ( state[x] + state[y] ) % 256;
+        xorIndex = (state[x] + state[y]) % 256;
 
         buffer_ptr[counter] ^= state[xorIndex];
     }
     key->x = x;
     key->y = y;
 }
+

@@ -65,7 +65,7 @@ static const unsigned char fillbuf[64] = { 0x80, 0 /* , 0, 0, ... */ };
  * intializes it to the start constants of the SHA256 algorithm. This
  * must be called before using hash in the call to sha256_hash
  */
-void sha256_init_ctx ( struct sha256_ctx *ctx )
+void sha256_init_ctx(struct sha256_ctx *ctx)
 {
     ctx->state[0] = 0x6a09e667UL;
     ctx->state[1] = 0xbb67ae85UL;
@@ -85,22 +85,22 @@ void sha256_init_ctx ( struct sha256_ctx *ctx )
  * If your architecture allows unaligned access this is equivalent to
  * (uint32_t *) cp = v
  */
-static inline void set_uint32 ( char *cp, uint32_t v )
+static inline void set_uint32(char *cp, uint32_t v)
 {
-    memcpy ( cp, &v, sizeof v );
+    memcpy(cp, &v, sizeof v);
 }
 
 /**
  * Put result from CTX in first 32 bytes following RESBUF. The result
  * must be in little endian byte order.
  */
-void * sha256_read_ctx ( const struct sha256_ctx *ctx, void *resbuf )
+void *sha256_read_ctx(const struct sha256_ctx *ctx, void *resbuf)
 {
     int i;
-    char *r = (char*) resbuf;
+    char *r = (char *) resbuf;
 
-    for ( i = 0; i < 8; i++ )
-        set_uint32 ( r + i * sizeof ctx->state[0], SWAP ( ctx->state[i] ) );
+    for(i = 0; i < 8; i++)
+        set_uint32(r + i * sizeof ctx->state[0], SWAP(ctx->state[i]));
 
     return resbuf;
 }
@@ -109,35 +109,35 @@ void * sha256_read_ctx ( const struct sha256_ctx *ctx, void *resbuf )
  * Process the remaining bytes in the internal buffer and the usual
  * prolog according to the standard and write the result to RESBUF.
  */
-static void sha256_conclude_ctx ( struct sha256_ctx *ctx )
+static void sha256_conclude_ctx(struct sha256_ctx *ctx)
 {
     /* Take yet unprocessed bytes into account. */
     size_t bytes = ctx->buflen;
-    size_t size = ( bytes < 56 ) ? 64 / 4 : 64 * 2 / 4;
+    size_t size = (bytes < 56) ? 64 / 4 : 64 * 2 / 4;
 
     /* Now count remaining bytes. */
     ctx->total[0] += bytes;
-    if ( ctx->total[0] < bytes )
+    if(ctx->total[0] < bytes)
         ++ctx->total[1];
 
     /* Put the 64-bit file length in *bits* at the end of the buffer.
        Use set_uint32 rather than a simple assignment, to avoid risk of
        unaligned access. */
-    set_uint32 ( ( char * ) &ctx->buffer[size - 2],
-                 SWAP ( ( ctx->total[1] << 3 ) | ( ctx->total[0] >> 29 ) ) );
-    set_uint32 ( ( char * ) &ctx->buffer[size - 1],
-                 SWAP ( ctx->total[0] << 3 ) );
+    set_uint32((char *) &ctx->buffer[size - 2],
+               SWAP((ctx->total[1] << 3) | (ctx->total[0] >> 29)));
+    set_uint32((char *) &ctx->buffer[size - 1],
+               SWAP(ctx->total[0] << 3));
 
-    memcpy ( & ( ( char * ) ctx->buffer ) [bytes], fillbuf, ( size - 2 ) * 4 - bytes );
+    memcpy(& ((char *) ctx->buffer) [bytes], fillbuf, (size - 2) * 4 - bytes);
 
     /* Process last bytes. */
-    sha256_process_block ( ctx->buffer, size * 4, ctx );
+    sha256_process_block(ctx->buffer, size * 4, ctx);
 }
 
-void * sha256_finish_ctx ( struct sha256_ctx *ctx, void *resbuf )
+void *sha256_finish_ctx(struct sha256_ctx *ctx, void *resbuf)
 {
-    sha256_conclude_ctx ( ctx );
-    return sha256_read_ctx ( ctx, resbuf );
+    sha256_conclude_ctx(ctx);
+    return sha256_read_ctx(ctx, resbuf);
 }
 
 /**
@@ -145,21 +145,20 @@ void * sha256_finish_ctx ( struct sha256_ctx *ctx, void *resbuf )
  * resulting message digest number will be written into the 32 bytes
  * beginning at RESBLOCK.
  */
-int sha256_stream ( FILE *stream, void *resblock )
+int sha256_stream(FILE *stream, void *resblock)
 {
     struct sha256_ctx ctx;
     size_t sum;
 
-    char *buffer = (char*) malloc ( SHA256_BLOCKSIZE + 72 );
-    if ( !buffer )
+    char *buffer = (char *) malloc(SHA256_BLOCKSIZE + 72);
+    if(!buffer)
         return 1;
 
     /* Initialize the computation context. */
-    sha256_init_ctx ( &ctx );
+    sha256_init_ctx(&ctx);
 
     /* Iterate over full file contents. */
-    while ( 1 )
-    {
+    while(1) {
         /* We read the file in blocks of SHA256_BLOCKSIZE bytes. One call of the
            computation function processes the whole buffer so that with the
            next round of the loop another block can be read. */
@@ -167,23 +166,20 @@ int sha256_stream ( FILE *stream, void *resblock )
         sum = 0;
 
         /* Read block. Take care for partial reads. */
-        while ( 1 )
-        {
-            n = fread ( buffer + sum, 1, SHA256_BLOCKSIZE - sum, stream );
+        while(1) {
+            n = fread(buffer + sum, 1, SHA256_BLOCKSIZE - sum, stream);
 
             sum += n;
 
-            if ( sum == SHA256_BLOCKSIZE )
+            if(sum == SHA256_BLOCKSIZE)
                 break;
 
-            if ( n == 0 )
-            {
+            if(n == 0) {
                 /* Check for the error flag IFF N == 0, so that we don't
                    exit the loop after a partial read due to e.g., EAGAIN
                    or EWOULDBLOCK. */
-                if ( ferror ( stream ) )
-                {
-                    free ( buffer );
+                if(ferror(stream)) {
+                    free(buffer);
                     return 1;
                 }
                 goto process_partial_block;
@@ -192,26 +188,26 @@ int sha256_stream ( FILE *stream, void *resblock )
             /* We've read at least one byte, so ignore errors. But always
                check for EOF, since feof may be true even though N > 0.
                Otherwise, we could end up calling fread after EOF. */
-            if ( feof ( stream ) )
+            if(feof(stream))
                 goto process_partial_block;
         }
 
         /* Process buffer with SHA256_BLOCKSIZE bytes. Note that
                           SHA256_BLOCKSIZE % 64 == 0
          */
-        sha256_process_block ( buffer, SHA256_BLOCKSIZE, &ctx );
+        sha256_process_block(buffer, SHA256_BLOCKSIZE, &ctx);
     }
 
 process_partial_block:
     ;
 
     /* Process any remaining bytes. */
-    if ( sum > 0 )
-        sha256_process_bytes ( buffer, sum, &ctx );
+    if(sum > 0)
+        sha256_process_bytes(buffer, sum, &ctx);
 
     /* Construct result in desired memory. */
-    sha256_finish_ctx ( &ctx, resblock );
-    free ( buffer );
+    sha256_finish_ctx(&ctx, resblock);
+    free(buffer);
     return 0;
 }
 
@@ -221,86 +217,79 @@ process_partial_block:
  * output yields to the wanted ASCII representation of the message
  * digest.
  */
-void * sha256_buffer ( const char *buffer, size_t len, void *resblock )
+void *sha256_buffer(const char *buffer, size_t len, void *resblock)
 {
     struct sha256_ctx ctx;
 
     /* Initialize the computation context. */
-    sha256_init_ctx ( &ctx );
+    sha256_init_ctx(&ctx);
 
     /* Process whole buffer but last len % 64 bytes. */
-    sha256_process_bytes ( buffer, len, &ctx );
+    sha256_process_bytes(buffer, len, &ctx);
 
     /* Put result in desired memory area. */
-    return sha256_finish_ctx ( &ctx, resblock );
+    return sha256_finish_ctx(&ctx, resblock);
 }
 
-void sha256_process_bytes ( const void *buffer, size_t len, struct sha256_ctx *ctx )
+void sha256_process_bytes(const void *buffer, size_t len, struct sha256_ctx *ctx)
 {
     /* When we already have some bits in our internal buffer concatenate
        both inputs first. */
-    if ( ctx->buflen != 0 )
-    {
+    if(ctx->buflen != 0) {
         size_t left_over = ctx->buflen;
         size_t add = 128 - left_over > len ? len : 128 - left_over;
 
-        memcpy ( & ( ( char * ) ctx->buffer ) [left_over], buffer, add );
+        memcpy(& ((char *) ctx->buffer) [left_over], buffer, add);
         ctx->buflen += add;
 
-        if ( ctx->buflen > 64 )
-        {
-            sha256_process_block ( ctx->buffer, ctx->buflen & ~63, ctx );
+        if(ctx->buflen > 64) {
+            sha256_process_block(ctx->buffer, ctx->buflen & ~63, ctx);
 
             ctx->buflen &= 63;
             /* The regions in the following copy operation cannot overlap. */
-            memcpy ( ctx->buffer,
-                     & ( ( char * ) ctx->buffer ) [ ( left_over + add ) & ~63],
-                     ctx->buflen );
+            memcpy(ctx->buffer,
+                   & ((char *) ctx->buffer) [(left_over + add) & ~63],
+                   ctx->buflen);
         }
 
-        buffer = ( const char * ) buffer + add;
+        buffer = (const char *) buffer + add;
         len -= add;
     }
 
     /* Process available complete blocks. */
-    if ( len >= 64 )
-    {
+    if(len >= 64) {
 #if !_STRING_ARCH_unaligned
 #define alignof(type) offsetof (offsetof_type, x)
 #define UNALIGNED_P(p) (((size_t) p) % alignof (uint32_t) != 0)
-        typedef struct
-        {
+        typedef struct {
             char c;
             uint32_t x;
         } offsetof_type;
-        if ( UNALIGNED_P ( buffer ) )
-            while ( len > 64 )
-            {
-                sha256_process_block ( memcpy ( ctx->buffer, buffer, 64 ), 64, ctx );
-                buffer = ( const char * ) buffer + 64;
+        if(UNALIGNED_P(buffer))
+            while(len > 64) {
+                sha256_process_block(memcpy(ctx->buffer, buffer, 64), 64, ctx);
+                buffer = (const char *) buffer + 64;
                 len -= 64;
             }
         else
 #endif
         {
-            sha256_process_block ( buffer, len & ~63, ctx );
-            buffer = ( const char * ) buffer + ( len & ~63 );
+            sha256_process_block(buffer, len & ~63, ctx);
+            buffer = (const char *) buffer + (len & ~63);
             len &= 63;
         }
     }
 
     /* Move remaining bytes in internal buffer. */
-    if ( len > 0 )
-    {
+    if(len > 0) {
         size_t left_over = ctx->buflen;
 
-        memcpy ( & ( ( char * ) ctx->buffer ) [left_over], buffer, len );
+        memcpy(& ((char *) ctx->buffer) [left_over], buffer, len);
         left_over += len;
-        if ( left_over >= 64 )
-        {
-            sha256_process_block ( ctx->buffer, 64, ctx );
+        if(left_over >= 64) {
+            sha256_process_block(ctx->buffer, 64, ctx);
             left_over -= 64;
-            memcpy ( ctx->buffer, &ctx->buffer[16], left_over );
+            memcpy(ctx->buffer, &ctx->buffer[16], left_over);
         }
         ctx->buflen = left_over;
     }
@@ -310,8 +299,7 @@ void sha256_process_bytes ( const void *buffer, size_t len, struct sha256_ctx *c
  * SHA256 round constants
  */
 #define K(I) sha256_round_constants[I]
-static const uint32_t sha256_round_constants[64] =
-{
+static const uint32_t sha256_round_constants[64] = {
     0x428a2f98UL, 0x71374491UL, 0xb5c0fbcfUL, 0xe9b5dba5UL,
     0x3956c25bUL, 0x59f111f1UL, 0x923f82a4UL, 0xab1c5ed5UL,
     0xd807aa98UL, 0x12835b01UL, 0x243185beUL, 0x550c7dc3UL,
@@ -340,10 +328,10 @@ static const uint32_t sha256_round_constants[64] =
  * Most of this code comes from GnuPG's cipher/sha1.c.
  */
 
-void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *ctx )
+void sha256_process_block(const void *buffer, size_t len, struct sha256_ctx *ctx)
 {
-    const uint32_t *words = (uint32_t*) buffer;
-    size_t nwords = len / sizeof ( uint32_t );
+    const uint32_t *words = (uint32_t *) buffer;
+    size_t nwords = len / sizeof(uint32_t);
     const uint32_t *endp = words + nwords;
     uint32_t x[16];
     uint32_t a = ctx->state[0];
@@ -359,7 +347,7 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
        length of the file up to 2^64 bits. Here we only compute the
        number of bytes. Do a double word increment. */
     ctx->total[0] += len;
-    if ( ctx->total[0] < len )
+    if(ctx->total[0] < len)
         ++ctx->total[1];
 
 #define rol(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
@@ -380,82 +368,80 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
                                      D += t1; H = t0 + t1; \
                                } while(0)
 
-    while ( words < endp )
-    {
+    while(words < endp) {
         uint32_t tm;
         uint32_t t0, t1;
         int t;
         /* FIXME: see sha1.c for a better implementation. */
-        for ( t = 0; t < 16; t++ )
-        {
-            x[t] = SWAP ( *words );
+        for(t = 0; t < 16; t++) {
+            x[t] = SWAP(*words);
             words++;
         }
 
-        R ( a, b, c, d, e, f, g, h, K ( 0 ), x[ 0] );
-        R ( h, a, b, c, d, e, f, g, K ( 1 ), x[ 1] );
-        R ( g, h, a, b, c, d, e, f, K ( 2 ), x[ 2] );
-        R ( f, g, h, a, b, c, d, e, K ( 3 ), x[ 3] );
-        R ( e, f, g, h, a, b, c, d, K ( 4 ), x[ 4] );
-        R ( d, e, f, g, h, a, b, c, K ( 5 ), x[ 5] );
-        R ( c, d, e, f, g, h, a, b, K ( 6 ), x[ 6] );
-        R ( b, c, d, e, f, g, h, a, K ( 7 ), x[ 7] );
-        R ( a, b, c, d, e, f, g, h, K ( 8 ), x[ 8] );
-        R ( h, a, b, c, d, e, f, g, K ( 9 ), x[ 9] );
-        R ( g, h, a, b, c, d, e, f, K ( 10 ), x[10] );
-        R ( f, g, h, a, b, c, d, e, K ( 11 ), x[11] );
-        R ( e, f, g, h, a, b, c, d, K ( 12 ), x[12] );
-        R ( d, e, f, g, h, a, b, c, K ( 13 ), x[13] );
-        R ( c, d, e, f, g, h, a, b, K ( 14 ), x[14] );
-        R ( b, c, d, e, f, g, h, a, K ( 15 ), x[15] );
-        R ( a, b, c, d, e, f, g, h, K ( 16 ), M ( 16 ) );
-        R ( h, a, b, c, d, e, f, g, K ( 17 ), M ( 17 ) );
-        R ( g, h, a, b, c, d, e, f, K ( 18 ), M ( 18 ) );
-        R ( f, g, h, a, b, c, d, e, K ( 19 ), M ( 19 ) );
-        R ( e, f, g, h, a, b, c, d, K ( 20 ), M ( 20 ) );
-        R ( d, e, f, g, h, a, b, c, K ( 21 ), M ( 21 ) );
-        R ( c, d, e, f, g, h, a, b, K ( 22 ), M ( 22 ) );
-        R ( b, c, d, e, f, g, h, a, K ( 23 ), M ( 23 ) );
-        R ( a, b, c, d, e, f, g, h, K ( 24 ), M ( 24 ) );
-        R ( h, a, b, c, d, e, f, g, K ( 25 ), M ( 25 ) );
-        R ( g, h, a, b, c, d, e, f, K ( 26 ), M ( 26 ) );
-        R ( f, g, h, a, b, c, d, e, K ( 27 ), M ( 27 ) );
-        R ( e, f, g, h, a, b, c, d, K ( 28 ), M ( 28 ) );
-        R ( d, e, f, g, h, a, b, c, K ( 29 ), M ( 29 ) );
-        R ( c, d, e, f, g, h, a, b, K ( 30 ), M ( 30 ) );
-        R ( b, c, d, e, f, g, h, a, K ( 31 ), M ( 31 ) );
-        R ( a, b, c, d, e, f, g, h, K ( 32 ), M ( 32 ) );
-        R ( h, a, b, c, d, e, f, g, K ( 33 ), M ( 33 ) );
-        R ( g, h, a, b, c, d, e, f, K ( 34 ), M ( 34 ) );
-        R ( f, g, h, a, b, c, d, e, K ( 35 ), M ( 35 ) );
-        R ( e, f, g, h, a, b, c, d, K ( 36 ), M ( 36 ) );
-        R ( d, e, f, g, h, a, b, c, K ( 37 ), M ( 37 ) );
-        R ( c, d, e, f, g, h, a, b, K ( 38 ), M ( 38 ) );
-        R ( b, c, d, e, f, g, h, a, K ( 39 ), M ( 39 ) );
-        R ( a, b, c, d, e, f, g, h, K ( 40 ), M ( 40 ) );
-        R ( h, a, b, c, d, e, f, g, K ( 41 ), M ( 41 ) );
-        R ( g, h, a, b, c, d, e, f, K ( 42 ), M ( 42 ) );
-        R ( f, g, h, a, b, c, d, e, K ( 43 ), M ( 43 ) );
-        R ( e, f, g, h, a, b, c, d, K ( 44 ), M ( 44 ) );
-        R ( d, e, f, g, h, a, b, c, K ( 45 ), M ( 45 ) );
-        R ( c, d, e, f, g, h, a, b, K ( 46 ), M ( 46 ) );
-        R ( b, c, d, e, f, g, h, a, K ( 47 ), M ( 47 ) );
-        R ( a, b, c, d, e, f, g, h, K ( 48 ), M ( 48 ) );
-        R ( h, a, b, c, d, e, f, g, K ( 49 ), M ( 49 ) );
-        R ( g, h, a, b, c, d, e, f, K ( 50 ), M ( 50 ) );
-        R ( f, g, h, a, b, c, d, e, K ( 51 ), M ( 51 ) );
-        R ( e, f, g, h, a, b, c, d, K ( 52 ), M ( 52 ) );
-        R ( d, e, f, g, h, a, b, c, K ( 53 ), M ( 53 ) );
-        R ( c, d, e, f, g, h, a, b, K ( 54 ), M ( 54 ) );
-        R ( b, c, d, e, f, g, h, a, K ( 55 ), M ( 55 ) );
-        R ( a, b, c, d, e, f, g, h, K ( 56 ), M ( 56 ) );
-        R ( h, a, b, c, d, e, f, g, K ( 57 ), M ( 57 ) );
-        R ( g, h, a, b, c, d, e, f, K ( 58 ), M ( 58 ) );
-        R ( f, g, h, a, b, c, d, e, K ( 59 ), M ( 59 ) );
-        R ( e, f, g, h, a, b, c, d, K ( 60 ), M ( 60 ) );
-        R ( d, e, f, g, h, a, b, c, K ( 61 ), M ( 61 ) );
-        R ( c, d, e, f, g, h, a, b, K ( 62 ), M ( 62 ) );
-        R ( b, c, d, e, f, g, h, a, K ( 63 ), M ( 63 ) );
+        R(a, b, c, d, e, f, g, h, K(0), x[ 0]);
+        R(h, a, b, c, d, e, f, g, K(1), x[ 1]);
+        R(g, h, a, b, c, d, e, f, K(2), x[ 2]);
+        R(f, g, h, a, b, c, d, e, K(3), x[ 3]);
+        R(e, f, g, h, a, b, c, d, K(4), x[ 4]);
+        R(d, e, f, g, h, a, b, c, K(5), x[ 5]);
+        R(c, d, e, f, g, h, a, b, K(6), x[ 6]);
+        R(b, c, d, e, f, g, h, a, K(7), x[ 7]);
+        R(a, b, c, d, e, f, g, h, K(8), x[ 8]);
+        R(h, a, b, c, d, e, f, g, K(9), x[ 9]);
+        R(g, h, a, b, c, d, e, f, K(10), x[10]);
+        R(f, g, h, a, b, c, d, e, K(11), x[11]);
+        R(e, f, g, h, a, b, c, d, K(12), x[12]);
+        R(d, e, f, g, h, a, b, c, K(13), x[13]);
+        R(c, d, e, f, g, h, a, b, K(14), x[14]);
+        R(b, c, d, e, f, g, h, a, K(15), x[15]);
+        R(a, b, c, d, e, f, g, h, K(16), M(16));
+        R(h, a, b, c, d, e, f, g, K(17), M(17));
+        R(g, h, a, b, c, d, e, f, K(18), M(18));
+        R(f, g, h, a, b, c, d, e, K(19), M(19));
+        R(e, f, g, h, a, b, c, d, K(20), M(20));
+        R(d, e, f, g, h, a, b, c, K(21), M(21));
+        R(c, d, e, f, g, h, a, b, K(22), M(22));
+        R(b, c, d, e, f, g, h, a, K(23), M(23));
+        R(a, b, c, d, e, f, g, h, K(24), M(24));
+        R(h, a, b, c, d, e, f, g, K(25), M(25));
+        R(g, h, a, b, c, d, e, f, K(26), M(26));
+        R(f, g, h, a, b, c, d, e, K(27), M(27));
+        R(e, f, g, h, a, b, c, d, K(28), M(28));
+        R(d, e, f, g, h, a, b, c, K(29), M(29));
+        R(c, d, e, f, g, h, a, b, K(30), M(30));
+        R(b, c, d, e, f, g, h, a, K(31), M(31));
+        R(a, b, c, d, e, f, g, h, K(32), M(32));
+        R(h, a, b, c, d, e, f, g, K(33), M(33));
+        R(g, h, a, b, c, d, e, f, K(34), M(34));
+        R(f, g, h, a, b, c, d, e, K(35), M(35));
+        R(e, f, g, h, a, b, c, d, K(36), M(36));
+        R(d, e, f, g, h, a, b, c, K(37), M(37));
+        R(c, d, e, f, g, h, a, b, K(38), M(38));
+        R(b, c, d, e, f, g, h, a, K(39), M(39));
+        R(a, b, c, d, e, f, g, h, K(40), M(40));
+        R(h, a, b, c, d, e, f, g, K(41), M(41));
+        R(g, h, a, b, c, d, e, f, K(42), M(42));
+        R(f, g, h, a, b, c, d, e, K(43), M(43));
+        R(e, f, g, h, a, b, c, d, K(44), M(44));
+        R(d, e, f, g, h, a, b, c, K(45), M(45));
+        R(c, d, e, f, g, h, a, b, K(46), M(46));
+        R(b, c, d, e, f, g, h, a, K(47), M(47));
+        R(a, b, c, d, e, f, g, h, K(48), M(48));
+        R(h, a, b, c, d, e, f, g, K(49), M(49));
+        R(g, h, a, b, c, d, e, f, K(50), M(50));
+        R(f, g, h, a, b, c, d, e, K(51), M(51));
+        R(e, f, g, h, a, b, c, d, K(52), M(52));
+        R(d, e, f, g, h, a, b, c, K(53), M(53));
+        R(c, d, e, f, g, h, a, b, K(54), M(54));
+        R(b, c, d, e, f, g, h, a, K(55), M(55));
+        R(a, b, c, d, e, f, g, h, K(56), M(56));
+        R(h, a, b, c, d, e, f, g, K(57), M(57));
+        R(g, h, a, b, c, d, e, f, K(58), M(58));
+        R(f, g, h, a, b, c, d, e, K(59), M(59));
+        R(e, f, g, h, a, b, c, d, K(60), M(60));
+        R(d, e, f, g, h, a, b, c, K(61), M(61));
+        R(c, d, e, f, g, h, a, b, K(62), M(62));
+        R(b, c, d, e, f, g, h, a, K(63), M(63));
 
         a = ctx->state[0] += a;
         b = ctx->state[1] += b;
@@ -479,80 +465,71 @@ void sha256_process_block ( const void *buffer, size_t len, struct sha256_ctx *c
 #define SHAERR_INVALID 0x42
 #define SHAERR_VALID   0x43
 
-DLLEXPORT void ascii_from_resbuf ( unsigned char* ascii, void* resblock )
+DLLEXPORT void ascii_from_resbuf(unsigned char *ascii, void *resblock)
 {
     int i;
-    for ( i = 0; i < 32; i++ )
-    {
-        sprintf ( ( ( char * ) ascii ) + i * 2, "%02x", ( ( unsigned char * ) resblock ) [i] );
+    for(i = 0; i < 32; i++) {
+        sprintf(((char *) ascii) + i * 2, "%02x", ((unsigned char *) resblock) [i]);
     }
 }
 
-DLLEXPORT int build_sha256_sum ( char *filename, unsigned char *hash )
+DLLEXPORT int build_sha256_sum(char *filename, unsigned char *hash)
 {
     void *resblock = NULL;
     FILE *fp = NULL;
 
-    resblock = malloc ( 32 );
-    if ( resblock == NULL )
-    {
+    resblock = malloc(32);
+    if(resblock == NULL) {
         return SHAERR_CALC;
     }
 
-    fp = fopen ( filename, "rb" );
-    if ( fp == NULL )
-    {
+    fp = fopen(filename, "rb");
+    if(fp == NULL) {
         return SHAERR_CALC;
     }
-    sha256_stream ( fp, resblock );
-    ascii_from_resbuf ( hash, resblock );
+    sha256_stream(fp, resblock);
+    ascii_from_resbuf(hash, resblock);
 
-    fclose ( fp );
-    free ( resblock );
+    fclose(fp);
+    free(resblock);
     return 0;
 }
 
-DLLEXPORT int build_sha256_sum_file ( FILE *fp, unsigned char *hash )
+DLLEXPORT int build_sha256_sum_file(FILE *fp, unsigned char *hash)
 {
     void *resblock = NULL;
 
-    if ( fp == NULL )
-    {
+    if(fp == NULL) {
         return SHAERR_CALC;
     }
 
-    resblock = malloc ( 32 );
-    if ( resblock == NULL )
-    {
+    resblock = malloc(32);
+    if(resblock == NULL) {
         return SHAERR_CALC;
     }
 
-    sha256_stream ( fp, resblock );
-    ascii_from_resbuf ( hash, resblock );
+    sha256_stream(fp, resblock);
+    ascii_from_resbuf(hash, resblock);
 
-    free ( resblock );
+    free(resblock);
     return 0;
 }
 
-DLLEXPORT unsigned char* check_sha256_sum ( char *filename, unsigned char *hash )
+DLLEXPORT unsigned char *check_sha256_sum(char *filename, unsigned char *hash)
 {
     unsigned char *ascii = NULL;
 
-    ascii = ( unsigned char * ) malloc ( 65 );
-    if ( ascii == NULL )
-    {
+    ascii = (unsigned char *) malloc(65);
+    if(ascii == NULL) {
         return hash;
     }
 
-    memset ( ascii, '\0', 65 );
-    build_sha256_sum ( filename, ascii );
-    if ( memcmp ( ascii, hash, 64 ) == 0 )
-    {
-        free ( ascii );
+    memset(ascii, '\0', 65);
+    build_sha256_sum(filename, ascii);
+    if(memcmp(ascii, hash, 64) == 0) {
+        free(ascii);
         return NULL;
-    }
-    else
-    {
+    } else {
         return ascii;
     }
 }
