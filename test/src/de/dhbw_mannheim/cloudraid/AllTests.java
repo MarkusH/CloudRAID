@@ -32,8 +32,6 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({de.dhbw_mannheim.cloudraid.util.TestConfig.class,
 		de.dhbw_mannheim.cloudraid.jni.TestRaidAccessInterface.class,
-		de.dhbw_mannheim.cloudraid.fs.TestFileSystemUtilities.class,
-		de.dhbw_mannheim.cloudraid.fs.TestFileLock.class,
 		de.dhbw_mannheim.cloudraid.metadatamgr.TestHSQLDatabaseConnector.class,
 		de.dhbw_mannheim.cloudraid.api.TestRestApi.class})
 public class AllTests {
