@@ -93,11 +93,7 @@ public class AmazonS3Service implements OAuthService {
 	 * @return The bucket endpoint with taking care of capital letters
 	 */
 	public String getBucketEndpoint(String bucket) {
-		if (bucket.toLowerCase().equals(bucket)) {
-			return String.format(this.api.getBucketEndpoint(), bucket);
-		} else {
-			return this.api.getS3Endpoint() + bucket + "/";
-		}
+		return this.api.getS3Endpoint() + bucket + "/";
 	}
 
 	/**
