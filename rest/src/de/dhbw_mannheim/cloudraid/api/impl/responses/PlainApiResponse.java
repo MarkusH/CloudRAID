@@ -48,7 +48,6 @@ public class PlainApiResponse implements IRestApiResponse {
 	public void writeLine(String line) {
 		if (this.resp != null) {
 			String s = line + "\n";
-			System.err.println(s);
 			try {
 				this.resp.getOutputStream().write(s.getBytes());
 			} catch (IOException e) {

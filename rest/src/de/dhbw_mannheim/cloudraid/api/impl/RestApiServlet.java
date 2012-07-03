@@ -154,6 +154,27 @@ public class RestApiServlet extends HttpServlet {
 		this.userpattern = Pattern.compile("[a-zA-Z0-9]");
 	}
 
+	/**
+	 * View to get the API information. Method must be <code>GET</code> and path
+	 * pattern <code>^/api/info/$</code>.
+	 * 
+	 * @param req
+	 *            The request. Needs no HTTP header attributes.
+	 * @param resp
+	 *            Status codes:
+	 *            <ul>
+	 *            <li>200 - Success</li>
+	 *            </ul>
+	 * @param args
+	 *            No arguments.
+	 */
+	public void apiInfo(HttpServletRequest req, IRestApiResponse resp,
+			ArrayList<String> args) {
+		resp.setStatusCode(200);
+		resp.writeField("Provider", "CloudRAID-RESTful");
+		resp.writeField("Version", API_VERSION);
+	}
+
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
@@ -179,26 +200,6 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
-	 * View to get the API information. Method must be <code>GET</code> and path
-	 * pattern <code>^/api/info/$</code>.
-	 * 
-	 * @param req
-	 *            The request. Needs no HTTP header attributes.
-	 * @param resp
-	 *            Status codes:
-	 *            <ul>
-	 *            <li>200 - Success</li>
-	 *            </ul>
-	 * @param args
-	 *            No arguments.
-	 */
-	public void apiInfo(HttpServletRequest req, IRestApiResponse resp,
-			ArrayList<String> args) {
-		resp.setStatusCode(200);
-		resp.writeField("Version", API_VERSION);
-	}
-
-	/**
 	 * @param req
 	 *            The request
 	 * @param resp
@@ -212,7 +213,8 @@ public class RestApiServlet extends HttpServlet {
 		IRestApiResponse r;
 		r = new PlainApiResponse();
 		r.setResponseObject(resp);
-
+		resp.addHeader("X-Powered-By", "CloudRAID/" + API_VERSION);
+		
 		MatchResult mr = null;
 		for (RestApiUrlMapping mapping : mappings) {
 			mr = mapping.match(req);
