@@ -25,7 +25,6 @@ package de.dhbw_mannheim.cloudraid.core.net.connector;
 import java.io.InputStream;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
-import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
 /**
  * Defines the methods to be implemented by classes that are used to connect to
@@ -60,15 +59,6 @@ public interface IStorageConnector {
 			throws InstantiationException;
 
 	/**
-	 * Create the volume name
-	 * 
-	 * @param name
-	 *            The name of the new volume
-	 * @return The instance of the newly created volume
-	 */
-	public IVolumeModel createVolume(String name);
-
-	/**
 	 * Deletes a file on a cloud service.
 	 * 
 	 * In case that the requested file <b>does not exist</b> (HTTP 404) or that
@@ -81,14 +71,6 @@ public interface IStorageConnector {
 	 *         if not.
 	 */
 	public boolean delete(String resource);
-
-	/**
-	 * Delete a volume with all its content
-	 * 
-	 * @param name
-	 *            The volume to delete
-	 */
-	public void deleteVolume(String name);
 
 	/**
 	 * Ends the current session on a cloud storage. There might be APIs that do
@@ -118,20 +100,6 @@ public interface IStorageConnector {
 	 * @return A string containing the RAID meta data.
 	 */
 	public String getMetadata(String resource);
-
-	/**
-	 * Get a specific volume
-	 * 
-	 * @param name
-	 *            The volume to get
-	 * @return The volume instance
-	 */
-	public IVolumeModel getVolume(String name);
-
-	/**
-	 * (Re)load all volumes
-	 */
-	public void loadVolumes();
 
 	/**
 	 * Changes an <b>existing</b> file to a cloud service. This method

@@ -6,7 +6,7 @@ Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: javax.xml.parsers,
- org.osgi.framework;version="1.6.0",
  org.w3c.dom,
  org.xml.sax
 Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1"
+Export-Package: de.dhbw_mannheim.cloudraid.sugarsync.impl.net.connector

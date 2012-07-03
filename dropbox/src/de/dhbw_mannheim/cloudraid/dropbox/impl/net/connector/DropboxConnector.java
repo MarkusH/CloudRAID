@@ -44,7 +44,6 @@ import org.scribe.oauth.OAuthService;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
-import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
 /**
  * The API wrapper for Dropbox (API version 1).
@@ -181,11 +180,6 @@ public class DropboxConnector implements IStorageConnector {
 		return this;
 	}
 
-	@Override
-	public IVolumeModel createVolume(String name) {
-		return null;
-	}
-
 	/**
 	 * Deletes a file from the Dropbox servers.
 	 * 
@@ -218,10 +212,6 @@ public class DropboxConnector implements IStorageConnector {
 			}
 		}
 		return ret;
-	}
-
-	@Override
-	public void deleteVolume(String name) {
 	}
 
 	@Override
@@ -264,15 +254,6 @@ public class DropboxConnector implements IStorageConnector {
 			return null;
 		}
 		return response.getBody();
-	}
-
-	@Override
-	public IVolumeModel getVolume(String name) {
-		return null;
-	}
-
-	@Override
-	public void loadVolumes() {
 	}
 
 	/**
@@ -334,7 +315,7 @@ public class DropboxConnector implements IStorageConnector {
 		System.out.println(response.getCode());
 		boolean ret;
 		if (response.getCode() == 404) {
-			ret = false;
+			return false;
 		}
 		ret = performUpload(resource, String.valueOf(this.id));
 		if (ret) {

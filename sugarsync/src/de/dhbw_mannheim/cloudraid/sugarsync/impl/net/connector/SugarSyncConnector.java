@@ -45,7 +45,6 @@ import org.xml.sax.SAXException;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
-import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
 
 /**
  * The API wrapper for SugarSync.
@@ -302,11 +301,6 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	@Override
-	public IVolumeModel createVolume(String name) {
-		return null;
-	}
-
-	@Override
 	public boolean delete(String resource) {
 		boolean ret = performDelete(resource, String.valueOf(this.id));
 		if (ret) {
@@ -316,10 +310,6 @@ public class SugarSyncConnector implements IStorageConnector {
 			}
 		}
 		return ret;
-	}
-
-	@Override
-	public void deleteVolume(String name) {
 	}
 
 	@Override
@@ -546,11 +536,6 @@ public class SugarSyncConnector implements IStorageConnector {
 		}
 	}
 
-	@Override
-	public IVolumeModel getVolume(String name) {
-		return null;
-	}
-
 	/**
 	 * Returns if a folder is empty and can be deleted.
 	 * 
@@ -594,10 +579,6 @@ public class SugarSyncConnector implements IStorageConnector {
 
 		return !doc.getDocumentElement().getElementsByTagName("displayName")
 				.item(0).getTextContent().equals("Magic Briefcase");
-	}
-
-	@Override
-	public void loadVolumes() {
 	}
 
 	/**
@@ -765,13 +746,10 @@ public class SugarSyncConnector implements IStorageConnector {
 					System.err.println("No file found for update.");
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (SAXException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (ParserConfigurationException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

@@ -26,10 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
 import org.scribe.model.Response;
@@ -41,8 +38,6 @@ import org.scribe.utils.OAuthEncoder;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
-import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
-import de.dhbw_mannheim.cloudraid.ubuntuone.impl.net.model.UbuntuOneVolumeModel;
 import de.dhbw_mannheim.cloudraid.ubuntuone.impl.net.oauth.UbuntuOneApi;
 import de.dhbw_mannheim.cloudraid.ubuntuone.impl.net.oauth.UbuntuOneService;
 
@@ -72,11 +67,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * The {@link OAuthService}
 	 */
 	private UbuntuOneService service;
-
-	/**
-	 * A internal storage for all volumes of the user
-	 */
-	private HashMap<String, UbuntuOneVolumeModel> volumes = new HashMap<String, UbuntuOneVolumeModel>();
 
 	/**
 	 * A reference to the current config;
@@ -179,27 +169,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 	}
 
 	@Override
-	public IVolumeModel createVolume(String name) {
-		if (this.volumes.containsKey(name)) {
-			return this.volumes.get(name);
-		}
-		Response response = sendRequest(Verb.PUT,
-				this.service.getFileStorageEndpoint() + "/volumes/~/" + name
-						+ "/");
-		if (response.getCode() == 200) {
-			try {
-				UbuntuOneVolumeModel volume = new UbuntuOneVolumeModel(
-						response.getBody());
-				this.volumes.put(volume.getName(), volume);
-				return volume;
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
-	}
-
-	@Override
 	public boolean delete(String resource) {
 		Response response = sendRequest(
 				Verb.DELETE,
@@ -211,18 +180,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		sendRequest(Verb.DELETE, this.service.getFileStorageEndpoint()
 				+ "/~/Ubuntu%20One/" + OAuthEncoder.encode(resource + ".m"));
 		return ret;
-	}
-
-	@Override
-	public void deleteVolume(String name) {
-		if (this.volumes.containsKey(name)) {
-			Response response = sendRequest(Verb.DELETE,
-					this.service.getFileStorageEndpoint() + "/volumes/~/"
-							+ name + "/");
-			if (response.getCode() == 200 || response.getCode() == 404) {
-				this.volumes.remove(name);
-			}
-		}
 	}
 
 	@Override
@@ -250,65 +207,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 			return response.getBody();
 		} else {
 			return null;
-		}
-	}
-
-	@Override
-	public IVolumeModel getVolume(String name) {
-		if (this.volumes.containsKey(name)) {
-			return this.volumes.get(name);
-		}
-		Response response = sendRequest(Verb.GET,
-				this.service.getFileStorageEndpoint() + "/volumes/~/"
-						+ OAuthEncoder.encode(name) + "/");
-		System.out.println(response.getBody());
-		if (response.getCode() == 200) {
-			try {
-				UbuntuOneVolumeModel volume = new UbuntuOneVolumeModel(
-						response.getBody());
-				this.volumes.put(volume.getName(), volume);
-				return volume;
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * @param volume
-	 *            The volume to get the directories from
-	 */
-	public void loadDirectories(IVolumeModel volume) {
-		Response response = sendRequest(Verb.GET,
-				this.service.getFileStorageEndpoint()
-						+ (String) volume.getMetadata().get("node_path_safe")
-						+ "/?include_children=true");
-		System.out.println(response.getCode());
-		System.out.println(response.getBody());
-	}
-
-	@Override
-	public void loadVolumes() {
-		Response response = sendRequest(Verb.GET,
-				this.service.getFileStorageEndpoint() + "/volumes");
-		if (response.getCode() == 200) {
-			try {
-				JSONArray vs = new JSONArray(response.getBody());
-				System.out.println(response.getBody());
-				for (int i = 0; i < vs.length(); i++) {
-					UbuntuOneVolumeModel volume = new UbuntuOneVolumeModel(
-							vs.getJSONObject(i));
-					if (this.volumes.containsKey(volume.getName())) {
-						this.volumes.get(volume.getName()).getMetadata()
-								.putAll(volume.getMetadata());
-					} else {
-						this.volumes.put(volume.getName(), volume);
-					}
-				}
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 

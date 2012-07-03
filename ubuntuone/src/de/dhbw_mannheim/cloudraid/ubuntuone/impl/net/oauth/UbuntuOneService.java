@@ -35,8 +35,6 @@ import org.scribe.utils.OAuthEncoder;
 
 import com.miginfocom.base64.Base64;
 
-import de.dhbw_mannheim.cloudraid.core.net.model.IVolumeModel;
-
 /**
  * @author Markus Holtermann
  * 
