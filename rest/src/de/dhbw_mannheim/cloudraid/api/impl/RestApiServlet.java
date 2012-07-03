@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
@@ -171,8 +172,31 @@ public class RestApiServlet extends HttpServlet {
 	public void apiInfo(HttpServletRequest req, IRestApiResponse resp,
 			ArrayList<String> args) {
 		resp.setStatusCode(200);
-		resp.writeField("Provider", "CloudRAID-RESTful");
-		resp.writeField("Version", API_VERSION);
+		resp.writeField("Core-Service",
+				bundleVersionFromClass(this.coreService.getClass()));
+		resp.writeField("Metadata-Service",
+				bundleVersionFromClass(this.metadata.getClass()));
+		resp.writeField("Configuration-Service",
+				bundleVersionFromClass(this.config.getClass()));
+		resp.writeField("API-Service", bundleVersionFromClass(this.getClass()));
+
+		Object[] services = this.coreService.getStorageConnectors();
+		for (int i = 0; i < 3; i++) {
+			resp.writeField("Storage-Connector-" + i,
+					bundleVersionFromClass(services[i].getClass()));
+		}
+
+		resp.writeField("API-Version", API_VERSION);
+	}
+
+	private String bundleVersionFromClass(Class<?> klass) {
+		try {
+			Bundle b = FrameworkUtil.getBundle(klass);
+			return b.getSymbolicName() + " v" + b.getVersion() + " by "
+					+ b.getHeaders().get("Bundle-Vendor");
+		} catch (Exception e) {
+			return "unknown";
+		}
 	}
 
 	@Override
@@ -214,7 +238,7 @@ public class RestApiServlet extends HttpServlet {
 		r = new PlainApiResponse();
 		r.setResponseObject(resp);
 		resp.addHeader("X-Powered-By", "CloudRAID/" + API_VERSION);
-		
+
 		MatchResult mr = null;
 		for (RestApiUrlMapping mapping : mappings) {
 			mr = mapping.match(req);
