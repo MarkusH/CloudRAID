@@ -401,7 +401,6 @@ DLLEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
     metadata.missing = max - min;
     status = write_metadata(meta, &metadata);
     if(status != 0) {
-        status = METADATA_ERROR;
         DEBUGPRINT("Meta data error");
         goto end;
     }
@@ -752,23 +751,20 @@ DLLEXPORT void set_metadata_hash(raid5md *md, const int idx, const unsigned char
 
 /**
  * Write the meta data object `*md` to file `*fp`. The function returns 0 on
- * success, 1 if `*fp` is NULL and 2 if `*md` is NULL.
+ * success, METADATA_ERROR if either `*fp` or `*md` or both are NULL.
  */
 DLLEXPORT int write_metadata(FILE *fp, raid5md *md)
 {
-    if(fp != NULL) {
-        if(md != NULL) {
-            fprintf(fp, "%02x", md->version);
-            fprintf(fp, "%64s", md->hash_dev0);
-            fprintf(fp, "%64s", md->hash_dev1);
-            fprintf(fp, "%64s", md->hash_dev2);
-            fprintf(fp, "%64s", md->hash_in);
-            fprintf(fp, "%04x", md->missing);
-            return 0;
-        }
-        return 2;
+    if(fp != NULL && md != NULL) {
+        fprintf(fp, "%02x", md->version);
+        fprintf(fp, "%64s", md->hash_dev0);
+        fprintf(fp, "%64s", md->hash_dev1);
+        fprintf(fp, "%64s", md->hash_dev2);
+        fprintf(fp, "%64s", md->hash_in);
+        fprintf(fp, "%04x", md->missing);
+        return 0;
     }
-    return 1;
+    return METADATA_ERROR;
 }
 
 /**
