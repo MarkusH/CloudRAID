@@ -180,6 +180,40 @@ public class DropboxConnector implements IStorageConnector {
 		return this;
 	}
 
+	@Override
+	public boolean delete(String resource) {
+		boolean ret = performDelete(resource, String.valueOf(this.id));
+		if (ret) {
+			if (!performDelete(resource, "m")) {
+				System.err
+						.println("The data file has been removed. But unfortunately the meta data file has not been removed!");
+			}
+		}
+		return ret;
+	}
+
+	@Override
+	public void disconnect() {
+	}
+
+	@Override
+	public InputStream get(String resource) {
+		Response response = performGet(resource, String.valueOf(this.id));
+		if (response == null) {
+			return null;
+		}
+		return response.getStream();
+	}
+
+	@Override
+	public String getMetadata(String resource) {
+		Response response = performGet(resource, "m");
+		if (response == null) {
+			return null;
+		}
+		return response.getBody();
+	}
+
 	/**
 	 * Deletes a file from the Dropbox servers.
 	 * 
@@ -202,22 +236,6 @@ public class DropboxConnector implements IStorageConnector {
 		return true;
 	}
 
-	@Override
-	public boolean delete(String resource) {
-		boolean ret = performDelete(resource, String.valueOf(this.id));
-		if (ret) {
-			if (!performDelete(resource, "m")) {
-				System.err
-						.println("The data file has been removed. But unfortunately the meta data file has not been removed!");
-			}
-		}
-		return ret;
-	}
-
-	@Override
-	public void disconnect() {
-	}
-
 	/**
 	 * Gets a file from the Dropbox servers.
 	 * 
@@ -236,24 +254,6 @@ public class DropboxConnector implements IStorageConnector {
 			return null;
 		}
 		return response;
-	}
-
-	@Override
-	public InputStream get(String resource) {
-		Response response = performGet(resource, String.valueOf(this.id));
-		if (response == null) {
-			return null;
-		}
-		return response.getStream();
-	}
-
-	@Override
-	public String getMetadata(String resource) {
-		Response response = performGet(resource, "m");
-		if (response == null) {
-			return null;
-		}
-		return response.getBody();
 	}
 
 	/**

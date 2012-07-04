@@ -43,6 +43,11 @@ public class RaidAccessInterface {
 	public static final int METADATA_ERROR = 0x0200;
 	public static final int SUCCESS_SPLIT = 0x0400;
 
+	public static native String getName();
+
+	public static native String getVendor();
+	
+	public static native String getVersion();
 	/**
 	 * @param tempInputDirPath
 	 *            The complete, absolute path to the temporary input directory,
@@ -64,7 +69,6 @@ public class RaidAccessInterface {
 	 */
 	public static native int mergeInterface(String tempInputDirPath,
 			String hash, String outputFilePath, String key);
-
 	/**
 	 * <p>
 	 * This function splits the file <code>inputBasePath</code> +
@@ -111,8 +115,4 @@ public class RaidAccessInterface {
 	 */
 	public static native String splitInterface(String inputBasePath,
 			String inputFilePath, String tempOutputDirPath, String key);
-	
-	public static native String getName();
-	public static native String getVendor();
-	public static native String getVersion();
 }

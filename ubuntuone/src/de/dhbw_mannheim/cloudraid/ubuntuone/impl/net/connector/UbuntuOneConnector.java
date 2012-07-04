@@ -211,6 +211,55 @@ public class UbuntuOneConnector implements IStorageConnector {
 	}
 
 	/**
+	 * Executes the actual upload to the UbuntuOne severs.
+	 * 
+	 * @param resource
+	 *            The resource.
+	 * @param extension
+	 *            The resource's extension.
+	 * @return true, if the upload succeeded; false, if not.
+	 */
+	private boolean performUpload(String resource, String extension) {
+		File f = new File(splitOutputDir + "/" + resource + "." + extension);
+		int maxFilesize;
+		try {
+			maxFilesize = this.config.getInt("filesize.max", null);
+			if (f.length() > maxFilesize) {
+				System.err.println("File too big");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		if (f.length() > maxFilesize) {
+			System.err.println("File too big.");
+		} else {
+			byte[] fileBytes = new byte[(int) f.length()];
+			InputStream fis = null;
+			try {
+				fis = new FileInputStream(f);
+				fis.read(fileBytes);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			} finally {
+				try {
+					if (fis != null)
+						fis.close();
+				} catch (IOException ignore) {
+				}
+			}
+			Response response = sendRequest(Verb.PUT,
+					this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
+							+ OAuthEncoder.encode(resource), fileBytes);
+			if (response.getCode() == 201) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Creates a {@link org.scribe.model.OAuthRequest} to <code>endpoint</code>
 	 * as a HTTP <code>verb</code> Request Method. The request is signed with
 	 * the secret customer and application keys.
@@ -304,55 +353,6 @@ public class UbuntuOneConnector implements IStorageConnector {
 		} else {
 			return false;
 		}
-	}
-
-	/**
-	 * Executes the actual upload to the UbuntuOne severs.
-	 * 
-	 * @param resource
-	 *            The resource.
-	 * @param extension
-	 *            The resource's extension.
-	 * @return true, if the upload succeeded; false, if not.
-	 */
-	private boolean performUpload(String resource, String extension) {
-		File f = new File(splitOutputDir + "/" + resource + "." + extension);
-		int maxFilesize;
-		try {
-			maxFilesize = this.config.getInt("filesize.max", null);
-			if (f.length() > maxFilesize) {
-				System.err.println("File too big");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		if (f.length() > maxFilesize) {
-			System.err.println("File too big.");
-		} else {
-			byte[] fileBytes = new byte[(int) f.length()];
-			InputStream fis = null;
-			try {
-				fis = new FileInputStream(f);
-				fis.read(fileBytes);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			} finally {
-				try {
-					if (fis != null)
-						fis.close();
-				} catch (IOException ignore) {
-				}
-			}
-			Response response = sendRequest(Verb.PUT,
-					this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
-							+ OAuthEncoder.encode(resource), fileBytes);
-			if (response.getCode() == 201) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 }

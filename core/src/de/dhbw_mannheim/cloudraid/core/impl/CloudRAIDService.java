@@ -55,6 +55,55 @@ public class CloudRAIDService implements ICloudRAIDService {
 
 	private String splitOutputDir;
 
+	@Override
+	public String getRAIDName() {
+		return RaidAccessInterface.getName();
+	}
+
+	@Override
+	public String getRAIDVendor() {
+		return RaidAccessInterface.getVendor();
+	}
+
+	@Override
+	public String getRAIDVersion() {
+		return RaidAccessInterface.getVersion();
+	}
+
+	@Override
+	public synchronized ICoreAccess getSlot() throws InstantiationException {
+		return new CoreAccess();
+	}
+
+	@Override
+	public IStorageConnector[] getStorageConnectors() {
+		if (this.storageConnectors[0] == null
+				|| this.storageConnectors[1] == null
+				|| this.storageConnectors[2] == null) {
+			throw new IllegalStateException(
+					"At least one storage connector missing");
+		}
+		return this.storageConnectors;
+	}
+
+	private void initPaths() throws MissingConfigValueException {
+		this.mergeInputDir = this.config.getString("merge.input.dir");
+		this.mergeOutputDir = this.config.getString("merge.output.dir");
+		this.splitInputDir = this.config.getString("split.input.dir");
+		this.splitOutputDir = this.config.getString("split.output.dir");
+
+		if (this.mergeInputDir == null || this.mergeOutputDir == null
+				|| this.splitInputDir == null || this.splitOutputDir == null) {
+			throw new MissingConfigValueException(
+					"Missing split or merge directory definitions.");
+		}
+
+		new File(this.mergeInputDir).mkdirs();
+		new File(this.mergeOutputDir).mkdirs();
+		new File(this.splitInputDir).mkdirs();
+		new File(this.splitOutputDir).mkdirs();
+	}
+
 	/**
 	 * @param config
 	 *            The running instance of the {@link ICloudRAIDConfig
@@ -66,7 +115,7 @@ public class CloudRAIDService implements ICloudRAIDService {
 		System.out.println("CloudRAIDService: setConfig: " + this.config);
 		System.out.println("CloudRAIDService: setConfig: end");
 	}
-
+	
 	/**
 	 * This function is called upon shutdown of this service. The
 	 * {@link ICloudRAIDConfig} will be saved.
@@ -76,7 +125,7 @@ public class CloudRAIDService implements ICloudRAIDService {
 		config.save();
 		System.out.println("CloudRAIDService: shutdown: end");
 	}
-
+	
 	/**
 	 * During the {@link #startup(BundleContext) startup} this service reads the
 	 * three {@link IStorageConnector cloud storage connectors} to be used from
@@ -173,55 +222,6 @@ public class CloudRAIDService implements ICloudRAIDService {
 		this.config = null;
 		System.out.println("CloudRAIDService: unsetConfig: " + this.config);
 		System.out.println("CloudRAIDService: unsetConfig: end");
-	}
-
-	private void initPaths() throws MissingConfigValueException {
-		this.mergeInputDir = this.config.getString("merge.input.dir");
-		this.mergeOutputDir = this.config.getString("merge.output.dir");
-		this.splitInputDir = this.config.getString("split.input.dir");
-		this.splitOutputDir = this.config.getString("split.output.dir");
-
-		if (this.mergeInputDir == null || this.mergeOutputDir == null
-				|| this.splitInputDir == null || this.splitOutputDir == null) {
-			throw new MissingConfigValueException(
-					"Missing split or merge directory definitions.");
-		}
-
-		new File(this.mergeInputDir).mkdirs();
-		new File(this.mergeOutputDir).mkdirs();
-		new File(this.splitInputDir).mkdirs();
-		new File(this.splitOutputDir).mkdirs();
-	}
-
-	@Override
-	public synchronized ICoreAccess getSlot() throws InstantiationException {
-		return new CoreAccess();
-	}
-
-	@Override
-	public IStorageConnector[] getStorageConnectors() {
-		if (this.storageConnectors[0] == null
-				|| this.storageConnectors[1] == null
-				|| this.storageConnectors[2] == null) {
-			throw new IllegalStateException(
-					"At least one storage connector missing");
-		}
-		return this.storageConnectors;
-	}
-	
-	@Override
-	public String getRAIDName() {
-		return RaidAccessInterface.getName();
-	}
-	
-	@Override
-	public String getRAIDVendor() {
-		return RaidAccessInterface.getVendor();
-	}
-
-	@Override
-	public String getRAIDVersion() {
-		return RaidAccessInterface.getVersion();
 	}
 
 }

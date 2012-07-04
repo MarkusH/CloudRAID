@@ -113,6 +113,14 @@ public class RestApiComponent {
 		System.out.println("RestApiComponent: startup: end");
 	}
 
+	protected synchronized void unsetCloudRAIDService(ICloudRAIDService core) {
+		System.out.println("RestApiComponent: unsetCloudRAIDService: begin");
+		System.out.println("RestApiComponent: unsetCloudRAIDService: "
+				+ core);
+		httpService.unregister(SERVLET_ALIAS);
+		System.out.println("RestApiComponent: unsetCloudRAIDService: end");
+	}
+
 	/**
 	 * @param config
 	 */
@@ -146,14 +154,6 @@ public class RestApiComponent {
 				+ metadataService);
 		httpService.unregister(SERVLET_ALIAS);
 		System.out.println("RestApiComponent: unsetMetadataMgr: end");
-	}
-
-	protected synchronized void unsetCloudRAIDService(ICloudRAIDService core) {
-		System.out.println("RestApiComponent: unsetCloudRAIDService: begin");
-		System.out.println("RestApiComponent: unsetCloudRAIDService: "
-				+ core);
-		httpService.unregister(SERVLET_ALIAS);
-		System.out.println("RestApiComponent: unsetCloudRAIDService: end");
 	}
 
 }

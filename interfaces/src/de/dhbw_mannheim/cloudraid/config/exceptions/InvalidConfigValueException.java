@@ -41,11 +41,11 @@ public class InvalidConfigValueException extends ConfigException {
 		super(arg0);
 	}
 
-	public InvalidConfigValueException(Throwable cause) {
-		super(cause);
-	}
-
 	public InvalidConfigValueException(String arg0, Throwable cause) {
 		super(arg0, cause);
+	}
+
+	public InvalidConfigValueException(Throwable cause) {
+		super(cause);
 	}
 }

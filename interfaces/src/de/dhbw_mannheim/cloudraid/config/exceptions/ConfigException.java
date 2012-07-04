@@ -41,12 +41,12 @@ public class ConfigException extends Exception {
 		super(arg0);
 	}
 
-	public ConfigException(Throwable cause) {
-		super(cause);
-	}
-
 	public ConfigException(String arg0, Throwable cause) {
 		super(arg0, cause);
+	}
+
+	public ConfigException(Throwable cause) {
+		super(cause);
 	}
 
 }

@@ -37,6 +37,46 @@ public class Configurator {
 
 	private static Config config;
 
+	private static void get(String key) {
+		try {
+			System.out.println(config.getString(key, null));
+		} catch (ConfigException e) {
+			System.out.println("Key \"" + key + "\" not found.");
+		}
+	}
+
+	private static void help() {
+		System.out
+				.println("Usage: java de.dhbw_mannheim.cloudraid.config.cli.Configurator COMMAND");
+		System.out.println("    COMMAND:");
+		System.out.println("        get KEY");
+		System.out.println("        list");
+		System.out.println("        set [ -e | --encrypted ] KEY VALUE");
+	}
+
+	private static void list() {
+		ArrayList<String> s = new ArrayList<String>(config.getDefaultData()
+				.keySet());
+		s.addAll(config.keySet());
+		ArrayList<String> list = new ArrayList<String>(s);
+		Collections.sort(list);
+		for (String key : list) {
+			try {
+				if (!config.keyExists(key)) {
+					System.out.println("* " + key + " = "
+							+ config.getString(key, null));
+				} else {
+					System.out.println("  " + key + " = "
+							+ config.getString(key, null));
+				}
+			} catch (ConfigException e) {
+				System.out.println("Key \"" + key + "\" not found.");
+			}
+		}
+		System.out.println();
+		System.out.println("Elements marked with a * are default values!");
+	}
+
 	/**
 	 * @param args
 	 *            the arguments
@@ -88,46 +128,6 @@ public class Configurator {
 			System.err.println("Cannot get console for password input.");
 			System.exit(1);
 		}
-	}
-
-	private static void help() {
-		System.out
-				.println("Usage: java de.dhbw_mannheim.cloudraid.config.cli.Configurator COMMAND");
-		System.out.println("    COMMAND:");
-		System.out.println("        get KEY");
-		System.out.println("        list");
-		System.out.println("        set [ -e | --encrypted ] KEY VALUE");
-	}
-
-	private static void get(String key) {
-		try {
-			System.out.println(config.getString(key, null));
-		} catch (ConfigException e) {
-			System.out.println("Key \"" + key + "\" not found.");
-		}
-	}
-
-	private static void list() {
-		ArrayList<String> s = new ArrayList<String>(config.getDefaultData()
-				.keySet());
-		s.addAll(config.keySet());
-		ArrayList<String> list = new ArrayList<String>(s);
-		Collections.sort(list);
-		for (String key : list) {
-			try {
-				if (!config.keyExists(key)) {
-					System.out.println("* " + key + " = "
-							+ config.getString(key, null));
-				} else {
-					System.out.println("  " + key + " = "
-							+ config.getString(key, null));
-				}
-			} catch (ConfigException e) {
-				System.out.println("Key \"" + key + "\" not found.");
-			}
-		}
-		System.out.println();
-		System.out.println("Elements marked with a * are default values!");
 	}
 
 	private static void set(boolean encrypted, String key, String value) {

@@ -40,19 +40,26 @@ public class PlainApiResponse implements IRestApiResponse {
 	private HttpServletResponse resp = null;
 
 	@Override
-	public void writeField(String name, String value) {
-		writeLine(name + ":" + value);
+	public void addRow(Map<String, Object> map) {
+		StringBuffer table = new StringBuffer();
+		for (Map.Entry<String, Object> e : map.entrySet()) {
+			table.append("\""
+					+ e.getValue().toString().replace("\\", "\\\\")
+							.replace("\"", "\\\"") + "\",");
+		}
+		table.setLength(table.length() - 1);
+		table.append("\n");
+		try {
+			this.resp.getOutputStream().write(table.toString().getBytes());
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 	}
 
 	@Override
-	public void writeLine(String line) {
+	public void flush() throws IOException {
 		if (this.resp != null) {
-			String s = line + "\n";
-			try {
-				this.resp.getOutputStream().write(s.getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			this.resp.getOutputStream().flush();
 		}
 	}
 
@@ -69,6 +76,20 @@ public class PlainApiResponse implements IRestApiResponse {
 		if (this.resp != null) {
 			this.resp.setContentType(this.mime);
 			this.resp.getOutputStream().flush();
+		}
+	}
+
+	@Override
+	public void setContentLength(int len) {
+		if (this.resp != null) {
+			this.resp.setContentLength(len);
+		}
+	}
+
+	@Override
+	public void setContentType(String type) {
+		if (this.resp != null) {
+			this.mime = type;
 		}
 	}
 
@@ -93,48 +114,27 @@ public class PlainApiResponse implements IRestApiResponse {
 	}
 
 	@Override
-	public void addRow(Map<String, Object> map) {
-		StringBuffer table = new StringBuffer();
-		for (Map.Entry<String, Object> e : map.entrySet()) {
-			table.append("\""
-					+ e.getValue().toString().replace("\\", "\\\\")
-							.replace("\"", "\\\"") + "\",");
-		}
-		table.setLength(table.length() - 1);
-		table.append("\n");
-		try {
-			this.resp.getOutputStream().write(table.toString().getBytes());
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-	}
-
-	@Override
-	public void setContentLength(int len) {
-		if (this.resp != null) {
-			this.resp.setContentLength(len);
-		}
-	}
-
-	@Override
-	public void setContentType(String type) {
-		if (this.resp != null) {
-			this.mime = type;
-		}
-	}
-
-	@Override
-	public void flush() throws IOException {
-		if (this.resp != null) {
-			this.resp.getOutputStream().flush();
-		}
-	}
-
-	@Override
 	public void write(String content) {
 		if (this.resp != null) {
 			try {
 				this.resp.getOutputStream().write(content.getBytes());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Override
+	public void writeField(String name, String value) {
+		writeLine(name + ":" + value);
+	}
+
+	@Override
+	public void writeLine(String line) {
+		if (this.resp != null) {
+			String s = line + "\n";
+			try {
+				this.resp.getOutputStream().write(s.getBytes());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

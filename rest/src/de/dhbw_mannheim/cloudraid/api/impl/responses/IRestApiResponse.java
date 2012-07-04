@@ -40,33 +40,33 @@ public interface IRestApiResponse {
 	public static String MIMETYPE = "text/plain";
 
 	/**
-	 * @param name
-	 * @param payload
-	 */
-	public void writeField(String name, String value);
-
-	/**
-	 * @param payload
-	 *            the content to set
-	 */
-	public void writeLine(String line);
-
-	/**
-	 * @param payload
-	 *            the content to set
-	 */
-	public void write(String content);
-
-	/**
 	 * @param map
 	 */
 	public void addRow(Map<String, Object> map);
+
+	public void flush() throws IOException;
+
+	/**
+	 * @return Returns the output stream of the underlying
+	 *         {@link HttpServletResponse}.
+	 * @throws IOException
+	 */
+	public OutputStream getOutputStream() throws IOException;
 
 	/**
 	 * @throws IOException
 	 * 
 	 */
 	public void send() throws IOException;
+
+	/**
+	 * Set the content length to <code>len</code>
+	 * 
+	 * @param len
+	 */
+	public void setContentLength(int len);
+
+	public void setContentType(String type);
 
 	/**
 	 * @param name
@@ -85,20 +85,20 @@ public interface IRestApiResponse {
 	public void setStatusCode(int sc);
 
 	/**
-	 * @return Returns the output stream of the underlying
-	 *         {@link HttpServletResponse}.
-	 * @throws IOException
+	 * @param payload
+	 *            the content to set
 	 */
-	public OutputStream getOutputStream() throws IOException;
+	public void write(String content);
 
 	/**
-	 * Set the content length to <code>len</code>
-	 * 
-	 * @param len
+	 * @param name
+	 * @param payload
 	 */
-	public void setContentLength(int len);
+	public void writeField(String name, String value);
 
-	public void flush() throws IOException;
-
-	public void setContentType(String type);
+	/**
+	 * @param payload
+	 *            the content to set
+	 */
+	public void writeLine(String line);
 }

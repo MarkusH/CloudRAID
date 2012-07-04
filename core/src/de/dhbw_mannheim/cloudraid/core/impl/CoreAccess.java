@@ -98,85 +98,41 @@ public class CoreAccess extends Thread implements ICoreAccess {
 	}
 
 	@Override
-	public boolean putData(InputStream is, int fileid) {
-		return this.putData(is, fileid, false);
-	}
-
-	@Override
-	public boolean putData(InputStream is, int fileid, boolean update) {
+	public boolean deleteData(int fileid) {
 		this.fileid = fileid;
-		this.update = update;
-		BufferedInputStream bis = null;
-		BufferedOutputStream bos = null;
+		boolean state = false;
 		try {
 			// Retrieve the metadata from the database
 			ResultSet rs = this.metadata.fileById(this.fileid);
 			if (rs != null) {
 				setByResultSet(rs);
 
-				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.UPLOADING) {
+				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
 					throw new IllegalStateException(String.format(
-							"File %s has state %s but UPLOADING expected!",
+							"File %s has state %s but READY expected!",
 							this.path, this.status));
 				}
 
-				int bufsize = 4096;
-
-				// Create the file
-				this.file = new File(this.config.getString("split.input.dir")
-						+ File.separator + this.userid + File.separator
-						+ this.path);
-				this.file.getParentFile().mkdirs();
-
-				// Write data to file
-				bis = new BufferedInputStream(is, bufsize);
-				bos = new BufferedOutputStream(new FileOutputStream(this.file),
-						bufsize);
-				byte[] inputBytes = new byte[bufsize];
-				int readLength;
-				while ((readLength = bis.read(inputBytes)) >= 0) {
-					bos.write(inputBytes, 0, readLength);
-				}
-
-				// Update file state in database
 				this.metadata
-						.fileUpdateState(this.fileid, FILE_STATUS.UPLOADED);
+						.fileUpdateState(this.fileid, FILE_STATUS.DELETING);
 
-				if (this.config.getBoolean("upload.asynchronous")) {
-					this.start();
-					this.uploadstate = true;
-				} else {
-					this.run();
+				IStorageConnector[] storageConnectors = coreService
+						.getStorageConnectors();
+
+				for (int i = 0; i < 3; i++) {
+					storageConnectors[i].delete(this.hash);
 				}
+				this.metadata.fileUpdateState(this.fileid, FILE_STATUS.DELETED);
+				this.metadata.fileDelete(fileid);
+				state = true;
+
 			}
 		} catch (SQLException e) {
-			this.uploadstate = false;
-			e.printStackTrace();
-		} catch (MissingConfigValueException e) {
-			this.uploadstate = false;
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			this.uploadstate = false;
-			e.printStackTrace();
-		} catch (IOException e) {
-			this.uploadstate = false;
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
-			this.uploadstate = false;
 			e.printStackTrace();
-		} finally {
-			try {
-				if (bis != null)
-					bis.close();
-			} catch (IOException ignore) {
-			}
-			try {
-				if (bos != null)
-					bos.close();
-			} catch (IOException ignore) {
-			}
 		}
-		return this.uploadstate;
+		return state;
 	}
 
 	@Override
@@ -313,41 +269,97 @@ public class CoreAccess extends Thread implements ICoreAccess {
 	}
 
 	@Override
-	public boolean deleteData(int fileid) {
+	public boolean putData(InputStream is, int fileid) {
+		return this.putData(is, fileid, false);
+	}
+
+	@Override
+	public boolean putData(InputStream is, int fileid, boolean update) {
 		this.fileid = fileid;
-		boolean state = false;
+		this.update = update;
+		BufferedInputStream bis = null;
+		BufferedOutputStream bos = null;
 		try {
 			// Retrieve the metadata from the database
 			ResultSet rs = this.metadata.fileById(this.fileid);
 			if (rs != null) {
 				setByResultSet(rs);
 
-				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
+				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.UPLOADING) {
 					throw new IllegalStateException(String.format(
-							"File %s has state %s but READY expected!",
+							"File %s has state %s but UPLOADING expected!",
 							this.path, this.status));
 				}
 
-				this.metadata
-						.fileUpdateState(this.fileid, FILE_STATUS.DELETING);
+				int bufsize = 4096;
 
-				IStorageConnector[] storageConnectors = coreService
-						.getStorageConnectors();
+				// Create the file
+				this.file = new File(this.config.getString("split.input.dir")
+						+ File.separator + this.userid + File.separator
+						+ this.path);
+				this.file.getParentFile().mkdirs();
 
-				for (int i = 0; i < 3; i++) {
-					storageConnectors[i].delete(this.hash);
+				// Write data to file
+				bis = new BufferedInputStream(is, bufsize);
+				bos = new BufferedOutputStream(new FileOutputStream(this.file),
+						bufsize);
+				byte[] inputBytes = new byte[bufsize];
+				int readLength;
+				while ((readLength = bis.read(inputBytes)) >= 0) {
+					bos.write(inputBytes, 0, readLength);
 				}
-				this.metadata.fileUpdateState(this.fileid, FILE_STATUS.DELETED);
-				this.metadata.fileDelete(fileid);
-				state = true;
 
+				// Update file state in database
+				this.metadata
+						.fileUpdateState(this.fileid, FILE_STATUS.UPLOADED);
+
+				if (this.config.getBoolean("upload.asynchronous")) {
+					this.start();
+					this.uploadstate = true;
+				} else {
+					this.run();
+				}
 			}
 		} catch (SQLException e) {
+			this.uploadstate = false;
+			e.printStackTrace();
+		} catch (MissingConfigValueException e) {
+			this.uploadstate = false;
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			this.uploadstate = false;
+			e.printStackTrace();
+		} catch (IOException e) {
+			this.uploadstate = false;
 			e.printStackTrace();
 		} catch (IllegalStateException e) {
+			this.uploadstate = false;
 			e.printStackTrace();
+		} finally {
+			try {
+				if (bis != null)
+					bis.close();
+			} catch (IOException ignore) {
+			}
+			try {
+				if (bos != null)
+					bos.close();
+			} catch (IOException ignore) {
+			}
 		}
-		return state;
+		return this.uploadstate;
+	}
+
+	@Override
+	public void reset() {
+		this.path = null;
+		this.userid = -1;
+		this.fileid = -1;
+		this.update = false;
+		this.file = null;
+		this.hash = null;
+		this.uploadstate = false;
+		this.status = null;
 	}
 
 	public void run() {
@@ -396,18 +408,6 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			e.printStackTrace();
 		}
 		this.uploadstate = true;
-	}
-
-	@Override
-	public void reset() {
-		this.path = null;
-		this.userid = -1;
-		this.fileid = -1;
-		this.update = false;
-		this.file = null;
-		this.hash = null;
-		this.uploadstate = false;
-		this.status = null;
 	}
 
 	private void setByResultSet(ResultSet rs) throws SQLException {

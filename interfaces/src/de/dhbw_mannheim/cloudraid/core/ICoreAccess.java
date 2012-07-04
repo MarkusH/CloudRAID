@@ -34,6 +34,28 @@ public interface ICoreAccess {
 
 	/**
 	 * This function <b>must</b> release itself from the {@link ICoreAccess}
+	 * slots in the {@link ICloudRAIDService}.
+	 * 
+	 * @param fileid
+	 *            The id for this file from the {@link IMetadataManager}
+	 * @return True on success, else false.
+	 */
+	public boolean deleteData(int fileid);
+
+	/**
+	 * This function <b>must not</b> release itself from the {@link ICoreAccess}
+	 * slots in the {@link ICloudRAIDService}. A calling function <b>must</b>
+	 * release the slot!
+	 * 
+	 * @param fileid
+	 *            The id for this file from the {@link IMetadataManager}
+	 * @return Returns an InputStream providing the merged file or null in case
+	 *         of an error.
+	 */
+	public InputStream getData(int fileid);
+
+	/**
+	 * This function <b>must</b> release itself from the {@link ICoreAccess}
 	 * slots in the {@link ICloudRAIDService}. A calling function <b>must
 	 * not</b> release the slot!
 	 * 
@@ -61,28 +83,6 @@ public interface ICoreAccess {
 	 * @return True on success, else false.
 	 */
 	public boolean putData(InputStream is, int fileid, boolean update);
-
-	/**
-	 * This function <b>must not</b> release itself from the {@link ICoreAccess}
-	 * slots in the {@link ICloudRAIDService}. A calling function <b>must</b>
-	 * release the slot!
-	 * 
-	 * @param fileid
-	 *            The id for this file from the {@link IMetadataManager}
-	 * @return Returns an InputStream providing the merged file or null in case
-	 *         of an error.
-	 */
-	public InputStream getData(int fileid);
-
-	/**
-	 * This function <b>must</b> release itself from the {@link ICoreAccess}
-	 * slots in the {@link ICloudRAIDService}.
-	 * 
-	 * @param fileid
-	 *            The id for this file from the {@link IMetadataManager}
-	 * @return True on success, else false.
-	 */
-	public boolean deleteData(int fileid);
 
 	/**
 	 * Reset the internal states

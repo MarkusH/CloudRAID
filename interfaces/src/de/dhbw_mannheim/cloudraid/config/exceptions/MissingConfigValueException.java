@@ -41,11 +41,11 @@ public class MissingConfigValueException extends ConfigException {
 		super(arg0);
 	}
 
-	public MissingConfigValueException(Throwable cause) {
-		super(cause);
-	}
-
 	public MissingConfigValueException(String arg0, Throwable cause) {
 		super(arg0, cause);
+	}
+
+	public MissingConfigValueException(Throwable cause) {
+		super(cause);
 	}
 }
