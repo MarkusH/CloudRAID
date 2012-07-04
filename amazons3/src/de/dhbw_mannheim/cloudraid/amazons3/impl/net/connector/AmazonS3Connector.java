@@ -170,7 +170,7 @@ public class AmazonS3Connector implements IStorageConnector {
 				this.service.getBucketEndpoint(name));
 		request.addHeader("Content-Type", "application/x-www-form-urlencoded");
 		System.err.println(request);
-		service.signRequest(request);
+		this.service.signRequest(request);
 		Response response = request.send();
 		System.out.println(response.getCode());
 		if (response.getCode() == 200) {
@@ -279,7 +279,8 @@ public class AmazonS3Connector implements IStorageConnector {
 		OAuthRequest request = new OAuthRequest(Verb.PUT,
 				this.service.getBucketEndpoint(this.bucketname) + resource
 						+ "." + extension);
-		request.addHeader("Content-Type", MIME_MAP.getContentType(f));
+		request.addHeader("Content-Type",
+				AmazonS3Connector.MIME_MAP.getContentType(f));
 		this.service.signRequest(request);
 		// request.addHeader("Expect", "100-continue"); // TODO
 		request.addPayload(fileBytes);
@@ -309,7 +310,7 @@ public class AmazonS3Connector implements IStorageConnector {
 	private Response sendRequest(Verb verb, String endpoint) {
 		OAuthRequest request = new OAuthRequest(verb, endpoint);
 		System.err.println(request);
-		service.signRequest(request);
+		this.service.signRequest(request);
 		Response response = request.send();
 		System.err.println(String.format("@Response(%d, %s, %s)",
 				response.getCode(), verb, endpoint));

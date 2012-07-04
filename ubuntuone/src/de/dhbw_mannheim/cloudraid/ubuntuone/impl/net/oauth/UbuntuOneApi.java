@@ -77,7 +77,7 @@ public class UbuntuOneApi extends DefaultApi10a {
 	 */
 	@Override
 	public String getAccessTokenEndpoint() {
-		return ACCESS_URL;
+		return UbuntuOneApi.ACCESS_URL;
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class UbuntuOneApi extends DefaultApi10a {
 	 * @return The {@link #API_BASE_URL}: {@value #API_BASE_URL}
 	 */
 	public String getApiBaseEndpoint() {
-		return API_BASE_URL;
+		return UbuntuOneApi.API_BASE_URL;
 	}
 
 	@Override
@@ -101,14 +101,14 @@ public class UbuntuOneApi extends DefaultApi10a {
 	 * @return The {@link #CONTENT_ROOT_URL}: {@value #CONTENT_ROOT_URL}
 	 */
 	public String getContentRootEndpoint() {
-		return CONTENT_ROOT_URL;
+		return UbuntuOneApi.CONTENT_ROOT_URL;
 	}
 
 	/**
 	 * @return The {@link #FILE_STORAGE_URL}: {@value #FILE_STORAGE_URL}
 	 */
 	public String getFileStorageEndpoint() {
-		return FILE_STORAGE_URL;
+		return UbuntuOneApi.FILE_STORAGE_URL;
 	}
 
 	@Override
@@ -119,10 +119,11 @@ public class UbuntuOneApi extends DefaultApi10a {
 	@Override
 	public String getRequestTokenEndpoint() {
 		try {
-			return REQUEST_URL + InetAddress.getLocalHost().getHostName();
+			return UbuntuOneApi.REQUEST_URL
+					+ InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
-			return REQUEST_URL + "localhost";
+			return UbuntuOneApi.REQUEST_URL + "localhost";
 		}
 	}
 

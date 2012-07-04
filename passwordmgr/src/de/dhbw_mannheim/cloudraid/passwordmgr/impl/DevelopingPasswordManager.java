@@ -32,7 +32,8 @@ public class DevelopingPasswordManager implements IPasswordManager {
 
 	@Override
 	public String getCredentials() {
-		System.out.println("DevelopingPasswordManager: getCredentials: invocation");
+		System.out
+				.println("DevelopingPasswordManager: getCredentials: invocation");
 		return "Test!P4ssw0rd";
 	}
 

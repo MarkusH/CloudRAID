@@ -103,7 +103,7 @@ public class PlainApiResponse implements IRestApiResponse {
 	@Override
 	public void setResponseObject(HttpServletResponse resp) {
 		this.resp = resp;
-		this.mime = DEFAULT_MIMETYPE;
+		this.mime = PlainApiResponse.DEFAULT_MIMETYPE;
 	}
 
 	@Override

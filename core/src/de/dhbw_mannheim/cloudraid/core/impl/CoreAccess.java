@@ -116,7 +116,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				this.metadata
 						.fileUpdateState(this.fileid, FILE_STATUS.DELETING);
 
-				IStorageConnector[] storageConnectors = coreService
+				IStorageConnector[] storageConnectors = this.coreService
 						.getStorageConnectors();
 
 				for (int i = 0; i < 3; i++) {
@@ -151,7 +151,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 							this.path, this.status));
 				}
 
-				IStorageConnector[] storageConnectors = coreService
+				IStorageConnector[] storageConnectors = this.coreService
 						.getStorageConnectors();
 
 				// Retrieve the data from the three cloud storages. Take care,
@@ -183,13 +183,15 @@ public class CoreAccess extends Thread implements ICoreAccess {
 						e.printStackTrace();
 					} finally {
 						try {
-							if (bis != null)
+							if (bis != null) {
 								bis.close();
+							}
 						} catch (IOException ignore) {
 						}
 						try {
-							if (bos != null)
+							if (bos != null) {
 								bos.close();
+							}
 						} catch (IOException ignore) {
 						}
 					}
@@ -235,8 +237,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 					e.printStackTrace();
 				} finally {
 					try {
-						if (bos != null)
+						if (bos != null) {
 							bos.close();
+						}
 					} catch (IOException ignore) {
 					}
 				}
@@ -249,7 +252,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				RaidAccessInterface.mergeInterface(
 						this.config.getString("merge.input.dir"), this.hash,
 						this.file.getAbsolutePath(),
-						config.getString("file.password"));
+						this.config.getString("file.password"));
 
 				// Get data from file
 				BufferedInputStream bis = new BufferedInputStream(
@@ -337,13 +340,15 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			e.printStackTrace();
 		} finally {
 			try {
-				if (bis != null)
+				if (bis != null) {
 					bis.close();
+				}
 			} catch (IOException ignore) {
 			}
 			try {
-				if (bos != null)
+				if (bos != null) {
 					bos.close();
+				}
 			} catch (IOException ignore) {
 			}
 		}
@@ -362,23 +367,24 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		this.status = null;
 	}
 
+	@Override
 	public void run() {
 		// Update state to splitting
 		this.metadata.fileUpdateState(this.fileid, FILE_STATUS.SPLITTING);
 		try {
 			// perform the splitting process
 			this.hash = RaidAccessInterface.splitInterface(
-					config.getString("split.input.dir"), this.userid
+					this.config.getString("split.input.dir"), this.userid
 							+ File.separator + this.path,
-					config.getString("split.output.dir"),
-					config.getString("file.password"));
+					this.config.getString("split.output.dir"),
+					this.config.getString("file.password"));
 			// Update state to split
 			// TODO set lastMod
 			this.metadata.fileUpdate(this.fileid, this.path, this.hash,
 					new Date().getTime(), this.userid);
 			this.metadata.fileUpdateState(this.fileid, FILE_STATUS.SPLITTED);
 
-			IStorageConnector[] storageConnectors = coreService
+			IStorageConnector[] storageConnectors = this.coreService
 					.getStorageConnectors();
 
 			this.metadata

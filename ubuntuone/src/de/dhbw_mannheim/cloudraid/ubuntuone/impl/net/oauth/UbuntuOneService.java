@@ -91,14 +91,14 @@ public class UbuntuOneService implements OAuthService {
 	 *            The OAuth token
 	 */
 	private void addOAuthParams(OAuthRequest request, Token token) {
-		request.addOAuthParameter(OAuthConstants.TIMESTAMP, api
+		request.addOAuthParameter(OAuthConstants.TIMESTAMP, this.api
 				.getTimestampService().getTimestampInSeconds());
 		request.addOAuthParameter(OAuthConstants.TOKEN, token.getToken());
-		request.addOAuthParameter(OAuthConstants.NONCE, api
+		request.addOAuthParameter(OAuthConstants.NONCE, this.api
 				.getTimestampService().getNonce());
 		request.addOAuthParameter(OAuthConstants.CONSUMER_KEY,
 				this.config.getApiKey());
-		request.addOAuthParameter(OAuthConstants.SIGN_METHOD, api
+		request.addOAuthParameter(OAuthConstants.SIGN_METHOD, this.api
 				.getSignatureService().getSignatureMethod());
 		request.addOAuthParameter(OAuthConstants.VERSION, getVersion());
 	}
@@ -110,7 +110,7 @@ public class UbuntuOneService implements OAuthService {
 	 *            The OAuth token
 	 */
 	private void addSignature(OAuthRequest request, Token token) {
-		String oauthHeader = api.getHeaderExtractor().extract(request);
+		String oauthHeader = this.api.getHeaderExtractor().extract(request);
 		String signature = getSignature(request, token);
 		oauthHeader = oauthHeader + ", " + OAuthConstants.SIGNATURE + "=\""
 				+ OAuthEncoder.encode(signature) + "\"";
@@ -140,7 +140,7 @@ public class UbuntuOneService implements OAuthService {
 	@Override
 	public Token getAccessToken(Token requestToken, Verifier verifier) {
 		OAuthRequest request = new OAuthRequest(Verb.GET,
-				api.getAccessTokenEndpoint() + this.email);
+				this.api.getAccessTokenEndpoint() + this.email);
 
 		signRequest(requestToken, request);
 
@@ -193,7 +193,7 @@ public class UbuntuOneService implements OAuthService {
 	@Override
 	public Token getRequestToken() {
 		OAuthRequest tokenRequest = new OAuthRequest(Verb.GET,
-				api.getRequestTokenEndpoint());
+				this.api.getRequestTokenEndpoint());
 		System.err
 				.println("[DEBUG] UbuntuOneService.getRequestToken(): tokenRequest = "
 						+ tokenRequest.getUrl());
@@ -220,13 +220,14 @@ public class UbuntuOneService implements OAuthService {
 				.println("[DEBUG] UbuntuOneService.getRequestToken(): response.getBody() = "
 						+ response.getBody());
 
-		Token stoken = api.getRequestTokenExtractor().extract(
+		Token stoken = this.api.getRequestTokenExtractor().extract(
 				response.getBody());
 		System.err
 				.println("[DEBUG] UbuntuOneService.getRequestToken(): stoken = "
 						+ stoken);
-		Token ctoken = ((UbuntuOneJsonExtractor) api.getRequestTokenExtractor())
-				.extractConsumerToken(response.getBody());
+		Token ctoken = ((UbuntuOneJsonExtractor) this.api
+				.getRequestTokenExtractor()).extractConsumerToken(response
+				.getBody());
 		this.config = new OAuthConfig(ctoken.getToken(), ctoken.getSecret(),
 				this.config.getCallback(), this.config.getSignatureType(),
 				this.config.getScope(), null);
@@ -244,14 +245,14 @@ public class UbuntuOneService implements OAuthService {
 	 * @return The signature
 	 */
 	private String getSignature(OAuthRequest request, Token token) {
-		String baseString = api.getBaseStringExtractor().extract(request);
-		return api.getSignatureService().getSignature(baseString,
+		String baseString = this.api.getBaseStringExtractor().extract(request);
+		return this.api.getSignatureService().getSignature(baseString,
 				this.config.getApiSecret(), token.getSecret());
 	}
 
 	@Override
 	public String getVersion() {
-		return VERSION;
+		return UbuntuOneService.VERSION;
 	}
 
 	/**

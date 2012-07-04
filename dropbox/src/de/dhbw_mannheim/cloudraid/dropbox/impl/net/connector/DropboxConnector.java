@@ -54,13 +54,13 @@ import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 public class DropboxConnector implements IStorageConnector {
 	private final static String ROOT_NAME = "sandbox";
 	private final static String DELETE_URL = "https://api.dropbox.com/1/fileops/delete?root="
-			+ ROOT_NAME + "&path=";
+			+ DropboxConnector.ROOT_NAME + "&path=";
 	private final static String GET_URL = "https://api-content.dropbox.com/1/files/"
-			+ ROOT_NAME + "/";
+			+ DropboxConnector.ROOT_NAME + "/";
 	private final static String PUT_URL = "https://api-content.dropbox.com/1/files_put/"
-			+ ROOT_NAME + "/";
+			+ DropboxConnector.ROOT_NAME + "/";
 	private final static String META_URL = "https://api.dropbox.com/1/metadata/"
-			+ ROOT_NAME + "/";
+			+ DropboxConnector.ROOT_NAME + "/";
 
 	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 
@@ -82,13 +82,13 @@ public class DropboxConnector implements IStorageConnector {
 
 	@Override
 	public boolean connect() {
-		service = new ServiceBuilder().provider(DropBoxApi.class)
+		this.service = new ServiceBuilder().provider(DropBoxApi.class)
 				.apiKey(this.appKey).apiSecret(this.appSecret).build();
 		if (this.accessTokenValue == null || this.accessTokenSecret == null) {
-			Token requestToken = service.getRequestToken();
+			Token requestToken = this.service.getRequestToken();
 			System.out
 					.println("Please go to "
-							+ service.getAuthorizationUrl(requestToken)
+							+ this.service.getAuthorizationUrl(requestToken)
 							+ " , authorize the app and then press enter in this window.");
 			try {
 				Thread.sleep(9000);
@@ -96,7 +96,8 @@ public class DropboxConnector implements IStorageConnector {
 				e1.printStackTrace();
 			}
 			Verifier verifier = new Verifier("");
-			this.accessToken = service.getAccessToken(requestToken, verifier);
+			this.accessToken = this.service.getAccessToken(requestToken,
+					verifier);
 			this.accessTokenSecret = this.accessToken.getSecret();
 			this.accessTokenValue = this.accessToken.getToken();
 			this.config.put(
@@ -152,7 +153,7 @@ public class DropboxConnector implements IStorageConnector {
 		String kAppKey = String.format("connector.%d.appKey", this.id);
 		String kAppSecret = String.format("connector.%d.appSecret", this.id);
 		try {
-			splitOutputDir = this.config.getString("split.output.dir");
+			this.splitOutputDir = this.config.getString("split.output.dir");
 			if (this.config.keyExists(kAccessTokenSecret)
 					&& this.config.keyExists(kAccessTokenValue)
 					&& this.config.keyExists(kAppKey)
@@ -224,8 +225,8 @@ public class DropboxConnector implements IStorageConnector {
 	private boolean performDelete(String resource, String extension) {
 		System.out.println("DELETE " + resource + "." + extension);
 		// This request has to be sent as "POST" not as "DELETE"
-		OAuthRequest request = new OAuthRequest(POST, DELETE_URL + resource
-				+ "." + extension);
+		OAuthRequest request = new OAuthRequest(POST,
+				DropboxConnector.DELETE_URL + resource + "." + extension);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode() + " " + response.getBody());
@@ -245,8 +246,8 @@ public class DropboxConnector implements IStorageConnector {
 	 */
 	private Response performGet(String resource, String extension) {
 		System.out.println("GET " + resource + "." + extension);
-		OAuthRequest request = new OAuthRequest(GET, GET_URL + resource + "."
-				+ extension);
+		OAuthRequest request = new OAuthRequest(GET, DropboxConnector.GET_URL
+				+ resource + "." + extension);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
@@ -264,7 +265,8 @@ public class DropboxConnector implements IStorageConnector {
 	 * @return true, if the file could be uploaded; false, if not.
 	 */
 	private boolean performUpload(String resource, String extension) {
-		File f = new File(splitOutputDir + "/" + resource + "." + extension);
+		File f = new File(this.splitOutputDir + "/" + resource + "."
+				+ extension);
 		if (!f.exists()) {
 			System.err.println("File does not exist.");
 			return false;
@@ -291,9 +293,10 @@ public class DropboxConnector implements IStorageConnector {
 			e.printStackTrace();
 			return false;
 		}
-		OAuthRequest request = new OAuthRequest(PUT, PUT_URL + resource + "."
-				+ extension + "?overwrite=true");
-		request.addHeader("Content-Type", MIME_MAP.getContentType(f));
+		OAuthRequest request = new OAuthRequest(PUT, DropboxConnector.PUT_URL
+				+ resource + "." + extension + "?overwrite=true");
+		request.addHeader("Content-Type",
+				DropboxConnector.MIME_MAP.getContentType(f));
 		this.service.signRequest(this.accessToken, request);
 		request.addPayload(fileBytes);
 		Response response = request.send();
@@ -308,8 +311,8 @@ public class DropboxConnector implements IStorageConnector {
 	@Override
 	public boolean update(String resource) {
 		System.out.println("Update " + resource + "." + this.id);
-		OAuthRequest request = new OAuthRequest(GET, META_URL + resource + "."
-				+ this.id);
+		OAuthRequest request = new OAuthRequest(GET, DropboxConnector.META_URL
+				+ resource + "." + this.id);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());
@@ -335,8 +338,8 @@ public class DropboxConnector implements IStorageConnector {
 	@Override
 	public boolean upload(String resource) {
 		System.out.println("Upload " + resource + "." + this.id);
-		OAuthRequest request = new OAuthRequest(GET, META_URL + resource + "."
-				+ this.id);
+		OAuthRequest request = new OAuthRequest(GET, DropboxConnector.META_URL
+				+ resource + "." + this.id);
 		this.service.signRequest(this.accessToken, request);
 		Response response = request.send();
 		System.out.println(response.getCode());

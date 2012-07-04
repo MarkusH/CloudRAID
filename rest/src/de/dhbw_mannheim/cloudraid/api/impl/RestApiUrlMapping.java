@@ -106,6 +106,7 @@ public class RestApiUrlMapping {
 		return klass.getMethod(function, HttpServletRequest.class,
 				IRestApiResponse.class, ArrayList.class);
 	}
+
 	/**
 	 * 
 	 */
@@ -169,10 +170,12 @@ public class RestApiUrlMapping {
 	 */
 	public RestApiUrlMapping(Pattern pattern, String method, Method function)
 			throws IllegalArgumentException {
-		if (null == pattern)
+		if (null == pattern) {
 			throw new IllegalArgumentException("Pattern must not be null!");
-		if (null == function)
+		}
+		if (null == function) {
 			throw new IllegalArgumentException("Function must not be null!");
+		}
 		this.pattern = pattern;
 		this.method = method;
 		this.function = function;

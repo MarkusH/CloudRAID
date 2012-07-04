@@ -115,17 +115,17 @@ public class CloudRAIDService implements ICloudRAIDService {
 		System.out.println("CloudRAIDService: setConfig: " + this.config);
 		System.out.println("CloudRAIDService: setConfig: end");
 	}
-	
+
 	/**
 	 * This function is called upon shutdown of this service. The
 	 * {@link ICloudRAIDConfig} will be saved.
 	 */
 	protected synchronized void shutdown() {
 		System.out.println("CloudRAIDService: shutdown: begin");
-		config.save();
+		this.config.save();
 		System.out.println("CloudRAIDService: shutdown: end");
 	}
-	
+
 	/**
 	 * During the {@link #startup(BundleContext) startup} this service reads the
 	 * three {@link IStorageConnector cloud storage connectors} to be used from

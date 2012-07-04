@@ -142,7 +142,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		String kUsername = String.format("connector.%d.username", this.id);
 		String kPassword = String.format("connector.%d.password", this.id);
 		try {
-			splitOutputDir = this.config.getString("split.output.dir");
+			this.splitOutputDir = this.config.getString("split.output.dir");
 			if (this.config.keyExists(kCustomerKey)
 					&& this.config.keyExists(kCustomerSecret)
 					&& this.config.keyExists(kTokenKey)
@@ -220,7 +220,8 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * @return true, if the upload succeeded; false, if not.
 	 */
 	private boolean performUpload(String resource, String extension) {
-		File f = new File(splitOutputDir + "/" + resource + "." + extension);
+		File f = new File(this.splitOutputDir + "/" + resource + "."
+				+ extension);
 		int maxFilesize;
 		try {
 			maxFilesize = this.config.getInt("filesize.max", null);
@@ -244,8 +245,9 @@ public class UbuntuOneConnector implements IStorageConnector {
 				return false;
 			} finally {
 				try {
-					if (fis != null)
+					if (fis != null) {
 						fis.close();
+					}
 				} catch (IOException ignore) {
 				}
 			}
@@ -276,7 +278,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		System.err.flush();
 		OAuthRequest request = new OAuthRequest(verb, endpoint);
 		System.err.println(request);
-		service.signRequest(this.stoken, request);
+		this.service.signRequest(this.stoken, request);
 		Response response = request.send();
 		System.err.println(String.format("@Response(%d, %s, %s)",
 				response.getCode(), verb, endpoint));
@@ -302,7 +304,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 		System.err.flush();
 		OAuthRequest request = new OAuthRequest(verb, endpoint);
 		System.err.println(request);
-		service.signRequest(this.stoken, request);
+		this.service.signRequest(this.stoken, request);
 		request.addPayload(body);
 		Response response = request.send();
 		System.err.println(String.format("@Response(%d, %s, %s)",

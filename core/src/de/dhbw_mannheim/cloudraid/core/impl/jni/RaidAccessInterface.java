@@ -46,8 +46,9 @@ public class RaidAccessInterface {
 	public static native String getName();
 
 	public static native String getVendor();
-	
+
 	public static native String getVersion();
+
 	/**
 	 * @param tempInputDirPath
 	 *            The complete, absolute path to the temporary input directory,
@@ -69,6 +70,7 @@ public class RaidAccessInterface {
 	 */
 	public static native int mergeInterface(String tempInputDirPath,
 			String hash, String outputFilePath, String key);
+
 	/**
 	 * <p>
 	 * This function splits the file <code>inputBasePath</code> +

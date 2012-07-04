@@ -103,8 +103,8 @@ public class SugarSyncConnector implements IStorageConnector {
 	public boolean connect() {
 		try {
 			// Get the Access Token
-			HttpsURLConnection con = SugarSyncConnector.getConnection(AUTH_URL,
-					"", "POST");
+			HttpsURLConnection con = SugarSyncConnector.getConnection(
+					SugarSyncConnector.AUTH_URL, "", "POST");
 			con.setDoOutput(true);
 			con.setRequestProperty("Content-Type",
 					"application/xml; charset=UTF-8");
@@ -116,8 +116,8 @@ public class SugarSyncConnector implements IStorageConnector {
 							+ "</password>\n\t<accessKeyId>%s"
 							+ "</accessKeyId><privateAccessKey>%s"
 							+ "</privateAccessKey></authRequest>",
-					new Object[] { username, password, accessKeyId,
-							privateAccessKey });
+					new Object[] { this.username, this.password,
+							this.accessKeyId, this.privateAccessKey });
 
 			con.connect();
 			try {
@@ -166,7 +166,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		String kPrivateAccessKey = String.format(
 				"connector.%d.privateAccessKey", this.id);
 		try {
-			splitOutputDir = this.config.getString("split.output.dir");
+			this.splitOutputDir = this.config.getString("split.output.dir");
 			if (this.config.keyExists(kUsername)
 					&& this.config.keyExists(kPassword)
 					&& this.config.keyExists(kAccessKey)
@@ -181,11 +181,11 @@ public class SugarSyncConnector implements IStorageConnector {
 						+ ", " + kAccessKey + " and " + kPrivateAccessKey
 						+ " have to be set in the config!");
 			}
-			docBuilder = null;
+			this.docBuilder = null;
 			try {
-				docBuilder = DocumentBuilderFactory.newInstance()
+				this.docBuilder = DocumentBuilderFactory.newInstance()
 						.newDocumentBuilder();
-				docBuilder.setErrorHandler(null);
+				this.docBuilder.setErrorHandler(null);
 			} catch (ParserConfigurationException e) {
 				e.printStackTrace();
 				throw new InstantiationException(e.getMessage());
@@ -215,7 +215,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private void createFile(String name, File f, String parent)
 			throws IOException, SAXException, ParserConfigurationException {
-		String mime = MIME_MAP.getContentType(f);
+		String mime = SugarSyncConnector.MIME_MAP.getContentType(f);
 		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><file><displayName>"
 				+ name
 				+ "</displayName><mediaType>"
@@ -253,13 +253,15 @@ public class SugarSyncConnector implements IStorageConnector {
 			}
 		} finally {
 			try {
-				if (os != null)
+				if (os != null) {
 					os.close();
+				}
 			} catch (IOException ignore) {
 			}
 			try {
-				if (is != null)
+				if (is != null) {
 					is.close();
+				}
 			} catch (IOException ignore) {
 			}
 			con.disconnect();
@@ -341,7 +343,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		// Build the XML tree.
 		con.connect();
 		try {
-			doc = docBuilder.parse(con.getInputStream());
+			doc = this.docBuilder.parse(con.getInputStream());
 			con.getInputStream().close();
 		} finally {
 			con.disconnect();
@@ -384,7 +386,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		// Build the XML tree.
 		con.connect();
 		try {
-			doc = docBuilder.parse(con.getInputStream());
+			doc = this.docBuilder.parse(con.getInputStream());
 			con.getInputStream().close();
 		} finally {
 			con.disconnect();
@@ -421,16 +423,16 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private synchronized String getBaseUrl() throws IOException, SAXException,
 			ParserConfigurationException {
-		if (baseURL == null) {
+		if (this.baseURL == null) {
 			Document doc = null;
 			HttpsURLConnection con = SugarSyncConnector.getConnection(
-					USER_INFO_URL, this.token, "GET");
+					SugarSyncConnector.USER_INFO_URL, this.token, "GET");
 			con.setDoInput(true);
 
 			// Build the XML tree.
 			con.connect();
 			try {
-				doc = docBuilder.parse(con.getInputStream());
+				doc = this.docBuilder.parse(con.getInputStream());
 				con.getInputStream().close();
 			} finally {
 				con.disconnect();
@@ -563,8 +565,9 @@ public class SugarSyncConnector implements IStorageConnector {
 		}
 
 		if (!doc.getDocumentElement().hasAttribute("end")
-				|| !doc.getDocumentElement().getAttribute("end").equals("0"))
+				|| !doc.getDocumentElement().getAttribute("end").equals("0")) {
 			return false;
+		}
 
 		con = SugarSyncConnector.getConnection(folder, this.token, "GET");
 		con.setDoInput(true);
@@ -594,12 +597,13 @@ public class SugarSyncConnector implements IStorageConnector {
 		resource += "." + extension;
 		// Find URL to parent directory.
 		String parent;
-		if (resource.contains("/"))
+		if (resource.contains("/")) {
 			parent = this
 					.getResourceURL(resource.substring(0,
 							resource.lastIndexOf("/") + 1), false);
-		else
+		} else {
 			parent = this.getResourceURL("", false);
+		}
 
 		if (parent == null) {
 			return true;
@@ -663,12 +667,13 @@ public class SugarSyncConnector implements IStorageConnector {
 		resource += "." + extension;
 		try {
 			String parent;
-			if (resource.contains("/"))
+			if (resource.contains("/")) {
 				parent = this.getResourceURL(
 						resource.substring(0, resource.lastIndexOf("/") + 1),
 						false);
-			else
+			} else {
 				parent = this.getResourceURL("", false);
+			}
 			String resourceURL = this.findFileInFolder(
 					resource.substring(resource.lastIndexOf("/") + 1), parent
 							+ "/contents?type=file");
@@ -695,7 +700,8 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * @return true, if the update was successful; false, if not.
 	 */
 	private boolean performUpdate(String resource, String extension) {
-		File f = new File(splitOutputDir + "/" + resource + "." + extension);
+		File f = new File(this.splitOutputDir + "/" + resource + "."
+				+ extension);
 		int maxFilesize;
 		try {
 			maxFilesize = this.config.getInt("filesize.max", null);
@@ -766,7 +772,8 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * @return true, if the upload was successful; false, if not.
 	 */
 	private boolean performUpload(String resource, String extension) {
-		File f = new File(splitOutputDir + "/" + resource + "." + extension);
+		File f = new File(this.splitOutputDir + "/" + resource + "."
+				+ extension);
 		int maxFilesize;
 		try {
 			maxFilesize = this.config.getInt("filesize.max", null);

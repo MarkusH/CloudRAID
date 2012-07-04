@@ -79,13 +79,13 @@ public class AmazonS3HeaderExtractor extends HeaderExtractorImpl {
 
 		header.append(request.getVerb());
 
-		header.append(PARAM_SEPARATOR);
+		header.append(AmazonS3HeaderExtractor.PARAM_SEPARATOR);
 		header.append(contentMD5);
 
-		header.append(PARAM_SEPARATOR);
+		header.append(AmazonS3HeaderExtractor.PARAM_SEPARATOR);
 		header.append(contentType);
 
-		header.append(PARAM_SEPARATOR);
+		header.append(AmazonS3HeaderExtractor.PARAM_SEPARATOR);
 		header.append(date);
 
 		// append the X-Amz-* header attributes to the signature string
@@ -94,7 +94,7 @@ public class AmazonS3HeaderExtractor extends HeaderExtractorImpl {
 				.println("[DEBUG] AmazonS3HeaderExtractor.extract(): tmpkeyList = "
 						+ xAmz.toString());
 		for (String xAmzKey : xAmz) {
-			header.append(PARAM_SEPARATOR);
+			header.append(AmazonS3HeaderExtractor.PARAM_SEPARATOR);
 			header.append(String.format("%s:%s", xAmzKey.toLowerCase(),
 					parameters.get(xAmzKey)));
 		}
@@ -111,7 +111,7 @@ public class AmazonS3HeaderExtractor extends HeaderExtractorImpl {
 		// "Constructing the CanonicalizedResource Element" at
 		// http://docs.amazonwebservices.com/AmazonS3/latest/dev/RESTAuthentication.html
 
-		header.append(PARAM_SEPARATOR);
+		header.append(AmazonS3HeaderExtractor.PARAM_SEPARATOR);
 		header.append(canonicalizedResource);
 
 		System.out.flush();

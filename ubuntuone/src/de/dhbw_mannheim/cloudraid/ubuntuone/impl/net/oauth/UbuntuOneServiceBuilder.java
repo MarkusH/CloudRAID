@@ -85,13 +85,14 @@ public class UbuntuOneServiceBuilder {
 	 * @return fully configured {@link OAuthService}
 	 */
 	public UbuntuOneService build() {
-		Preconditions.checkNotNull(api,
+		Preconditions.checkNotNull(this.api,
 				"You must specify a valid api through the provider() method");
-		Preconditions.checkEmptyString(apiKey, "You must provide an api key");
-		Preconditions.checkEmptyString(apiSecret,
+		Preconditions.checkEmptyString(this.apiKey,
+				"You must provide an api key");
+		Preconditions.checkEmptyString(this.apiSecret,
 				"You must provide an api secret");
-		return api.createService(new OAuthConfig(apiKey, apiSecret, null, null,
-				null, null));
+		return this.api.createService(new OAuthConfig(this.apiKey,
+				this.apiSecret, null, null, null, null));
 	}
 
 	/**

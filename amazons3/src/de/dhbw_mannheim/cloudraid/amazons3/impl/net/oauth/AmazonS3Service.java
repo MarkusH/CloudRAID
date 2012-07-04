@@ -110,7 +110,7 @@ public class AmazonS3Service implements OAuthService {
 	 *         <code>https://s3.amazonaws.com</code>
 	 */
 	public String getS3Endpoint() {
-		return api.getS3Endpoint();
+		return this.api.getS3Endpoint();
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class AmazonS3Service implements OAuthService {
 	 */
 	@Override
 	public String getVersion() {
-		return VERSION;
+		return AmazonS3Service.VERSION;
 	}
 
 	/**
@@ -131,10 +131,10 @@ public class AmazonS3Service implements OAuthService {
 		System.err.println("[DEBUG] AmazonS3Service.signRequest(): request = "
 				+ request);
 
-		String baseString = api.getHeaderExtractor().extract(request);
+		String baseString = this.api.getHeaderExtractor().extract(request);
 
-		String signature = api.getSignatureService().getSignature(baseString,
-				this.config.getApiSecret());
+		String signature = this.api.getSignatureService().getSignature(
+				baseString, this.config.getApiSecret());
 
 		String signHeader = "AWS" + " " + this.config.getApiKey() + ":"
 				+ signature;

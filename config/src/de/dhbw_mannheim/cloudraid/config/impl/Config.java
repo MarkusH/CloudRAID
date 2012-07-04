@@ -82,14 +82,14 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	/**
 	 * The path to the default configuration file.
 	 */
-	private static String CONFIG_PATH = CLOUDRAID_HOME + "config.xml";
+	private static String CONFIG_PATH = Config.CLOUDRAID_HOME + "config.xml";
 
 	/**
 	 * A File object of the configuration file.
 	 */
-	private static File CONFIG_FILE = new File(CONFIG_PATH);
+	private static File CONFIG_FILE = new File(Config.CONFIG_PATH);
 
-	private static final String DEFAULT_DATABASE_NAME = CLOUDRAID_HOME
+	private static final String DEFAULT_DATABASE_NAME = Config.CLOUDRAID_HOME
 			+ "database";
 
 	private static final int DEFAULT_FILEMANAGEMENT_COUNT = (int) Math
@@ -169,26 +169,31 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	 */
 	public Config() {
 		Config.allowedCiphers.put("AES", 256);
-		Config.defaultData.put("filesize.max", "" + DEFAULT_FILESIZE_MAX);
-		Config.defaultData.put("merge.input.dir", DEFAULT_MERGE_INPUT_DIR);
-		Config.defaultData.put("merge.output.dir", DEFAULT_MERGE_OUTPUT_DIR);
-		Config.defaultData.put("split.input.dir", DEFAULT_SPLIT_INPUT_DIR);
-		Config.defaultData.put("split.output.dir", DEFAULT_SPLIT_OUTPUT_DIR);
-		Config.defaultData.put("upload.dir", DEFAULT_UPLOAD_DIR);
+		Config.defaultData
+				.put("filesize.max", "" + Config.DEFAULT_FILESIZE_MAX);
+		Config.defaultData.put("merge.input.dir",
+				Config.DEFAULT_MERGE_INPUT_DIR);
+		Config.defaultData.put("merge.output.dir",
+				Config.DEFAULT_MERGE_OUTPUT_DIR);
+		Config.defaultData.put("split.input.dir",
+				Config.DEFAULT_SPLIT_INPUT_DIR);
+		Config.defaultData.put("split.output.dir",
+				Config.DEFAULT_SPLIT_OUTPUT_DIR);
+		Config.defaultData.put("upload.dir", Config.DEFAULT_UPLOAD_DIR);
 		Config.defaultData.put("upload.asynchronous", "true");
-		Config.defaultData.put("database.name", DEFAULT_DATABASE_NAME);
+		Config.defaultData.put("database.name", Config.DEFAULT_DATABASE_NAME);
 		Config.defaultData.put("filemanagement.count", ""
-				+ DEFAULT_FILEMANAGEMENT_COUNT);
+				+ Config.DEFAULT_FILEMANAGEMENT_COUNT);
 		Config.defaultData.put("filemanagement.intervall", ""
-				+ DEFAULT_FILEMANAGEMENT_INTERVALL);
+				+ Config.DEFAULT_FILEMANAGEMENT_INTERVALL);
 	}
 
 	@Override
 	public synchronized boolean delete() {
 		boolean res = false;
-		if (CONFIG_FILE.exists()) {
-			res = CONFIG_FILE.delete();
-			CONFIG_FILE = null;
+		if (Config.CONFIG_FILE.exists()) {
+			res = Config.CONFIG_FILE.delete();
+			Config.CONFIG_FILE = null;
 		}
 		return res;
 	}
@@ -255,7 +260,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public synchronized boolean getBoolean(String key) throws MissingConfigValueException {
+	public synchronized boolean getBoolean(String key)
+			throws MissingConfigValueException {
 		try {
 			return this.getBoolean(key, null);
 		} catch (Exception e) {
@@ -283,21 +289,22 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 
 	@Override
 	public synchronized String getCloudRAIDHome() {
-		return CLOUDRAID_HOME;
+		return Config.CLOUDRAID_HOME;
 	}
 
 	@Override
 	public synchronized String getConfigPath() {
-		return CONFIG_PATH;
+		return Config.CONFIG_PATH;
 	}
 
 	@Override
 	public synchronized HashMap<String, String> getDefaultData() {
-		return defaultData;
+		return Config.defaultData;
 	}
 
 	@Override
-	public synchronized double getDouble(String key) throws MissingConfigValueException {
+	public synchronized double getDouble(String key)
+			throws MissingConfigValueException {
 		try {
 			return this.getDouble(key, null);
 		} catch (Exception e) {
@@ -324,7 +331,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public synchronized float getFloat(String key) throws MissingConfigValueException {
+	public synchronized float getFloat(String key)
+			throws MissingConfigValueException {
 		try {
 			return this.getFloat(key, null);
 		} catch (Exception e) {
@@ -351,7 +359,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public synchronized int getInt(String key) throws MissingConfigValueException {
+	public synchronized int getInt(String key)
+			throws MissingConfigValueException {
 		try {
 			return this.getInt(key, null);
 		} catch (Exception e) {
@@ -378,7 +387,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public synchronized long getLong(String key) throws MissingConfigValueException {
+	public synchronized long getLong(String key)
+			throws MissingConfigValueException {
 		try {
 			return this.getLong(key, null);
 		} catch (Exception e) {
@@ -406,7 +416,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	}
 
 	@Override
-	public synchronized String getString(String key) throws MissingConfigValueException {
+	public synchronized String getString(String key)
+			throws MissingConfigValueException {
 		try {
 			return this.getString(key, null);
 		} catch (Exception e) {
@@ -448,7 +459,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		int l = allowedChars.length;
 		int i;
 		for (i = 0; i < length; i++) {
-			b[i] = allowedChars[r.nextInt(l)];
+			b[i] = allowedChars[Config.r.nextInt(l)];
 		}
 		return b;
 	}
@@ -586,8 +597,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 				// expected to work. But if something fails after adding the
 				// salt to the global salt list, we will remove that later.
 				this.cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
-				v = Base64.encodeToString(cipher.doFinal(value.getBytes()),
-						false);
+				v = Base64.encodeToString(
+						this.cipher.doFinal(value.getBytes()), false);
 				this.salts.put(key, new String(salt));
 				return super.put(key, v);
 			} catch (InvalidKeyException e) {
@@ -611,9 +622,9 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		this.clear();
 		this.salts.clear();
 
-		setConfigPath(CONFIG_PATH);
+		setConfigPath(Config.CONFIG_PATH);
 
-		if (!CONFIG_FILE.exists()) {
+		if (!Config.CONFIG_FILE.exists()) {
 			return this;
 		}
 
@@ -631,7 +642,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		// Build the XML tree.
 		Document doc;
 		try {
-			doc = docBuilder.parse(CONFIG_FILE);
+			doc = docBuilder.parse(Config.CONFIG_FILE);
 		} catch (SAXException e) {
 			e.printStackTrace();
 			return null;
@@ -684,9 +695,10 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			this.put(node.getAttribute("name").trim(), node.getTextContent()
 					.trim());
 			// If there is a salt stored, store it in an extra HashMap.
-			if (node.hasAttribute("salt"))
+			if (node.hasAttribute("salt")) {
 				this.salts.put(node.getAttribute("name").trim(), node
 						.getAttribute("salt").trim());
+			}
 		}
 		return this;
 	}
@@ -700,13 +712,13 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	@Override
 	public synchronized void save() {
 		try {
-			if (!CONFIG_FILE.getParentFile().exists()) {
-				CONFIG_FILE.getParentFile().mkdirs();
+			if (!Config.CONFIG_FILE.getParentFile().exists()) {
+				Config.CONFIG_FILE.getParentFile().mkdirs();
 			}
 
 			// Create the output writer.
 			BufferedWriter writer = new BufferedWriter(new FileWriter(
-					CONFIG_PATH));
+					Config.CONFIG_PATH));
 
 			String intgrsalt = "";
 			String intgrhash = "";
@@ -761,17 +773,17 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	@Override
 	public synchronized void setCloudRAIDHome(String path) {
 		if (path.endsWith(File.separator)) {
-			CLOUDRAID_HOME = path;
+			Config.CLOUDRAID_HOME = path;
 		} else {
-			CLOUDRAID_HOME = path + File.separator;
+			Config.CLOUDRAID_HOME = path + File.separator;
 		}
-		setConfigPath(CLOUDRAID_HOME + "config.xml");
+		setConfigPath(Config.CLOUDRAID_HOME + "config.xml");
 	}
 
 	@Override
 	public synchronized void setConfigPath(String path) {
-		CONFIG_PATH = path;
-		CONFIG_FILE = new File(CONFIG_PATH);
+		Config.CONFIG_PATH = path;
+		Config.CONFIG_FILE = new File(Config.CONFIG_PATH);
 	}
 
 	/**
@@ -799,9 +811,9 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	 */
 	protected void startup(BundleContext context) throws InvalidKeyException {
 		System.out.println("Config: startup: begin");
-		doSaveOnShutdown = true;
+		this.doSaveOnShutdown = true;
 		if (this.init(this.passwordmgr.getCredentials()) == null) {
-			doSaveOnShutdown = false;
+			this.doSaveOnShutdown = false;
 			throw new InvalidKeyException(
 					"The provided key for the configuration is invalid!");
 		}
@@ -815,7 +827,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 			IPasswordManager passwordManager) {
 		System.out.println("Config: unsetPasswordManager: begin");
 		System.out.println("Config: unsetPasswordManager: " + passwordManager);
-		if (doSaveOnShutdown) {
+		if (this.doSaveOnShutdown) {
 			this.save();
 		}
 		this.passwordmgr = null;

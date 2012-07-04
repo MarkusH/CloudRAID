@@ -69,7 +69,7 @@ public class UbuntuOneHeaderExtractor extends HeaderExtractorImpl {
 		checkPreconditions(request);
 		Map<String, String> parameters = request.getOauthParameters();
 		StringBuffer header = new StringBuffer(parameters.size() * 20);
-		header.append(AUTH_HEADER);
+		header.append(UbuntuOneHeaderExtractor.AUTH_HEADER);
 		Set<String> set = parameters.keySet();
 		String[] keys = new String[set.size()];
 		set.toArray(keys);
@@ -79,7 +79,7 @@ public class UbuntuOneHeaderExtractor extends HeaderExtractorImpl {
 				.println("[DEBUG] UbuntuOneHeaderExtractor.extract(): tmpkeyList = "
 						+ tmpkeyList.toString());
 		for (String key : tmpkeyList) {
-			header.append(PARAM_SEPARATOR);
+			header.append(UbuntuOneHeaderExtractor.PARAM_SEPARATOR);
 			header.append(String.format("%s=\"%s\"", key,
 					OAuthEncoder.encode(parameters.get(key))));
 		}

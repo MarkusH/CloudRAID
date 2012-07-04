@@ -42,11 +42,13 @@ public class AmazonS3Api extends DefaultApi10a {
 	/**
 	 * The S3 URL
 	 */
-	private static final String S3_URL = "https://" + S3_BASE_URL + "/";
+	private static final String S3_URL = "https://" + AmazonS3Api.S3_BASE_URL
+			+ "/";
 	/**
 	 * A templated S3 Bucket URL
 	 */
-	private static final String BUCKET_URL = "https://%s." + S3_BASE_URL + "/";
+	private static final String BUCKET_URL = "https://%s."
+			+ AmazonS3Api.S3_BASE_URL + "/";
 
 	/**
 	 * Returns the {@link org.scribe.oauth.OAuthService} for this
@@ -79,7 +81,7 @@ public class AmazonS3Api extends DefaultApi10a {
 	 * @return The {@link #BUCKET_URL}: {@value #BUCKET_URL}
 	 */
 	public String getBucketEndpoint() {
-		return BUCKET_URL;
+		return AmazonS3Api.BUCKET_URL;
 	}
 
 	@Override
@@ -106,7 +108,7 @@ public class AmazonS3Api extends DefaultApi10a {
 	 * @return The {@link #S3_URL}: {@value #S3_URL}
 	 */
 	public String getS3Endpoint() {
-		return S3_URL;
+		return AmazonS3Api.S3_URL;
 	}
 
 	@Override

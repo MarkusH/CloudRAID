@@ -86,7 +86,7 @@ public class RestApiComponent {
 	 */
 	protected void shutdown() {
 		System.out.println("RestApiComponent: shutdown: begin");
-		httpService.unregister(SERVLET_ALIAS);
+		this.httpService.unregister(RestApiComponent.SERVLET_ALIAS);
 		System.out.println("RestApiComponent: shutdown: end");
 	}
 
@@ -102,9 +102,11 @@ public class RestApiComponent {
 			SecurityException, NoSuchMethodException, InstantiationException {
 		System.out.println("RestApiComponent: startup: begin");
 		try {
-			System.out.println("Staring up sevlet at " + SERVLET_ALIAS);
+			System.out.println("Staring up sevlet at "
+					+ RestApiComponent.SERVLET_ALIAS);
 			RestApiServlet servlet = new RestApiServlet();
-			httpService.registerServlet(SERVLET_ALIAS, servlet, null, null);
+			this.httpService.registerServlet(RestApiComponent.SERVLET_ALIAS,
+					servlet, null, null);
 		} catch (ServletException e) {
 			e.printStackTrace();
 		} catch (NamespaceException e) {
@@ -115,9 +117,8 @@ public class RestApiComponent {
 
 	protected synchronized void unsetCloudRAIDService(ICloudRAIDService core) {
 		System.out.println("RestApiComponent: unsetCloudRAIDService: begin");
-		System.out.println("RestApiComponent: unsetCloudRAIDService: "
-				+ core);
-		httpService.unregister(SERVLET_ALIAS);
+		System.out.println("RestApiComponent: unsetCloudRAIDService: " + core);
+		this.httpService.unregister(RestApiComponent.SERVLET_ALIAS);
 		System.out.println("RestApiComponent: unsetCloudRAIDService: end");
 	}
 
@@ -127,7 +128,7 @@ public class RestApiComponent {
 	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
 		System.out.println("RestApiComponent: unsetConfig: begin");
 		System.out.println("RestApiComponent: unsetConfig: " + config);
-		httpService.unregister(SERVLET_ALIAS);
+		this.httpService.unregister(RestApiComponent.SERVLET_ALIAS);
 		System.out.println("RestApiComponent: unsetConfig: end");
 	}
 
@@ -138,7 +139,7 @@ public class RestApiComponent {
 		System.out.println("RestApiComponent: unsetHttpService: begin");
 		System.out
 				.println("RestApiComponent: unsetHttpService: " + httpService);
-		httpService.unregister(SERVLET_ALIAS);
+		httpService.unregister(RestApiComponent.SERVLET_ALIAS);
 		this.httpService = null;
 		System.out.println("RestApiComponent: unsetHttpService: "
 				+ this.httpService);
@@ -152,7 +153,7 @@ public class RestApiComponent {
 		System.out.println("RestApiComponent: unsetMetadataMgr: begin");
 		System.out.println("RestApiComponent: unsetMetadataMgr: "
 				+ metadataService);
-		httpService.unregister(SERVLET_ALIAS);
+		this.httpService.unregister(RestApiComponent.SERVLET_ALIAS);
 		System.out.println("RestApiComponent: unsetMetadataMgr: end");
 	}
 

@@ -102,30 +102,33 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	public RestApiServlet() throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException, InstantiationException {
-		mappings.add(new RestApiUrlMapping("^/api/info/$", "GET",
-				RestApiServlet.class, "apiInfo"));
-		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "DELETE",
-				RestApiServlet.class, "fileDelete"));
-		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "GET",
-				RestApiServlet.class, "fileDownload"));
-		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$", "PUT",
-				RestApiServlet.class, "fileNew"));
-		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/info/$", "GET",
-				RestApiServlet.class, "fileInfo"));
-		mappings.add(new RestApiUrlMapping("^/file/([^/]+)/update/$", "PUT",
-				RestApiServlet.class, "fileUpdate"));
-		mappings.add(new RestApiUrlMapping("^/list/$", "GET",
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/api/info/$",
+				"GET", RestApiServlet.class, "apiInfo"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
+				"DELETE", RestApiServlet.class, "fileDelete"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
+				"GET", RestApiServlet.class, "fileDownload"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
+				"PUT", RestApiServlet.class, "fileNew"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping(
+				"^/file/([^/]+)/info/$", "GET", RestApiServlet.class,
+				"fileInfo"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping(
+				"^/file/([^/]+)/update/$", "PUT", RestApiServlet.class,
+				"fileUpdate"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/list/$", "GET",
 				RestApiServlet.class, "list"));
-		mappings.add(new RestApiUrlMapping("^/user/add/$", "POST",
-				RestApiServlet.class, "userAdd"));
-		mappings.add(new RestApiUrlMapping("^/user/auth/$", "POST",
-				RestApiServlet.class, "userAuth"));
-		mappings.add(new RestApiUrlMapping("^/user/auth/logout/$", "GET",
-				RestApiServlet.class, "userLogout"));
-		mappings.add(new RestApiUrlMapping("^/user/chgpw/$", "POST",
-				RestApiServlet.class, "userChangePass"));
-		mappings.add(new RestApiUrlMapping("^/user/del/$", "DELETE",
-				RestApiServlet.class, "userDelete"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/user/add/$",
+				"POST", RestApiServlet.class, "userAdd"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/user/auth/$",
+				"POST", RestApiServlet.class, "userAuth"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping(
+				"^/user/auth/logout/$", "GET", RestApiServlet.class,
+				"userLogout"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/user/chgpw/$",
+				"POST", RestApiServlet.class, "userChangePass"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/user/del/$",
+				"DELETE", RestApiServlet.class, "userDelete"));
 
 		BundleContext ctx = FrameworkUtil.getBundle(RestApiServlet.class)
 				.getBundleContext();
@@ -174,9 +177,11 @@ public class RestApiServlet extends HttpServlet {
 		resp.setStatusCode(200);
 		resp.writeField("Core-Service",
 				bundleVersionFromClass(this.coreService.getClass()));
-		resp.writeField("RAID-Version", this.coreService.getRAIDName()
-				+ " v" + this.coreService.getRAIDVersion() + " by "
-				+ this.coreService.getRAIDVendor());
+		resp.writeField(
+				"RAID-Version",
+				this.coreService.getRAIDName() + " v"
+						+ this.coreService.getRAIDVersion() + " by "
+						+ this.coreService.getRAIDVendor());
 		resp.writeField("Metadata-Service",
 				bundleVersionFromClass(this.metadata.getClass()));
 		resp.writeField("Configuration-Service",
@@ -189,7 +194,7 @@ public class RestApiServlet extends HttpServlet {
 					bundleVersionFromClass(services[i].getClass()));
 		}
 
-		resp.writeField("API-Version", API_VERSION);
+		resp.writeField("API-Version", RestApiServlet.API_VERSION);
 	}
 
 	private String bundleVersionFromClass(Class<?> klass) {
@@ -240,10 +245,11 @@ public class RestApiServlet extends HttpServlet {
 		IRestApiResponse r;
 		r = new PlainApiResponse();
 		r.setResponseObject(resp);
-		resp.addHeader("X-Powered-By", "CloudRAID/" + API_VERSION);
+		resp.addHeader("X-Powered-By", "CloudRAID/"
+				+ RestApiServlet.API_VERSION);
 
 		MatchResult mr = null;
-		for (RestApiUrlMapping mapping : mappings) {
+		for (RestApiUrlMapping mapping : RestApiServlet.mappings) {
 			mr = mapping.match(req);
 			if (null != mr) {
 				System.out.println(mapping);
@@ -301,7 +307,7 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = metadata.fileGet(path, userid);
+		ResultSet rs = this.metadata.fileGet(path, userid);
 		if (rs == null) {
 			resp.setStatusCode(404);
 			return;
@@ -354,7 +360,7 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = metadata.fileGet(path, userid);
+		ResultSet rs = this.metadata.fileGet(path, userid);
 		if (rs == null) {
 			resp.setStatusCode(404);
 			return;
@@ -391,13 +397,15 @@ public class RestApiServlet extends HttpServlet {
 			e.printStackTrace();
 		} finally {
 			try {
-				if (bis != null)
+				if (bis != null) {
 					bis.close();
+				}
 			} catch (IOException ignore) {
 			}
 			try {
-				if (bos != null)
+				if (bos != null) {
 					bos.close();
+				}
 			} catch (IOException ignore) {
 			}
 		}
@@ -434,7 +442,7 @@ public class RestApiServlet extends HttpServlet {
 			return;
 		}
 		HttpSession s = req.getSession();
-		ResultSet rs = metadata.fileGet(args.get(0),
+		ResultSet rs = this.metadata.fileGet(args.get(0),
 				(Integer) s.getAttribute("userid"));
 		try {
 			if (rs == null) {
@@ -486,7 +494,7 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = metadata.fileGet(path, userid);
+		ResultSet rs = this.metadata.fileGet(path, userid);
 		if (rs != null) {
 			resp.setStatusCode(409);
 			return;
@@ -547,7 +555,7 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = metadata.fileGet(path, userid);
+		ResultSet rs = this.metadata.fileGet(path, userid);
 		if (rs == null) {
 			resp.setStatusCode(404);
 			return;
@@ -602,7 +610,7 @@ public class RestApiServlet extends HttpServlet {
 		}
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = metadata.fileList(userid);
+		ResultSet rs = this.metadata.fileList(userid);
 		if (rs == null) {
 			resp.writeLine("No files uploaded yet.");
 		} else {
@@ -666,7 +674,7 @@ public class RestApiServlet extends HttpServlet {
 			resp.writeLine("Username or password missing!");
 			return;
 		}
-		if (metadata.addUser(username, password)) {
+		if (this.metadata.addUser(username, password)) {
 			resp.setStatusCode(200);
 			resp.writeLine("User created");
 		} else {
@@ -711,7 +719,7 @@ public class RestApiServlet extends HttpServlet {
 			resp.setStatusCode(503);
 			return;
 		}
-		int id = metadata.authUser(username, password);
+		int id = this.metadata.authUser(username, password);
 		if (id > -1) {
 			session.setAttribute("auth", true);
 			session.setAttribute("username", username);
@@ -767,7 +775,7 @@ public class RestApiServlet extends HttpServlet {
 			resp.setStatusCode(400);
 			resp.writeLine("Username, password, or password confirmation missing or passwords do not match!");
 		}
-		if (metadata.changeUserPwd(username, password, userId)) {
+		if (this.metadata.changeUserPwd(username, password, userId)) {
 			resp.setStatusCode(200);
 			resp.writeLine("The password was changed successfully");
 		} else {

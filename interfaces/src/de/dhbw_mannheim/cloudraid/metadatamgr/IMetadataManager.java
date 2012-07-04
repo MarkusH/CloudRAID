@@ -228,6 +228,7 @@ public interface IMetadataManager {
 	 * @return The hash value. Or <code>null</code>, if the path does not exist
 	 *         in the database.
 	 */
+	@Deprecated
 	public String getHash(String path, int userId);
 
 	/**
@@ -242,6 +243,7 @@ public interface IMetadataManager {
 	 * @return The last modification date. Or <code>-1L</code>, if the path does
 	 *         not exist in the database.
 	 */
+	@Deprecated
 	public long getLastMod(String path, int userId);
 
 	/**
@@ -256,6 +258,7 @@ public interface IMetadataManager {
 	 * @return The path of the file. Or <code>null</code>, if the hash does not
 	 *         exist in the database.
 	 */
+	@Deprecated
 	public String getName(String hash, int userId);
 
 	/**

@@ -63,11 +63,13 @@ public class AmazonS3SignatureService implements SignatureService {
 	 *             Thrown, if the signing fails
 	 */
 	private String doSign(String toSign, String keyString) throws Exception {
-		SecretKeySpec key = new SecretKeySpec((keyString).getBytes(UTF8),
-				HMAC_SHA1);
-		Mac mac = Mac.getInstance(HMAC_SHA1);
+		SecretKeySpec key = new SecretKeySpec(
+				(keyString).getBytes(AmazonS3SignatureService.UTF8),
+				AmazonS3SignatureService.HMAC_SHA1);
+		Mac mac = Mac.getInstance(AmazonS3SignatureService.HMAC_SHA1);
 		mac.init(key);
-		byte[] bytes = mac.doFinal(toSign.getBytes(UTF8));
+		byte[] bytes = mac.doFinal(toSign
+				.getBytes(AmazonS3SignatureService.UTF8));
 		return Base64.encodeToString(bytes, false);
 	}
 
@@ -100,6 +102,6 @@ public class AmazonS3SignatureService implements SignatureService {
 	 */
 	@Override
 	public String getSignatureMethod() {
-		return METHOD;
+		return AmazonS3SignatureService.METHOD;
 	}
 }

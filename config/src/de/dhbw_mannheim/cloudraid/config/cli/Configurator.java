@@ -39,7 +39,7 @@ public class Configurator {
 
 	private static void get(String key) {
 		try {
-			System.out.println(config.getString(key, null));
+			System.out.println(Configurator.config.getString(key, null));
 		} catch (ConfigException e) {
 			System.out.println("Key \"" + key + "\" not found.");
 		}
@@ -55,19 +55,19 @@ public class Configurator {
 	}
 
 	private static void list() {
-		ArrayList<String> s = new ArrayList<String>(config.getDefaultData()
-				.keySet());
-		s.addAll(config.keySet());
+		ArrayList<String> s = new ArrayList<String>(Configurator.config
+				.getDefaultData().keySet());
+		s.addAll(Configurator.config.keySet());
 		ArrayList<String> list = new ArrayList<String>(s);
 		Collections.sort(list);
 		for (String key : list) {
 			try {
-				if (!config.keyExists(key)) {
+				if (!Configurator.config.keyExists(key)) {
 					System.out.println("* " + key + " = "
-							+ config.getString(key, null));
+							+ Configurator.config.getString(key, null));
 				} else {
 					System.out.println("  " + key + " = "
-							+ config.getString(key, null));
+							+ Configurator.config.getString(key, null));
 				}
 			} catch (ConfigException e) {
 				System.out.println("Key \"" + key + "\" not found.");
@@ -82,7 +82,7 @@ public class Configurator {
 	 *            the arguments
 	 */
 	public static void main(String[] args) {
-		config = new Config();
+		Configurator.config = new Config();
 		Console cons = System.console();
 		if (args.length == 0 || args.length > 4) {
 			System.err.println("Invalid number of arguments!");
@@ -106,7 +106,7 @@ public class Configurator {
 		if (cons != null) {
 			char[] password = cons
 					.readPassword("Please enter the password to access the configuration file: ");
-			if (config.init(new String(password)) == null) {
+			if (Configurator.config.init(new String(password)) == null) {
 				System.err.println("Invalid password!");
 				System.exit(1);
 			}
@@ -122,7 +122,7 @@ public class Configurator {
 				} else {
 					set(false, args[1], args[2]);
 				}
-				config.save();
+				Configurator.config.save();
 			}
 		} else {
 			System.err.println("Cannot get console for password input.");
@@ -131,7 +131,7 @@ public class Configurator {
 	}
 
 	private static void set(boolean encrypted, String key, String value) {
-		config.put(key, value, encrypted);
+		Configurator.config.put(key, value, encrypted);
 	}
 
 }

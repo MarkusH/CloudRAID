@@ -123,9 +123,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized boolean addUser(String username, String password) {
 		try {
-			getUserSaltStatement.setString(1, username);
-			getUserSaltStatement.execute();
-			ResultSet rs = getUserSaltStatement.getResultSet();
+			this.getUserSaltStatement.setString(1, username);
+			this.getUserSaltStatement.execute();
+			ResultSet rs = this.getUserSaltStatement.getResultSet();
 			if (rs == null || !rs.next()) {
 				Random rnd = new Random(System.nanoTime());
 				byte[] salt = new byte[8];
@@ -143,16 +143,16 @@ public class HSQLMetadataManager implements IMetadataManager {
 					e.printStackTrace();
 					return false;
 				}
-				addUserStatement.setString(1, username);
-				addUserStatement.setBytes(2, pwdigest);
-				addUserStatement.setBytes(3, salt);
-				addUserStatement.execute();
+				this.addUserStatement.setString(1, username);
+				this.addUserStatement.setBytes(2, pwdigest);
+				this.addUserStatement.setBytes(3, salt);
+				this.addUserStatement.execute();
 				return true;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			try {
-				con.rollback();
+				this.con.rollback();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
@@ -165,19 +165,19 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized int authUser(String username, String password) {
 		try {
-			getUserSaltStatement.setString(1, username);
-			getUserSaltStatement.execute();
-			ResultSet rs = getUserSaltStatement.getResultSet();
+			this.getUserSaltStatement.setString(1, username);
+			this.getUserSaltStatement.execute();
+			ResultSet rs = this.getUserSaltStatement.getResultSet();
 			if (rs != null && rs.next()) {
 				byte[] salt = rs.getBytes("salt");
 				MessageDigest digest = MessageDigest.getInstance("SHA-256");
 				digest.reset();
 				digest.update(salt);
 				byte[] pwdigest = digest.digest(password.getBytes("UTF-8"));
-				authUserStatement.setString(1, username);
-				authUserStatement.setBytes(2, pwdigest);
-				authUserStatement.execute();
-				rs = authUserStatement.getResultSet();
+				this.authUserStatement.setString(1, username);
+				this.authUserStatement.setBytes(2, pwdigest);
+				this.authUserStatement.execute();
+				rs = this.authUserStatement.getResultSet();
 				if (rs != null && rs.next()) {
 					return rs.getInt("id");
 				}
@@ -206,18 +206,18 @@ public class HSQLMetadataManager implements IMetadataManager {
 			digest.reset();
 			digest.update(salt);
 			pwdigest = digest.digest(password.getBytes("UTF-8"));
-			changeUserPwdStatement.setBytes(1, pwdigest);
-			changeUserPwdStatement.setBytes(2, salt);
-			changeUserPwdStatement.setString(3, username);
-			changeUserPwdStatement.setInt(4, userId);
-			changeUserPwdStatement.execute();
-			if (changeUserPwdStatement.getUpdateCount() == 0) {
+			this.changeUserPwdStatement.setBytes(1, pwdigest);
+			this.changeUserPwdStatement.setBytes(2, salt);
+			this.changeUserPwdStatement.setString(3, username);
+			this.changeUserPwdStatement.setInt(4, userId);
+			this.changeUserPwdStatement.execute();
+			if (this.changeUserPwdStatement.getUpdateCount() == 0) {
 				return false;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			try {
-				con.rollback();
+				this.con.rollback();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
@@ -237,9 +237,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 			String password) {
 		try {
 			Class.forName("org.hsqldb.jdbcDriver");
-			con = DriverManager.getConnection("jdbc:hsqldb:file:" + database
-					+ ";shutdown=true", username, password);
-			con.setAutoCommit(true);
+			this.con = DriverManager.getConnection("jdbc:hsqldb:file:"
+					+ database + ";shutdown=true", username, password);
+			this.con.setAutoCommit(true);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return false;
@@ -253,34 +253,34 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized boolean disconnect() {
 		try {
-			if (statement != null) {
-				statement.execute("SHUTDOWN COMPACT;");
+			if (this.statement != null) {
+				this.statement.execute("SHUTDOWN COMPACT;");
 			}
-			if (con != null) {
-				con.commit();
+			if (this.con != null) {
+				this.con.commit();
 			}
 		} catch (SQLException e) {
 		}
 
-		statement = null;
-		addUserStatement = null;
-		authUserStatement = null;
+		this.statement = null;
+		this.addUserStatement = null;
+		this.authUserStatement = null;
 
-		fileAddStmnt = null;
-		fileDeleteStmnt = null;
-		fileGetStmnt = null;
-		fileUpdateStatusStmnt = null;
-		fileUpdateStmnt = null;
+		this.fileAddStmnt = null;
+		this.fileDeleteStmnt = null;
+		this.fileGetStmnt = null;
+		this.fileUpdateStatusStmnt = null;
+		this.fileUpdateStmnt = null;
 
-		findNameStatement = null;
+		this.findNameStatement = null;
 
-		getUserSaltStatement = null;
+		this.getUserSaltStatement = null;
 
-		listFiles = null;
+		this.listFiles = null;
 
 		try {
-			if (con != null) {
-				con.close();
+			if (this.con != null) {
+				this.con.close();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -292,9 +292,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public ResultSet fileById(int fileId) {
 		try {
-			fileByIdStmnt.setInt(1, fileId);
-			fileByIdStmnt.execute();
-			ResultSet rs = fileByIdStmnt.getResultSet();
+			this.fileByIdStmnt.setInt(1, fileId);
+			this.fileByIdStmnt.execute();
+			ResultSet rs = this.fileByIdStmnt.getResultSet();
 			if (rs != null && rs.next()) {
 				return rs;
 			}
@@ -309,9 +309,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized int fileDelete(int fileId) {
 		try {
-			fileDeleteStmnt.setInt(1, fileId);
-			fileDeleteStmnt.execute();
-			return fileDeleteStmnt.getUpdateCount();
+			this.fileDeleteStmnt.setInt(1, fileId);
+			this.fileDeleteStmnt.execute();
+			return this.fileDeleteStmnt.getUpdateCount();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return -1;
@@ -324,10 +324,10 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized ResultSet fileGet(String path, int userId) {
 		try {
-			fileGetStmnt.setString(1, path);
-			fileGetStmnt.setInt(2, userId);
-			fileGetStmnt.execute();
-			ResultSet rs = fileGetStmnt.getResultSet();
+			this.fileGetStmnt.setString(1, path);
+			this.fileGetStmnt.setInt(2, userId);
+			this.fileGetStmnt.execute();
+			ResultSet rs = this.fileGetStmnt.getResultSet();
 			if (rs != null && rs.next()) {
 				return rs;
 			}
@@ -342,9 +342,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized ResultSet fileList(int userId) {
 		try {
-			listFiles.setInt(1, userId);
-			listFiles.execute();
-			return listFiles.getResultSet();
+			this.listFiles.setInt(1, userId);
+			this.listFiles.execute();
+			return this.listFiles.getResultSet();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
@@ -356,21 +356,21 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public int fileNew(String path, String hash, long lastMod, int userId) {
 		try {
-			fileAddStmnt.setString(1, path);
-			fileAddStmnt.setString(2, hash);
-			fileAddStmnt.setTimestamp(3, new Timestamp(lastMod));
-			fileAddStmnt.setString(4,
+			this.fileAddStmnt.setString(1, path);
+			this.fileAddStmnt.setString(2, hash);
+			this.fileAddStmnt.setTimestamp(3, new Timestamp(lastMod));
+			this.fileAddStmnt.setString(4,
 					IMetadataManager.FILE_STATUS.UPLOADING.toString());
-			fileAddStmnt.setInt(5, userId);
-			fileAddStmnt.execute();
-			ResultSet rs = fileAddStmnt.getGeneratedKeys();
+			this.fileAddStmnt.setInt(5, userId);
+			this.fileAddStmnt.execute();
+			ResultSet rs = this.fileAddStmnt.getGeneratedKeys();
 			if (rs != null && rs.next()) {
 				return rs.getInt(1); // The generated file ID
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			try {
-				con.rollback();
+				this.con.rollback();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
@@ -384,19 +384,19 @@ public class HSQLMetadataManager implements IMetadataManager {
 	public boolean fileUpdate(int id, String path, String hash, long lastMod,
 			int userId) {
 		try {
-			fileUpdateStmnt.setString(1, path);
-			fileUpdateStmnt.setString(2, hash);
-			fileUpdateStmnt.setTimestamp(3, new Timestamp(lastMod));
-			fileUpdateStmnt.setString(4,
+			this.fileUpdateStmnt.setString(1, path);
+			this.fileUpdateStmnt.setString(2, hash);
+			this.fileUpdateStmnt.setTimestamp(3, new Timestamp(lastMod));
+			this.fileUpdateStmnt.setString(4,
 					IMetadataManager.FILE_STATUS.UPLOADING.toString());
-			fileUpdateStmnt.setInt(5, userId);
-			fileUpdateStmnt.setInt(6, id);
-			fileUpdateStmnt.execute();
+			this.fileUpdateStmnt.setInt(5, userId);
+			this.fileUpdateStmnt.setInt(6, id);
+			this.fileUpdateStmnt.execute();
 			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			try {
-				con.rollback();
+				this.con.rollback();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
@@ -409,9 +409,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public boolean fileUpdateState(int id, FILE_STATUS state) {
 		try {
-			fileUpdateStatusStmnt.setString(1, state.toString());
-			fileUpdateStatusStmnt.setInt(2, id);
-			fileUpdateStatusStmnt.execute();
+			this.fileUpdateStatusStmnt.setString(1, state.toString());
+			this.fileUpdateStatusStmnt.setInt(2, id);
+			this.fileUpdateStatusStmnt.execute();
 			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -422,10 +422,10 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized String getHash(String path, int userId) {
 		try {
-			fileGetStmnt.setString(1, path);
-			fileGetStmnt.setInt(2, userId);
-			fileGetStmnt.execute();
-			ResultSet rs = fileGetStmnt.getResultSet();
+			this.fileGetStmnt.setString(1, path);
+			this.fileGetStmnt.setInt(2, userId);
+			this.fileGetStmnt.execute();
+			ResultSet rs = this.fileGetStmnt.getResultSet();
 			if (rs != null && rs.next()) {
 				return rs.getString("hash_name");
 			}
@@ -442,10 +442,10 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized long getLastMod(String path, int userId) {
 		try {
-			fileGetStmnt.setString(1, path);
-			fileGetStmnt.setInt(2, userId);
-			fileGetStmnt.execute();
-			ResultSet rs = fileGetStmnt.getResultSet();
+			this.fileGetStmnt.setString(1, path);
+			this.fileGetStmnt.setInt(2, userId);
+			this.fileGetStmnt.execute();
+			ResultSet rs = this.fileGetStmnt.getResultSet();
 			if (rs != null && rs.next()) {
 				return rs.getTimestamp("last_mod").getTime();
 			}
@@ -462,10 +462,10 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized String getName(String hash, int userId) {
 		try {
-			findNameStatement.setString(1, hash);
-			findNameStatement.setInt(2, userId);
-			findNameStatement.execute();
-			ResultSet rs = findNameStatement.getResultSet();
+			this.findNameStatement.setString(1, hash);
+			this.findNameStatement.setInt(2, userId);
+			this.findNameStatement.execute();
+			ResultSet rs = this.findNameStatement.getResultSet();
 			if (rs != null && rs.next()) {
 				return rs.getString("path_name");
 			}
@@ -482,14 +482,14 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized boolean initialize() {
 		try {
-			statement = con.createStatement();
+			this.statement = this.con.createStatement();
 			String createTable = "CREATE CACHED TABLE IF NOT EXISTS cloudraid_users ("
 					+ "id INTEGER IDENTITY, "
 					+ "username VARCHAR(32) NOT NULL, "
 					+ "password BLOB(32) NOT NULL, "
 					+ "salt BLOB(8) NOT NULL"
 					+ ");";
-			statement.execute(createTable);
+			this.statement.execute(createTable);
 
 			createTable = "CREATE CACHED TABLE IF NOT EXISTS cloudraid_files ("
 					+ "id INTEGER IDENTITY, "
@@ -500,45 +500,45 @@ public class HSQLMetadataManager implements IMetadataManager {
 					+ "user_id INTEGER NULL, "
 					+ "FOREIGN KEY ( user_id ) REFERENCES cloudraid_users ( id ),"
 					+ "UNIQUE ( user_id, path_name ) );";
-			statement.execute(createTable);
+			this.statement.execute(createTable);
 
-			addUserStatement = con
+			this.addUserStatement = this.con
 					.prepareStatement("INSERT INTO cloudraid_users VALUES (NULL, ?, ?, ? );");
-			authUserStatement = con
+			this.authUserStatement = this.con
 					.prepareStatement("SELECT * FROM cloudraid_users WHERE username = ? AND password = ?");
 
-			fileAddStmnt = con
+			this.fileAddStmnt = this.con
 					.prepareStatement(
 							"INSERT INTO cloudraid_files VALUES (NULL, ?, ?, ?, ?, ? );",
 							Statement.RETURN_GENERATED_KEYS);
-			fileByIdStmnt = con
+			this.fileByIdStmnt = this.con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE id = ? ;");
-			fileDeleteStmnt = con
+			this.fileDeleteStmnt = this.con
 					.prepareStatement("DELETE FROM cloudraid_files WHERE id = ? ;");
-			fileGetStmnt = con
+			this.fileGetStmnt = this.con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE path_name = ? AND user_id = ? ;");
-			fileUpdateStatusStmnt = con
+			this.fileUpdateStatusStmnt = this.con
 					.prepareStatement("UPDATE cloudraid_files SET status = ? WHERE id = ? ;");
-			fileUpdateStmnt = con
+			this.fileUpdateStmnt = this.con
 					.prepareStatement("UPDATE cloudraid_files SET path_name = ? , hash_name = ? , last_mod = ? , status = ? , user_id = ? WHERE id = ? ;");
 
-			findNameStatement = con
+			this.findNameStatement = this.con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE hash_name = ? AND user_id = ?;");
 
-			getUserSaltStatement = con
+			this.getUserSaltStatement = this.con
 					.prepareCall("SELECT salt FROM cloudraid_users WHERE username = ?");
 
-			changeUserPwdStatement = con
+			this.changeUserPwdStatement = this.con
 					.prepareStatement("UPDATE cloudraid_users SET password = ?, salt = ? WHERE username = ? AND id = ? ;");
 
-			listFiles = con
+			this.listFiles = this.con
 					.prepareStatement("SELECT * FROM cloudraid_files WHERE user_id = ?;");
 
 			return true;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			try {
-				con.rollback();
+				this.con.rollback();
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 			}
@@ -574,10 +574,12 @@ public class HSQLMetadataManager implements IMetadataManager {
 	protected void startup() {
 		System.out.println("HSQLMetadataManager: startup: begin");
 		try {
-			String database = config.getString("database.name", null);
+			String database = this.config.getString("database.name", null);
 			if (database != null) {
-				String username = config.getString("database.username", "SA");
-				String password = config.getString("database.password", "");
+				String username = this.config.getString("database.username",
+						"SA");
+				String password = this.config
+						.getString("database.password", "");
 				this.connect(database, username, password);
 				this.initialize();
 			} else {
