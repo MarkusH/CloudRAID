@@ -33,5 +33,10 @@ public interface ICloudRAIDService {
 	public ICoreAccess getSlot() throws InstantiationException;
 
 	public IStorageConnector[] getStorageConnectors();
+	
+	public String getRAIDName();
+	
+	public String getRAIDVendor();
 
+	public String getRAIDVersion();
 }

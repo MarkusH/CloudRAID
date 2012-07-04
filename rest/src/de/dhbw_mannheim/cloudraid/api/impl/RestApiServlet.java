@@ -174,6 +174,9 @@ public class RestApiServlet extends HttpServlet {
 		resp.setStatusCode(200);
 		resp.writeField("Core-Service",
 				bundleVersionFromClass(this.coreService.getClass()));
+		resp.writeField("RAID-Version", this.coreService.getRAIDName()
+				+ " v" + this.coreService.getRAIDVersion() + " by "
+				+ this.coreService.getRAIDVendor());
 		resp.writeField("Metadata-Service",
 				bundleVersionFromClass(this.metadata.getClass()));
 		resp.writeField("Configuration-Service",

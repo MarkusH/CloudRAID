@@ -33,6 +33,7 @@ import de.dhbw_mannheim.cloudraid.config.exceptions.ConfigException;
 import de.dhbw_mannheim.cloudraid.config.exceptions.MissingConfigValueException;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.core.ICoreAccess;
+import de.dhbw_mannheim.cloudraid.core.impl.jni.RaidAccessInterface;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 
 /**
@@ -206,6 +207,21 @@ public class CloudRAIDService implements ICloudRAIDService {
 					"At least one storage connector missing");
 		}
 		return this.storageConnectors;
+	}
+	
+	@Override
+	public String getRAIDName() {
+		return RaidAccessInterface.getName();
+	}
+	
+	@Override
+	public String getRAIDVendor() {
+		return RaidAccessInterface.getVendor();
+	}
+
+	@Override
+	public String getRAIDVersion() {
+		return RaidAccessInterface.getVersion();
 	}
 
 }

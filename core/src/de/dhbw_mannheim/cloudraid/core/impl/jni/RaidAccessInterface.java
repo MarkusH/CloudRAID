@@ -111,4 +111,8 @@ public class RaidAccessInterface {
 	 */
 	public static native String splitInterface(String inputBasePath,
 			String inputFilePath, String tempOutputDirPath, String key);
+	
+	public static native String getName();
+	public static native String getVendor();
+	public static native String getVersion();
 }

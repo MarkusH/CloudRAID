@@ -29,6 +29,10 @@
 #include <string.h>
 #include <stddef.h>
 
+#define _VERSION_ "0.0.1prealpha"
+#define _NAME_ "CloudRAID-RAID5"
+#define _VENDOR_ "cloudraid"
+
 #define SUCCESS_MERGE  0x0001
 #define MEMERR_BUF     0x0002
 #define MEMERR_DEV     0x0004
@@ -1013,3 +1017,17 @@ end:
     return (*env)->NewStringUTF(env, retvalue);
 }
 
+JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getName
+(JNIEnv *env, jclass cls) {
+    return (*env)->NewStringUTF(env, _NAME_);
+}
+
+JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getVendor
+(JNIEnv *env, jclass cls) {
+    return (*env)->NewStringUTF(env, _VENDOR_);
+}
+
+JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getVersion
+(JNIEnv *env, jclass cls) {
+    return (*env)->NewStringUTF(env, _VERSION_);
+}
