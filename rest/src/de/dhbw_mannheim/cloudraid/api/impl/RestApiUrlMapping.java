@@ -53,7 +53,9 @@ public class RestApiUrlMapping {
 
 		/**
 		 * @param function
+		 *            The function to call
 		 * @param args
+		 *            The arguments to the function
 		 */
 		public MatchResult(Method function, ArrayList<String> args) {
 			this.function = function;
@@ -93,16 +95,30 @@ public class RestApiUrlMapping {
 
 	/**
 	 * @param klass
+	 *            Class used for lookup
 	 * @param function
+	 *            The function name
 	 * @return Return the Method object described by <code>klass</code> and
 	 *         <code>function</code>.
-	 * @throws IllegalArgumentException
 	 * @throws NoSuchMethodException
+	 *             If a matching method is not found or if the name is
+	 *             "<init>"or "<clinit>".
 	 * @throws SecurityException
+	 *             If a security manager, s, is present and any of the following
+	 *             conditions is met:
+	 *             <ul>
+	 *             <li>invocation of s.checkMemberAccess(this, Member.PUBLIC)
+	 *             denies access to the method</li>
+	 *             <li>the caller's class loader is not the same as or an
+	 *             ancestor of the class loader for the current class and
+	 *             invocation of s.checkPackageAccess() denies access to the
+	 *             package of this class</li>
+	 *             </ul>
+	 * 
+	 * @see Class#getMethod(String, Class...)
 	 */
 	public static Method findFunction(Class<?> klass, String function)
-			throws IllegalArgumentException, SecurityException,
-			NoSuchMethodException {
+			throws NoSuchMethodException, SecurityException {
 		return klass.getMethod(function, HttpServletRequest.class,
 				IRestApiResponse.class, ArrayList.class);
 	}
@@ -124,22 +140,47 @@ public class RestApiUrlMapping {
 
 	/**
 	 * @param pattern
+	 *            The pattern to match the URL
 	 * @param klass
+	 *            The class used for lookup
 	 * @param function
+	 *            The function name to call on the given class
 	 * @throws IllegalArgumentException
-	 * @throws SecurityException
+	 *             Thrown if the pattern or the function is <code>null</code>
 	 * @throws NoSuchMethodException
+	 *             If a matching method is not found or if the name is
+	 *             "<init>"or "<clinit>".
+	 * @throws SecurityException
+	 *             If a security manager, s, is present and any of the following
+	 *             conditions is met:
+	 *             <ul>
+	 *             <li>invocation of s.checkMemberAccess(this, Member.PUBLIC)
+	 *             denies access to the method</li>
+	 *             <li>the caller's class loader is not the same as or an
+	 *             ancestor of the class loader for the current class and
+	 *             invocation of s.checkPackageAccess() denies access to the
+	 *             package of this class</li>
+	 *             </ul>
+	 * 
+	 * @see RestApiUrlMapping#RestApiUrlMapping(Pattern, String, Method)
+	 * @see RestApiUrlMapping#findFunction(Class, String)
+	 * @see Class#getMethod(String, Class...)
 	 */
 	public RestApiUrlMapping(Pattern pattern, Class<?> klass, String function)
-			throws IllegalArgumentException, SecurityException,
-			NoSuchMethodException {
+			throws IllegalArgumentException, NoSuchMethodException,
+			SecurityException {
 		this(pattern, null, RestApiUrlMapping.findFunction(klass, function));
 	}
 
 	/**
 	 * @param pattern
+	 *            The pattern to match the URL
 	 * @param function
+	 *            The function to call
 	 * @throws IllegalArgumentException
+	 *             Thrown if the pattern or the function is <code>null</code>
+	 * 
+	 * @see RestApiUrlMapping#RestApiUrlMapping(Pattern, String, Method)
 	 */
 	public RestApiUrlMapping(Pattern pattern, Method function)
 			throws IllegalArgumentException {
@@ -148,25 +189,53 @@ public class RestApiUrlMapping {
 
 	/**
 	 * @param pattern
+	 *            The pattern to match the URL
 	 * @param method
+	 *            The HTTP method (<code>GET</code>, <code>POST</code>,
+	 *            <code>PUT</code>, ...)
 	 * @param klass
+	 *            The class used for lookup
 	 * @param function
+	 *            The function name to call on the given class
 	 * @throws IllegalArgumentException
+	 *             Thrown if the pattern or the function is <code>null</code>
 	 * @throws NoSuchMethodException
+	 *             If a matching method is not found or if the name is
+	 *             "<init>"or "<clinit>".
 	 * @throws SecurityException
+	 *             If a security manager, s, is present and any of the following
+	 *             conditions is met:
+	 *             <ul>
+	 *             <li>invocation of s.checkMemberAccess(this, Member.PUBLIC)
+	 *             denies access to the method</li>
+	 *             <li>the caller's class loader is not the same as or an
+	 *             ancestor of the class loader for the current class and
+	 *             invocation of s.checkPackageAccess() denies access to the
+	 *             package of this class</li>
+	 *             </ul>
+	 * 
+	 * @see RestApiUrlMapping#RestApiUrlMapping(Pattern, String, Method)
+	 * @see RestApiUrlMapping#findFunction(Class, String)
+	 * @see Class#getMethod(String, Class...)
 	 */
 	public RestApiUrlMapping(Pattern pattern, String method, Class<?> klass,
 			String function) throws IllegalArgumentException,
-			SecurityException, NoSuchMethodException {
+			NoSuchMethodException, SecurityException {
 		this(pattern, method, RestApiUrlMapping.findFunction(klass, function));
 	}
 
 	/**
 	 * @param pattern
+	 *            The pattern to match the URL
 	 * @param method
+	 *            The HTTP method (<code>GET</code>, <code>POST</code>,
+	 *            <code>PUT</code>, ...)
 	 * @param function
+	 *            The function to call
 	 * @throws IllegalArgumentException
+	 *             Thrown if the pattern or the function is <code>null</code>
 	 * 
+	 * @see RestApiUrlMapping#RestApiUrlMapping(Pattern, String, Method)
 	 */
 	public RestApiUrlMapping(Pattern pattern, String method, Method function)
 			throws IllegalArgumentException {
@@ -183,23 +252,48 @@ public class RestApiUrlMapping {
 
 	/**
 	 * @param pattern
+	 *            The pattern to match the URL
 	 * @param klass
+	 *            The class used for lookup
 	 * @param function
+	 *            The function name to call on the given class
 	 * @throws IllegalArgumentException
-	 * @throws SecurityException
+	 *             Thrown if the pattern or the function is <code>null</code>
 	 * @throws NoSuchMethodException
+	 *             If a matching method is not found or if the name is
+	 *             "<init>"or "<clinit>".
+	 * @throws SecurityException
+	 *             If a security manager, s, is present and any of the following
+	 *             conditions is met:
+	 *             <ul>
+	 *             <li>invocation of s.checkMemberAccess(this, Member.PUBLIC)
+	 *             denies access to the method</li>
+	 *             <li>the caller's class loader is not the same as or an
+	 *             ancestor of the class loader for the current class and
+	 *             invocation of s.checkPackageAccess() denies access to the
+	 *             package of this class</li>
+	 *             </ul>
+	 * 
+	 * @see RestApiUrlMapping#RestApiUrlMapping(Pattern, String, Method)
+	 * @see RestApiUrlMapping#findFunction(Class, String)
+	 * @see Class#getMethod(String, Class...)
 	 */
 	public RestApiUrlMapping(String pattern, Class<?> klass, String function)
-			throws IllegalArgumentException, SecurityException,
-			NoSuchMethodException {
+			throws IllegalArgumentException, NoSuchMethodException,
+			SecurityException {
 		this(Pattern.compile(pattern), null, RestApiUrlMapping.findFunction(
 				klass, function));
 	}
 
 	/**
 	 * @param pattern
+	 *            The pattern to match the URL
 	 * @param function
+	 *            The function to call
 	 * @throws IllegalArgumentException
+	 *             Thrown if the pattern or the function is <code>null</code>
+	 * 
+	 * @see RestApiUrlMapping#RestApiUrlMapping(Pattern, String, Method)
 	 */
 	public RestApiUrlMapping(String pattern, Method function)
 			throws IllegalArgumentException {
@@ -208,26 +302,54 @@ public class RestApiUrlMapping {
 
 	/**
 	 * @param pattern
+	 *            The pattern to match the URL
 	 * @param method
+	 *            The HTTP method (<code>GET</code>, <code>POST</code>,
+	 *            <code>PUT</code>, ...)
 	 * @param klass
+	 *            The class used for lookup
 	 * @param function
+	 *            The function name to call on the given class
 	 * @throws IllegalArgumentException
+	 *             Thrown if the pattern or the function is <code>null</code>
 	 * @throws NoSuchMethodException
+	 *             If a matching method is not found or if the name is
+	 *             "<init>"or "<clinit>".
 	 * @throws SecurityException
+	 *             If a security manager, s, is present and any of the following
+	 *             conditions is met:
+	 *             <ul>
+	 *             <li>invocation of s.checkMemberAccess(this, Member.PUBLIC)
+	 *             denies access to the method</li>
+	 *             <li>the caller's class loader is not the same as or an
+	 *             ancestor of the class loader for the current class and
+	 *             invocation of s.checkPackageAccess() denies access to the
+	 *             package of this class</li>
+	 *             </ul>
+	 * 
+	 * @see RestApiUrlMapping#RestApiUrlMapping(Pattern, String, Method)
+	 * @see RestApiUrlMapping#findFunction(Class, String)
+	 * @see Class#getMethod(String, Class...)
 	 */
 	public RestApiUrlMapping(String pattern, String method, Class<?> klass,
 			String function) throws IllegalArgumentException,
-			SecurityException, NoSuchMethodException {
+			NoSuchMethodException, SecurityException {
 		this(Pattern.compile(pattern), method, RestApiUrlMapping.findFunction(
 				klass, function));
 	}
 
 	/**
 	 * @param pattern
+	 *            The pattern to match the URL
 	 * @param method
+	 *            The HTTP method (<code>GET</code>, <code>POST</code>,
+	 *            <code>PUT</code>, ...)
 	 * @param function
+	 *            The function to call
 	 * @throws IllegalArgumentException
+	 *             Thrown if the pattern or the function is <code>null</code>
 	 * 
+	 * @see RestApiUrlMapping#RestApiUrlMapping(Pattern, String, Method)
 	 */
 	public RestApiUrlMapping(String pattern, String method, Method function)
 			throws IllegalArgumentException {
@@ -235,27 +357,40 @@ public class RestApiUrlMapping {
 	}
 
 	/**
-	 * @param req
-	 * @return returns the function to invoke or null
+	 * Matches this {@link RestApiUrlMapping mapping} against a
+	 * {@link HttpServletRequest}
+	 * 
+	 * @param request
+	 *            The request to match against
+	 * @return returns the {@link MatchResult} on match else null
 	 */
-	public MatchResult match(HttpServletRequest req) {
-		String pathInfo = req.getPathInfo().substring(
-				req.getServletPath().length());
-		return this.match(pathInfo, req.getMethod());
+	public MatchResult match(HttpServletRequest request) {
+		String pathInfo = request.getPathInfo().substring(
+				request.getServletPath().length());
+		return this.match(pathInfo, request.getMethod());
 	}
 
 	/**
+	 * Matches this {@link RestApiUrlMapping mapping} against a the given path
+	 * 
 	 * @param pathInfo
-	 * @return returns the function to invoke or null
+	 *            The path to match against
+	 * @return returns the {@link MatchResult} on match else null
 	 */
 	public MatchResult match(String pathInfo) {
 		return this.match(pathInfo, null);
 	}
 
 	/**
+	 * Matches this {@link RestApiUrlMapping mapping} against a the given path
+	 * and the HTTP Method. If the method is null it is ignored for matching.
+	 * 
 	 * @param pathInfo
+	 *            The path to match against
 	 * @param method
-	 * @return returns the function to invoke or null
+	 *            The HTTP method (<code>GET</code>, <code>POST</code>,
+	 *            <code>PUT</code>, ...)
+	 * @return returns the {@link MatchResult} on match else null
 	 */
 	public MatchResult match(String pathInfo, String method) {
 		if (null == this.method || this.method.equalsIgnoreCase(method)) {

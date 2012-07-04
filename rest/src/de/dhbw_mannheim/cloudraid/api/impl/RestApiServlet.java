@@ -87,11 +87,6 @@ public class RestApiServlet extends HttpServlet {
 	 * Initializes all URL mappings and stores a reference to the
 	 * {@link IMetadataManager}
 	 * 
-	 * @param metadata
-	 *            The {@link IMetadataManager} that will be used for all
-	 *            database requests
-	 * @param config
-	 *            A reference to a running {@link ICloudRAIDConfig} service.
 	 * @throws IllegalArgumentException
 	 *             Thrown if the pattern or the function is invalid.
 	 * @throws SecurityException
@@ -99,6 +94,9 @@ public class RestApiServlet extends HttpServlet {
 	 * @throws NoSuchMethodException
 	 *             Thrown if no such function can be found
 	 * @throws InstantiationException
+	 *             Thrown if at least one of {@link IMetadataManager},
+	 *             {@link ICloudRAIDConfig} or {@link ICloudRAIDService} cannot
+	 *             be found.
 	 */
 	public RestApiServlet() throws IllegalArgumentException, SecurityException,
 			NoSuchMethodException, InstantiationException {
