@@ -29,25 +29,18 @@
 #include <string.h>
 #include <stddef.h>
 
-#define SUCCESS_MERGE 0x02
-#define SUCCESS_SPLIT 0x04
+#define SUCCESS_MERGE  0x0001
+#define MEMERR_BUF     0x0002
+#define MEMERR_DEV     0x0004
+#define MEMERR_SHA     0x0008
+#define OPENERR_DEV0   0x0010
+#define OPENERR_DEV1   0x0020
+#define OPENERR_DEV2   0x0040
+#define OPENERR_IN     0x0080
+#define OPENERR_OUT    0x0100
+#define METADATA_ERROR 0x0200
+#define SUCCESS_SPLIT  0x0400
 
-#define MEMERR_DEV 0x10
-#define MEMERR_SHA 0x16
-#define MEMERR_BUF 0x17
-
-#define READERR_DEV0 0x20
-#define READERR_DEV1 0x21
-#define READERR_DEV2 0x22
-#define READERR_IN   0x29
-
-#define OPENERR_DEV0 0x30
-#define OPENERR_DEV1 0x31
-#define OPENERR_DEV2 0x32
-#define OPENERR_OUT  0x38
-#define OPENERR_IN   0x39
-
-#define METADATA_ERROR        0x40
 #define METADATA_MISS_DEV0    0x01
 #define METADATA_MISS_DEV1    0x02
 #define METADATA_MISS_DEV2    0x04
@@ -59,26 +52,20 @@
 #if DEBUG>=1
 #define DEBUGPRINT(...) fprintf (stderr, "%s:%s():%d: %s\n", __FILE__, __func__, __LINE__, __VA_ARGS__)
 #define DEBUG1(format, ...) fprintf (stderr, "DEBUG1: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
-#endif
-
-#if DEBUG>=2
-#define DEBUG2(format, ...) fprintf (stderr, "DEBUG2: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
-#endif
-
-#if DEBUG>=3
-#define DEBUG3(format, ...) fprintf (stderr, "DEBUG3: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
-#endif
-
-#if DEBUG<1
+#else
 #define DEBUGPRINT(...)
 #define DEBUG1(...)
 #endif
 
-#if DEBUG<2
+#if DEBUG>=2
+#define DEBUG2(format, ...) fprintf (stderr, "DEBUG2: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
+#else
 #define DEBUG2(...)
 #endif
 
-#if DEBUG<3
+#if DEBUG>=3
+#define DEBUG3(format, ...) fprintf (stderr, "DEBUG3: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
+#else
 #define DEBUG3(...)
 #endif
 
@@ -271,17 +258,17 @@ DLLEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
     out = (unsigned char *) calloc(3 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     out_len = (size_t *) calloc(3, sizeof(size_t));
     if(chars == NULL) {
-        status = MEMERR_BUF;
+        status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for read buffer");
         goto end;
     }
     if(out == NULL) {
-        status = MEMERR_DEV;
+        status |= MEMERR_DEV;
         DEBUGPRINT("Cannot allocate memory for output buffer");
         goto end;
     }
     if(out_len == NULL) {
-        status = MEMERR_DEV;
+        status |= MEMERR_DEV;
         DEBUGPRINT("Cannot allocate memory for output length");
         goto end;
     }
@@ -290,14 +277,14 @@ DLLEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
     for(i = 0; i < 4; i++) {
         sha256_resblock[i] = calloc(32, sizeof(unsigned char));
         if(sha256_resblock[i] == NULL) {
-            status = MEMERR_SHA;
+            status |= MEMERR_SHA;
             DEBUGPRINT("Cannot allocate memory for SHA256 resources");
             goto end;
         }
 
         sha256_buf[i] = (char *) calloc(SHA256_BLOCKSIZE + 72, sizeof(unsigned char));
         if(sha256_buf[i] == NULL) {
-            status = MEMERR_SHA;
+            status |= MEMERR_SHA;
             DEBUGPRINT("Cannot allocate memory for buffer");
             goto end;
         }
@@ -369,7 +356,7 @@ DLLEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
         DEBUG3("Read %d bytes", rlen);
     }
     if(ferror(in)) {
-        status = READERR_IN;
+        status |= OPENERR_IN;
         DEBUGPRINT("Error while reading the input file for split");
         goto end;
     }
@@ -399,13 +386,13 @@ DLLEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
 #endif
     }
     metadata.missing = max - min;
-    status = write_metadata(meta, &metadata);
+    status |= write_metadata(meta, &metadata);
     if(status != 0) {
         DEBUGPRINT("Meta data error");
         goto end;
     }
 
-    status = SUCCESS_SPLIT;
+    status |= SUCCESS_SPLIT;
 
 end:
 
@@ -443,20 +430,20 @@ end:
  *
  * `*key` is the result of the `prepare_key()` function.
  *
- * All other return codes than `SUCCESS_MERGE` (0x02) mark a failure during
+ * All other return codes than `SUCCESS_MERGE` mark a failure during
  * merge.
  */
 DLLEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
 {
     unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i;
     size_t *in_len = NULL, out_len, l = 0;
-    int status, mds;
+    int status = 0, mds;
     raid5md metadata, md_read;
 
     new_metadata(&metadata);
     new_metadata(&md_read);
 
-    status = read_metadata(meta, &metadata);
+    status |= read_metadata(meta, &metadata);
 
     create_metadata(devices, &md_read);
     md_read.version = RAID5_METADATA_VERSION;
@@ -475,7 +462,7 @@ DLLEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
                 DEBUG2("dead device is 1");
                 dead_device = 1;
             } else {
-                status = METADATA_ERROR;
+                status |= METADATA_ERROR;
                 DEBUGPRINT("The meta data for at least two files is does not match");
                 goto end;
             }
@@ -487,17 +474,17 @@ DLLEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
     in_len = (size_t *) calloc(3, sizeof(size_t));
     buf = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     if(in == NULL) {
-        status = MEMERR_DEV;
+        status |= MEMERR_DEV;
         DEBUGPRINT("Cannot allocate memory for the input buffer");
         goto end;
     }
     if(in_len == NULL) {
-        status = MEMERR_DEV;
+        status |= MEMERR_DEV;
         DEBUGPRINT("Cannot allocate memory for the input length");
         goto end;
     }
     if(buf == NULL) {
-        status = MEMERR_BUF;
+        status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for the output buffer");
         goto end;
     }
@@ -527,7 +514,7 @@ DLLEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
         merge_byte_block(in, in_len, parity_pos, dead_device, l, buf, &out_len);
         DEBUG3("Merged %d bytes into %d", in_len[0] + in_len[1] + in_len[2], out_len);
         if(out_len == -1) {
-            status = READERR_IN;
+            status |= OPENERR_IN;
             DEBUGPRINT("The output contains no data.");
             goto end;
         }
@@ -546,21 +533,21 @@ DLLEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
         DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
     }
     if(devices[0] && ferror(devices[0])) {
-        status = READERR_DEV0;
+        status |= OPENERR_DEV0;
         DEBUGPRINT("Error reading from device 0 for during merge");
         goto end;
     }
     if(devices[1] && ferror(devices[1])) {
-        status = READERR_DEV1;
+        status |= OPENERR_DEV1;
         DEBUGPRINT("Error reading from device 1 for during merge");
         goto end;
     }
     if(devices[2] && ferror(devices[2])) {
-        status = READERR_DEV2;
+        status |= OPENERR_DEV2;
         DEBUGPRINT("Error reading from device 2 for during merge");
         goto end;
     }
-    status = SUCCESS_MERGE;
+    status |= SUCCESS_MERGE;
     DEBUG1("Merge finished with status %d", status);
 
 end:
@@ -705,20 +692,17 @@ DLLEXPORT void print_metadata(raid5md *md)
  */
 DLLEXPORT int read_metadata(FILE *fp, raid5md *md)
 {
-    if(fp != NULL) {
-        if(md != NULL) {
-            new_metadata(md);    /* clean the metadata */
-            fscanf(fp, "%2hhu", & (md->version));
-            fscanf(fp, "%64s", md->hash_dev0);
-            fscanf(fp, "%64s", md->hash_dev1);
-            fscanf(fp, "%64s", md->hash_dev2);
-            fscanf(fp, "%64s", md->hash_in);
-            fscanf(fp, "%4x", & (md->missing));
-            return 0;
-        }
-        return 2;
+    if(fp != NULL && md != NULL) {
+        new_metadata(md);    /* clean the metadata */
+        fscanf(fp, "%2hhu", & (md->version));
+        fscanf(fp, "%64s", md->hash_dev0);
+        fscanf(fp, "%64s", md->hash_dev1);
+        fscanf(fp, "%64s", md->hash_dev2);
+        fscanf(fp, "%64s", md->hash_in);
+        fscanf(fp, "%4x", & (md->missing));
+        return 0;
     }
-    return 1;
+    return METADATA_ERROR;
 }
 
 /**
@@ -782,7 +766,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     const int keyLength = (*env)->GetStringLength(env, _key);
 
     const int tmpLength = strlen((char *) tempInputDirPath);
-    int status, i, openfiles = 0;
+    int status = 0, i, openfiles = 0;
     char *inputBaseName = NULL;
     rc4_key rc4key;
 
@@ -799,7 +783,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
      */
     inputBaseName = (char *) calloc(tmpLength + 64 + 2 + 1, sizeof(unsigned char));
     if(inputBaseName == NULL) {
-        status = OPENERR_IN;
+        status |= OPENERR_IN;
         DEBUGPRINT("Cannot allocate memory for the input path");
         goto end;
     }
@@ -814,17 +798,17 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
         openfiles++;
     }
     if(devices[0] == NULL) {
-        status = OPENERR_DEV0;
+        status |= OPENERR_DEV0;
         DEBUGPRINT("Cannot open device 0 for merge");
         openfiles--;
     }
     if(devices[1] == NULL) {
-        status += OPENERR_DEV1;
+        status |= OPENERR_DEV1;
         DEBUGPRINT("Cannot open device 1 for merge");
         openfiles--;
     }
     if(devices[2] == NULL) {
-        status += OPENERR_DEV2;
+        status |= OPENERR_DEV2;
         DEBUGPRINT("Cannot open device 2 for merge");
         openfiles--;
     }
@@ -839,7 +823,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     DEBUG1("Merge input path for meta data file is %s", inputBaseName);
     meta = fopen(inputBaseName, "rb");
     if(meta == NULL) {
-        status = METADATA_ERROR;
+        status |= METADATA_ERROR;
         DEBUGPRINT("Cannot open meta data file for merge");
         goto end;
     }
@@ -847,7 +831,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     DEBUG1("Merge output path is %s", outputFilePath);
     fp = fopen(outputFilePath, "wb");
     if(fp == NULL) {
-        status = OPENERR_OUT;
+        status |= OPENERR_OUT;
         DEBUGPRINT("Cannot open output file for merge");
         goto end;
     }
@@ -856,7 +840,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     prepare_key((unsigned char *) key, keyLength, &rc4key);
 
     /* Invoke the native merge method. */
-    status = merge_file(fp, devices, meta, &rc4key);
+    status |= merge_file(fp, devices, meta, &rc4key);
     DEBUG1("Merge finished with status %d", status);
 
 end:
@@ -914,7 +898,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     /* generate the complete absolute input path */
     inputPath = calloc(strlen(inputBasePath) + strlen(inputFilePath) + 1, sizeof(unsigned char));
     if(inputPath == NULL) {
-        status = OPENERR_IN;
+        status |= OPENERR_IN;
         DEBUGPRINT("Cannot allocate memory for input path");
         goto end;
     }
@@ -925,7 +909,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     DEBUG1("Split input path is %s", inputPath);
     fp = fopen(inputPath, "rb");
     if(fp == NULL) {
-        status = OPENERR_IN;
+        status |= OPENERR_IN;
         DEBUGPRINT("Cannot open input file for split");
         goto end;
     }
@@ -939,7 +923,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     outputBaseName = (char *) calloc(tmpLength + 64 + 2 + 1, sizeof(unsigned char));
     resblock = calloc(32, sizeof(unsigned char));
     if(outputBaseName == NULL || resblock == NULL) {
-        status = OPENERR_IN;
+        status |= OPENERR_IN;
         DEBUGPRINT("Cannot allocate memory for output path");
         goto end;
     }
@@ -955,17 +939,17 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
         devices[i] = fopen(outputBaseName, "wb");
     }
     if(devices[0] == NULL) {
-        status = OPENERR_DEV0;
+        status |= OPENERR_DEV0;
         DEBUGPRINT("Cannot open device 0 for split");
         goto end;
     }
     if(devices[1] == NULL) {
-        status = OPENERR_DEV1;
+        status |= OPENERR_DEV1;
         DEBUGPRINT("Cannot open device 1 for split");
         goto end;
     }
     if(devices[2] == NULL) {
-        status = OPENERR_DEV2;
+        status |= OPENERR_DEV2;
         DEBUGPRINT("Cannot open device 2 for split");
         goto end;
     }
@@ -974,7 +958,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     DEBUG1("Split output path for meta data file is %s", outputBaseName);
     meta = fopen(outputBaseName, "wb");
     if(meta == NULL) {
-        status = METADATA_ERROR;
+        status |= METADATA_ERROR;
         DEBUGPRINT("Cannot open meta data file for split");
         goto end;
     }
@@ -983,19 +967,20 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     prepare_key((unsigned char *) key, keyLength, &rc4key);
 
     /* Invoke the native split method. */
-    status = split_file(fp, devices, meta, &rc4key);
+    status |= split_file(fp, devices, meta, &rc4key);
     DEBUG1("Split finished with status %d", status);
 
 end:
-    if(status == SUCCESS_SPLIT) {
+    if(status & SUCCESS_SPLIT) {
         DEBUGPRINT("Split succeeded.");
         memcpy(retvalue, &outputBaseName[ tmpLength ], 64);
         retvalue[64] = '\0';
         DEBUG2("Hash is %s", retvalue);
     } else {
         DEBUGPRINT("Split failed.");
-        retvalue[0] = status;
-        retvalue[1] = '\0';
+        retvalue[0] = (status & 0xff00) >> 8; /* Bits 8 to 15 */
+        retvalue[1] = (status & 0x00ff); /* Bits 0 to 7 */
+        retvalue[2] = '\0';
     }
     /* Close the files. */
     if(fp != NULL) {

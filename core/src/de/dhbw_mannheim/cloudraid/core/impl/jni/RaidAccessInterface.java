@@ -31,6 +31,18 @@ public class RaidAccessInterface {
 		System.loadLibrary("cloudraid");
 	}
 
+	public static final int SUCCESS_MERGE = 0x0001;
+	public static final int MEMERR_BUF = 0x0002;
+	public static final int MEMERR_DEV = 0x0004;
+	public static final int MEMERR_SHA = 0x0008;
+	public static final int OPENERR_DEV0 = 0x0010;
+	public static final int OPENERR_DEV1 = 0x0020;
+	public static final int OPENERR_DEV2 = 0x0040;
+	public static final int OPENERR_IN = 0x0080;
+	public static final int OPENERR_OUT = 0x0100;
+	public static final int METADATA_ERROR = 0x0200;
+	public static final int SUCCESS_SPLIT = 0x0400;
+
 	/**
 	 * @param tempInputDirPath
 	 *            The complete, absolute path to the temporary input directory,
