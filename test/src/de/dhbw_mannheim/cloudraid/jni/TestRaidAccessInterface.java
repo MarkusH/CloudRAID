@@ -141,7 +141,7 @@ public class TestRaidAccessInterface {
 
 		int i = RaidAccessInterface.mergeInterface(mergeInPath, hash,
 				out.getAbsolutePath(), KEY);
-		assertEquals(0x02, i);
+		assertEquals(0x0001, i);
 	}
 
 	@Ignore
