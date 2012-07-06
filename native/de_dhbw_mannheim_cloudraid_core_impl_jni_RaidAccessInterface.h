@@ -11,40 +11,22 @@ extern "C" {
 #define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_SUCCESS_MERGE 1L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_MEMERR_BUF
 #define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_MEMERR_BUF 2L
-#undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_MEMERR_DEV
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_MEMERR_DEV 4L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_MEMERR_SHA
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_MEMERR_SHA 8L
+#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_MEMERR_SHA 4L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV0
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV0 16L
+#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV0 8L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV1
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV1 32L
+#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV1 16L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV2
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV2 64L
+#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_DEV2 32L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_IN
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_IN 128L
+#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_IN 64L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_OUT
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_OUT 256L
+#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_OPENERR_OUT 128L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_METADATA_ERROR
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_METADATA_ERROR 512L
+#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_METADATA_ERROR 256L
 #undef de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_SUCCESS_SPLIT
-#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_SUCCESS_SPLIT 1024L
-/*
- * Class:     de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface
- * Method:    mergeInterface
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
- */
-JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_mergeInterface
-  (JNIEnv *, jclass, jstring, jstring, jstring, jstring);
-
-/*
- * Class:     de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface
- * Method:    splitInterface
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_splitInterface
-  (JNIEnv *, jclass, jstring, jstring, jstring, jstring);
-
+#define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_SUCCESS_SPLIT 512L
 /*
  * Class:     de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface
  * Method:    getName
@@ -68,6 +50,22 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
  */
 JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getVersion
   (JNIEnv *, jclass);
+
+/*
+ * Class:     de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface
+ * Method:    mergeInterface
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_mergeInterface
+  (JNIEnv *, jclass, jstring, jstring, jstring, jstring);
+
+/*
+ * Class:     de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface
+ * Method:    splitInterface
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_splitInterface
+  (JNIEnv *, jclass, jstring, jstring, jstring, jstring);
 
 #ifdef __cplusplus
 }

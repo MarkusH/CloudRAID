@@ -199,7 +199,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 				// Elements 0 - 2 are taken from the connectors, 3 will be the
 				// final one
-				String metadata[] = { null, null, null, null };
+				String metadata[] = {null, null, null, null};
 				for (int i = 0; i < 3; i++) {
 					metadata[i] = storageConnectors[i].getMetadata(this.hash);
 				}
@@ -249,10 +249,20 @@ public class CoreAccess extends Thread implements ICoreAccess {
 						+ this.path);
 				this.file.getParentFile().mkdirs();
 
-				RaidAccessInterface.mergeInterface(
+				int mergecode = RaidAccessInterface.mergeInterface(
 						this.config.getString("merge.input.dir"), this.hash,
 						this.file.getAbsolutePath(),
 						this.config.getString("file.password"));
+
+				if (mergecode != RaidAccessInterface.SUCCESS_MERGE) { // Error
+					System.err.println(RaidAccessInterface
+							.getErrorMessage(mergecode));
+					// TODO: Remove merge files?
+					// TODO: Remove upload file
+					// TODO: Remove from meta data
+					throw new IOException(
+							"Error merging the given file. See above for more information");
+				}
 
 				// Get data from file
 				BufferedInputStream bis = new BufferedInputStream(
@@ -261,11 +271,13 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
 		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
 		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (IllegalStateException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -378,8 +390,25 @@ public class CoreAccess extends Thread implements ICoreAccess {
 							+ File.separator + this.path,
 					this.config.getString("split.output.dir"),
 					this.config.getString("file.password"));
+
+			// Verify the content of this.hash
+			if (this.hash.length() == 2) { // Error
+				int splitcode = ((this.hash.charAt(0) ^ 0xFF) << 8) & 0xff00
+						| ((this.hash.charAt(1) ^ 0xFF) & 0x00ff);
+				System.err.println(RaidAccessInterface
+						.getErrorMessage(splitcode));
+				// TODO: Remove split files?
+				// TODO: Remove upload file
+				// TODO: Remove from meta data
+				throw new IOException(
+						"Error splitting the given file. See above for more information");
+			} else if (this.hash.length() != 64) { // Unknown error
+				throw new IOException(
+						"Error splitting the given file. Cannot determine further information. The computed hash is: "
+								+ this.hash);
+			}
+
 			// Update state to split
-			// TODO set lastMod
 			this.metadata.fileUpdate(this.fileid, this.path, this.hash,
 					new Date().getTime(), this.userid);
 			this.metadata.fileUpdateState(this.fileid, FILE_STATUS.SPLITTED);
@@ -407,6 +436,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			this.metadata.fileUpdateState(this.fileid, FILE_STATUS.READY);
 
 		} catch (MissingConfigValueException e) {
+			this.uploadstate = false;
+			e.printStackTrace();
+		} catch (IOException e) {
 			this.uploadstate = false;
 			e.printStackTrace();
 		} catch (IllegalStateException e) {

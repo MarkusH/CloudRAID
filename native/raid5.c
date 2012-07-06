@@ -35,15 +35,14 @@
 
 #define SUCCESS_MERGE  0x0001
 #define MEMERR_BUF     0x0002
-#define MEMERR_DEV     0x0004
-#define MEMERR_SHA     0x0008
-#define OPENERR_DEV0   0x0010
-#define OPENERR_DEV1   0x0020
-#define OPENERR_DEV2   0x0040
-#define OPENERR_IN     0x0080
-#define OPENERR_OUT    0x0100
-#define METADATA_ERROR 0x0200
-#define SUCCESS_SPLIT  0x0400
+#define MEMERR_SHA     0x0004
+#define OPENERR_DEV0   0x0008
+#define OPENERR_DEV1   0x0010
+#define OPENERR_DEV2   0x0020
+#define OPENERR_IN     0x0040
+#define OPENERR_OUT    0x0080
+#define METADATA_ERROR 0x0100
+#define SUCCESS_SPLIT  0x0200
 
 #define METADATA_MISS_DEV0    0x01
 #define METADATA_MISS_DEV1    0x02
@@ -267,12 +266,12 @@ DLLEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
         goto end;
     }
     if(out == NULL) {
-        status |= MEMERR_DEV;
+        status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for output buffer");
         goto end;
     }
     if(out_len == NULL) {
-        status |= MEMERR_DEV;
+        status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for output length");
         goto end;
     }
@@ -478,12 +477,12 @@ DLLEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
     in_len = (size_t *) calloc(3, sizeof(size_t));
     buf = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     if(in == NULL) {
-        status |= MEMERR_DEV;
+        status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for the input buffer");
         goto end;
     }
     if(in_len == NULL) {
-        status |= MEMERR_DEV;
+        status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for the input length");
         goto end;
     }
@@ -982,8 +981,8 @@ end:
         DEBUG2("Hash is %s", retvalue);
     } else {
         DEBUGPRINT("Split failed.");
-        retvalue[0] = (status & 0xff00) >> 8; /* Bits 8 to 15 */
-        retvalue[1] = (status & 0x00ff); /* Bits 0 to 7 */
+        retvalue[0] = ((status & 0xff00) >> 8) ^ 0xff;
+        retvalue[1] = ((status & 0x00ff)) ^ 0xff;
         retvalue[2] = '\0';
     }
     /* Close the files. */

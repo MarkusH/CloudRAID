@@ -33,15 +33,49 @@ public class RaidAccessInterface {
 
 	public static final int SUCCESS_MERGE = 0x0001;
 	public static final int MEMERR_BUF = 0x0002;
-	public static final int MEMERR_DEV = 0x0004;
-	public static final int MEMERR_SHA = 0x0008;
-	public static final int OPENERR_DEV0 = 0x0010;
-	public static final int OPENERR_DEV1 = 0x0020;
-	public static final int OPENERR_DEV2 = 0x0040;
-	public static final int OPENERR_IN = 0x0080;
-	public static final int OPENERR_OUT = 0x0100;
-	public static final int METADATA_ERROR = 0x0200;
-	public static final int SUCCESS_SPLIT = 0x0400;
+	public static final int MEMERR_SHA = 0x0004;
+	public static final int OPENERR_DEV0 = 0x0008;
+	public static final int OPENERR_DEV1 = 0x0010;
+	public static final int OPENERR_DEV2 = 0x0020;
+	public static final int OPENERR_IN = 0x0040;
+	public static final int OPENERR_OUT = 0x0080;
+	public static final int METADATA_ERROR = 0x0100;
+	public static final int SUCCESS_SPLIT = 0x0200;
+
+	public static String getErrorMessage(int code) {
+		StringBuffer sb = new StringBuffer();
+		if ((code & RaidAccessInterface.SUCCESS_MERGE) >= 1) {
+			sb.append("Merge successful");
+		}
+		if ((code & RaidAccessInterface.MEMERR_BUF) >= 1) {
+			sb.append("Memory error during buffer allocation");
+		}
+		if ((code & RaidAccessInterface.MEMERR_SHA) >= 1) {
+			sb.append("Memory error during checksum calculation");
+		}
+		if ((code & RaidAccessInterface.OPENERR_DEV0) >= 1) {
+			sb.append("Error opening the device 0");
+		}
+		if ((code & RaidAccessInterface.OPENERR_DEV1) >= 1) {
+			sb.append("Error opening the device 1");
+		}
+		if ((code & RaidAccessInterface.OPENERR_DEV2) >= 1) {
+			sb.append("Error opening the device 2");
+		}
+		if ((code & RaidAccessInterface.OPENERR_IN) >= 1) {
+			sb.append("Error opening the input device");
+		}
+		if ((code & RaidAccessInterface.OPENERR_OUT) >= 1) {
+			sb.append("Error opening the output device");
+		}
+		if ((code & RaidAccessInterface.METADATA_ERROR) >= 1) {
+			sb.append("Error during meta data calculation or verification");
+		}
+		if ((code & RaidAccessInterface.SUCCESS_SPLIT) >= 1) {
+			sb.append("Split successful");
+		}
+		return sb.toString();
+	}
 
 	public static native String getName();
 
