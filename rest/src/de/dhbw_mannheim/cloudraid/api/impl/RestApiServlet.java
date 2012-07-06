@@ -153,7 +153,7 @@ public class RestApiServlet extends HttpServlet {
 			throw new InstantiationException("No core service found");
 		}
 
-		this.userpattern = Pattern.compile("[a-zA-Z0-9]");
+		this.userpattern = Pattern.compile("[a-zA-Z0-9]+");
 	}
 
 	/**
