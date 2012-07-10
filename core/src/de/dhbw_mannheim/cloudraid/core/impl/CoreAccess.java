@@ -136,6 +136,32 @@ public class CoreAccess extends Thread implements ICoreAccess {
 	}
 
 	@Override
+	public boolean finishGetData(int fileid) {
+		this.fileid = fileid;
+		try {
+			// Retrieve the meta data from the database
+			ResultSet rs = this.metadata.fileById(this.fileid);
+			if (rs != null) {
+				setByResultSet(rs);
+
+				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
+					throw new IllegalStateException(String.format(
+							"File %s has state %s but READY expected!",
+							this.path, this.status));
+				}
+
+				removeFiles();
+			}
+		} catch (IllegalStateException e) {
+			e.printStackTrace();
+			return false;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return true;
+	}
+
+	@Override
 	public InputStream getData(int fileid) {
 		this.fileid = fileid;
 		int bufsize = 4096;
@@ -199,7 +225,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 				// Elements 0 - 2 are taken from the connectors, 3 will be the
 				// final one
-				String metadata[] = {null, null, null, null};
+				String metadata[] = { null, null, null, null };
 				for (int i = 0; i < 3; i++) {
 					metadata[i] = storageConnectors[i].getMetadata(this.hash);
 				}
@@ -257,9 +283,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				if (mergecode != RaidAccessInterface.SUCCESS_MERGE) { // Error
 					System.err.println(RaidAccessInterface
 							.getErrorMessage(mergecode));
-					// TODO: Remove merge files?
-					// TODO: Remove upload file
-					// TODO: Remove from meta data
+					removeFiles();
 					throw new IOException(
 							"Error merging the given file. See above for more information");
 				}
@@ -280,6 +304,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		} catch (IllegalStateException e) {
 			e.printStackTrace();
 		}
+
+		removeFiles();
+
 		return null;
 	}
 
@@ -367,6 +394,52 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		return this.uploadstate;
 	}
 
+	private void removeFiles() {
+		String si = null, so = null, mi = null, mo = null;
+		try {
+			si = this.config.getString("split.input.dir");
+		} catch (Exception ignore) {
+		}
+		try {
+			so = this.config.getString("split.output.dir");
+		} catch (Exception ignore) {
+		}
+		try {
+			mi = this.config.getString("merge.input.dir");
+		} catch (Exception ignore) {
+		}
+		try {
+			mo = this.config.getString("merge.output.dir");
+		} catch (Exception ignore) {
+		}
+		if (this.hash != null) {
+			if (so != null) {
+				so = so + File.separator;
+				silentRemove(so + this.hash + ".0");
+				silentRemove(so + this.hash + ".1");
+				silentRemove(so + this.hash + ".2");
+				silentRemove(so + this.hash + ".m");
+			}
+			if (mi != null) {
+				mi = mi + File.separator;
+				silentRemove(mi + this.hash + ".0");
+				silentRemove(mi + this.hash + ".1");
+				silentRemove(mi + this.hash + ".2");
+				silentRemove(mi + this.hash + ".m");
+			}
+		}
+		if (this.userid != -1 && this.path != null) {
+			if (si != null) {
+				si = si + File.separator;
+				silentRemove(si + this.userid + File.separator + this.path);
+			}
+			if (mo != null) {
+				mo = mo + File.separator;
+				silentRemove(mo + this.userid + File.separator + this.path);
+			}
+		}
+	}
+
 	@Override
 	public void reset() {
 		this.path = null;
@@ -397,9 +470,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 						| ((this.hash.charAt(1) ^ 0xFF) & 0x00ff);
 				System.err.println(RaidAccessInterface
 						.getErrorMessage(splitcode));
-				// TODO: Remove split files?
-				// TODO: Remove upload file
-				// TODO: Remove from meta data
+				removeFiles();
 				throw new IOException(
 						"Error splitting the given file. See above for more information");
 			} else if (this.hash.length() != 64) { // Unknown error
@@ -445,6 +516,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 			this.uploadstate = false;
 			e.printStackTrace();
 		}
+
+		removeFiles();
+
 		this.uploadstate = true;
 	}
 
@@ -453,6 +527,13 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		this.hash = rs.getString("hash_name");
 		this.userid = rs.getInt("user_id");
 		this.status = rs.getString("status");
+	}
+
+	private void silentRemove(String path) {
+		try {
+			new File(path).delete();
+		} catch (Exception ignore) {
+		}
 	}
 
 }

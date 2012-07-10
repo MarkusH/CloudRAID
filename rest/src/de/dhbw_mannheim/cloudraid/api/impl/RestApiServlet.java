@@ -367,9 +367,10 @@ public class RestApiServlet extends HttpServlet {
 		int statusCode = 500;
 		BufferedInputStream bis = null;
 		BufferedOutputStream bos = null;
+		int fileid = -1;
 		try {
 			slot = this.coreService.getSlot();
-			int fileid = rs.getInt("id");
+			fileid = rs.getInt("id");
 			int bufsize = 4096;
 
 			InputStream is = slot.getData(fileid);
@@ -406,6 +407,9 @@ public class RestApiServlet extends HttpServlet {
 				}
 			} catch (IOException ignore) {
 			}
+		}
+		if (slot != null && fileid > -1) {
+			slot.finishGetData(fileid);
 		}
 		resp.setStatusCode(statusCode);
 	}

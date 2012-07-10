@@ -43,9 +43,27 @@ public interface ICoreAccess {
 	public boolean deleteData(int fileid);
 
 	/**
+	 * This function must be called after the {@link #getData(int)} function has
+	 * been called. In case of the reference implementation
+	 * {@link de.dhbw_mannheim.cloudraid.core.impl.CoreAccess} this function
+	 * removes the underlying file object for the {@link InputStream} returned
+	 * by {@link #getData(int)}. If {@link #getData(int)} does not need some
+	 * cleanup after reading the {@link InputStream}, this function must return
+	 * <code>true</code>.
+	 * 
+	 * @param fileid
+	 *            The id for this file from the {@link IMetadataManager}
+	 * @return True on success, else false.
+	 */
+	public boolean finishGetData(int fileid);
+
+	/**
 	 * This function <b>must not</b> release itself from the {@link ICoreAccess}
 	 * slots in the {@link ICloudRAIDService}. A calling function <b>must</b>
-	 * release the slot!
+	 * release the slot!</br>
+	 * 
+	 * After closing the returned {@link InputStream}, the function
+	 * {@link #finishGetData(int)} <b>must</b> be called!
 	 * 
 	 * @param fileid
 	 *            The id for this file from the {@link IMetadataManager}
