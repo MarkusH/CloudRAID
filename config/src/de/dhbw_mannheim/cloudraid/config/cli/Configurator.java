@@ -49,6 +49,7 @@ public class Configurator {
 		System.out
 				.println("Usage: java de.dhbw_mannheim.cloudraid.config.cli.Configurator COMMAND");
 		System.out.println("    COMMAND:");
+		System.out.println("        rm KEY");
 		System.out.println("        get KEY");
 		System.out.println("        list");
 		System.out.println("        set [ -e | --encrypted ] KEY VALUE");
@@ -89,13 +90,13 @@ public class Configurator {
 			Configurator.help();
 			System.exit(1);
 		} else {
-			if (!(args[0].equals("get") || args[0].equals("list") || args[0]
-					.equals("set"))) {
+			if (!(args[0].equals("get") || args[0].equals("list")
+					|| args[0].equals("rm") || args[0].equals("set"))) {
 				System.err.println("Invalid argument!");
 				Configurator.help();
 				System.exit(1);
 			}
-			if ((args[0].equals("get") && args.length != 2)
+			if (((args[0].equals("get") || args[0].equals("rm")) && args.length != 2)
 					|| (args[0].equals("list") && args.length != 1)
 					|| (args[0].equals("set") && args.length != 3 && args.length != 4)) {
 				System.err.println("Invalid number of arguments!");
@@ -116,6 +117,9 @@ public class Configurator {
 				get(args[1]);
 			} else if (args[0].equals("list")) {
 				list();
+			} else if (args[0].equals("rm")) {
+				rm(args[1]);
+				Configurator.config.save();
 			} else if (args[0].equals("set")) {
 				if (args[1].equals("-e") || args[1].equals("--encrypted")) {
 					set(true, args[2], args[3]);
@@ -128,6 +132,10 @@ public class Configurator {
 			System.err.println("Cannot get console for password input.");
 			System.exit(1);
 		}
+	}
+
+	private static void rm(String key) {
+		Configurator.config.remove(key);
 	}
 
 	private static void set(boolean encrypted, String key, String value) {
