@@ -89,6 +89,22 @@ public class UbuntuOneConnector implements IStorageConnector {
 					.apiSecret(this.password).build();
 			this.stoken = this.service.getRequestToken();
 			this.ctoken = this.service.getAccessToken(this.stoken);
+			this.config.put(
+					String.format("connector.%d.customer_key", this.id),
+					this.ctoken.getToken(), true);
+			this.config.put(
+					String.format("connector.%d.customer_secret", this.id),
+					this.ctoken.getSecret(), true);
+			this.config.put(String.format("connector.%d.token_key", this.id),
+					this.stoken.getToken(), true);
+			this.config.put(
+					String.format("connector.%d.token_secret", this.id),
+					this.stoken.getSecret(), true);
+			this.config.save();
+			System.out
+					.println("Your customer token: " + this.ctoken.toString());
+			System.out
+					.println("Your security token: " + this.stoken.toString());
 		}
 
 		Response response = sendRequest(Verb.GET,
@@ -220,8 +236,8 @@ public class UbuntuOneConnector implements IStorageConnector {
 	 * @return true, if the upload succeeded; false, if not.
 	 */
 	private boolean performUpload(String resource, String extension) {
-		File f = new File(this.splitOutputDir + "/" + resource + "."
-				+ extension);
+		resource += "." + extension;
+		File f = new File(this.splitOutputDir + "/" + resource);
 		int maxFilesize;
 		try {
 			maxFilesize = this.config.getInt("filesize.max", null);
@@ -254,7 +270,7 @@ public class UbuntuOneConnector implements IStorageConnector {
 			Response response = sendRequest(Verb.PUT,
 					this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
 							+ OAuthEncoder.encode(resource), fileBytes);
-			if (response.getCode() == 201) {
+			if (response.getCode() == 200 || response.getCode() == 201) {
 				return true;
 			}
 		}
