@@ -7,6 +7,10 @@ else
 CFLAGS = -O3 ${FEATURES}
 endif
 
+ifdef EMPTY_SALT
+FEATURES += -DEMPTY_SALT=1
+endif
+
 ifndef DESTDIR
 DESTDIR = /
 endif
@@ -15,7 +19,7 @@ CC = gcc
 
 JAVASOURCE = ./../core/src
 JAVABIN = ./../core/bin
-SRC = raid5.c sha256.c rc4.c
+SRC = raid5.c sha256.c rc4.c utils.c
 OBJ = $(SRC:.c=.o)
 LIB = ./build/usr/lib/libcloudraid.so
 
@@ -43,12 +47,15 @@ clean:
 	rm -f *.dat
 
 test:
+	make DEBUG=${DEBUG} EMPTY_SALT=1
 	mkdir -p ./testing/
 	${CC} test_sha256.c ${CFLAGS} ${LIB} -o ./testing/test_sha256
+	${CC} test_utils.c ${CFLAGS} ${LIB} -o ./testing/test_utils
 	${CC} test_raid5.c -DCHECKING=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5
 
 run-test:
 	./testing/test_sha256
+	./testing/test_utils
 	./testing/test_raid5
 	./test_raid5.sh
 

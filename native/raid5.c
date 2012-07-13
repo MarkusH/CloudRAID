@@ -23,13 +23,14 @@
 #include "raid5.h"
 #include "sha256.h"
 #include "rc4.h"
+#include "utils.h"
 #include "de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
 
-#define _VERSION_ "0.0.1prealpha"
+#define _VERSION_ "0.0.2prealpha"
 #define _NAME_ "CloudRAID-RAID5"
 #define _VENDOR_ "cloudraid"
 
@@ -240,7 +241,7 @@ void split_byte_block(const unsigned char *in, const size_t in_len, unsigned cha
  * All other return codes than `SUCCESS_SPLIT` (0x04) mark a failure during
  * split.
  */
-LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
+LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key, const int keylen)
 {
     unsigned char *chars = NULL, *out = NULL, parity_pos = 2, *hash = NULL;
     size_t rlen, *out_len = NULL, l = 0, min = -1, max = 0;
@@ -253,13 +254,18 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
     char *sha256_buf[4] = {NULL, NULL, NULL, NULL};
     void *sha256_resblock[4] = {NULL, NULL, NULL, NULL};
     int i;
+    unsigned char *salt = NULL, *salted_key;
+    rc4_key rc4key;
 
     raid5md metadata;
+    new_metadata(&metadata);
     metadata.version = RAID5_METADATA_VERSION;
 
     chars = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     out = (unsigned char *) calloc(3 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     out_len = (size_t *) calloc(3, sizeof(size_t));
+    salt = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
+    salted_key = (unsigned char *) calloc(65, sizeof(unsigned char));
     if(chars == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for read buffer");
@@ -273,6 +279,16 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
     if(out_len == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for output length");
+        goto end;
+    }
+    if(salt == NULL) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot allocate memory for salt");
+        goto end;
+    }
+    if(salted_key == NULL) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot allocate memory for salted key");
         goto end;
     }
 
@@ -297,11 +313,30 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
 
     rlen = fread(chars, sizeof(unsigned char), 2 * RAID5_BLOCKSIZE, in);
     DEBUG3("Read %d bytes", rlen);
+#if ENCRYPT_DATA == 1
+#ifndef EMPTY_SALT
+    i = create_salt(salt);
+    if(i != 0) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot generate salt");
+        DEBUG1("Got return value %d but expected 0", i);
+    }
+    metadata.salt = salt;
+#endif
+
+    i = hmac(key, keylen, salt, salted_key);
+    if(i != 0) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot compute salted hash");
+        DEBUG1("Got return value %d but expected 0", i);
+    }
+    prepare_key((unsigned char *) salted_key, 64, &rc4key);
+#endif
     while(rlen > 0) {
 #if ENCRYPT_DATA == 1
         /* encrypt the input file */
         DEBUG1("Encryption enabled");
-        rc4(chars, rlen, key);
+        rc4(chars, rlen, &rc4key);
 #endif
         if(sha256_len[3] == SHA256_BLOCKSIZE) {
             sha256_process_block(sha256_buf[3], SHA256_BLOCKSIZE, &sha256_ctx[3]);
@@ -411,6 +446,12 @@ end:
             free(sha256_resblock[i]);
         }
     }
+    if(salted_key != NULL) {
+        free(salted_key);
+    }
+    if(salt != NULL) {
+        free(salt);
+    }
     if(out_len != NULL) {
         free(out_len);
     }
@@ -436,12 +477,14 @@ end:
  * All other return codes than `SUCCESS_MERGE` mark a failure during
  * merge.
  */
-LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
+LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key, const int keylen)
 {
     unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i;
     size_t *in_len = NULL, out_len, l = 0;
     int status = 0, mds;
     raid5md metadata, md_read;
+    unsigned char *salted_key = NULL;
+    rc4_key rc4key;
 
     new_metadata(&metadata);
     new_metadata(&md_read);
@@ -476,6 +519,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
     in = (unsigned char *) calloc(3 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     in_len = (size_t *) calloc(3, sizeof(size_t));
     buf = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
+    salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
     if(in == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for the input buffer");
@@ -491,11 +535,25 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
         DEBUGPRINT("Cannot allocate memory for the output buffer");
         goto end;
     }
+    if(salted_key == NULL) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot allocate memory for salt");
+        goto end;
+    }
 
     in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5_BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
     in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5_BLOCKSIZE], sizeof(char), RAID5_BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
     in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5_BLOCKSIZE], sizeof(char), RAID5_BLOCKSIZE, devices[parity_pos]) : 0;
     DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
+#if ENCRYPT_DATA == 1
+    i = hmac(key, keylen, metadata.salt, salted_key);
+    if(i != 0) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot compute salted hash");
+        DEBUG1("Got return value %d but expected 0", i);
+    }
+    prepare_key((unsigned char *) salted_key, 64, &rc4key);
+#endif
     while(in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0) {
         /*
         * Detect end of file, since reading to the end but
@@ -524,7 +582,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
 #if ENCRYPT_DATA == 1
         /* encrypt the input file */
         DEBUG1("Encryption enabled");
-        rc4(buf, out_len, key);
+        rc4(buf, out_len, &rc4key);
 #endif
 
         fwrite(buf, sizeof(unsigned char), out_len, out);
@@ -554,6 +612,9 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
     DEBUG1("Merge finished with status %d", status);
 
 end:
+    if(salted_key != NULL) {
+        free(salted_key);
+    }
     if(buf != NULL) {
         free(buf);
     }
@@ -651,6 +712,7 @@ LIBEXPORT int create_metadata(FILE *devices[], raid5md *md)
         min = (min < l) ? min : l;
         max = (max > l) ? max : l;
     }
+    md->salt = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
     md->missing = l;
     free(ascii);
     return 0;
@@ -666,6 +728,8 @@ LIBEXPORT void new_metadata(raid5md *md)
         memset(md->hash_dev1, 0, 65);
         memset(md->hash_dev2, 0, 65);
         memset(md->hash_in, 0, 65);
+        md->salt = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
+        memset(md->salt, 0, ENCRYPTION_SALT_BYTES + 1);
         md->version = 0;
         md->missing = 0;
     }
@@ -683,6 +747,9 @@ LIBEXPORT void print_metadata(raid5md *md)
         printf("1: %64s\n", md->hash_dev1);
         printf("2: %64s\n", md->hash_dev2);
         printf("I: %64s\n", md->hash_in);
+        printf("S: ");
+        print_salt(stdout, md->salt);
+        printf("\n");
     } else {
         printf("\nNo metadata given!\n");
     }
@@ -690,18 +757,27 @@ LIBEXPORT void print_metadata(raid5md *md)
 
 /**
  * Read the meta data from the file pointer `*fp` and store it in the raid5
- * meta data object `*md`. The function returns 0 on success, 1 if `*fp` is
- * NULL and 2 if `*md` is NULL.
+ * meta data object `*md`. The function returns 0 on success or 1 if either `*fp` is
+ * or `*md` or both are NULL.
  */
 LIBEXPORT int read_metadata(FILE *fp, raid5md *md)
 {
     if(fp != NULL && md != NULL) {
         new_metadata(md);    /* clean the metadata */
         fscanf(fp, "%2hhu", & (md->version));
+
+        if(md->version != RAID5_METADATA_VERSION) {
+            DEBUGPRINT("The meta data read from the meta data file is not suitable for this library.");
+            DEBUG2("Found meta data version %d but expected %d", md->version, RAID5_METADATA_VERSION);
+            return METADATA_ERROR;
+        }
+        /* TODO: implement backwards compatibility */
+
         fscanf(fp, "%64s", md->hash_dev0);
         fscanf(fp, "%64s", md->hash_dev1);
         fscanf(fp, "%64s", md->hash_dev2);
         fscanf(fp, "%64s", md->hash_in);
+        fread(md->salt, sizeof(unsigned char), ENCRYPTION_SALT_BYTES, fp);
         fscanf(fp, "%4x", & (md->missing));
         return 0;
     }
@@ -748,6 +824,7 @@ LIBEXPORT int write_metadata(FILE *fp, raid5md *md)
         fprintf(fp, "%64s", md->hash_dev1);
         fprintf(fp, "%64s", md->hash_dev2);
         fprintf(fp, "%64s", md->hash_in);
+        fwrite(md->salt, sizeof(unsigned char), ENCRYPTION_SALT_BYTES, fp);
         fprintf(fp, "%04x", md->missing);
         return 0;
     }
@@ -771,7 +848,6 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     const int tmpLength = strlen((char *) tempInputDirPath);
     int status = 0, i, openfiles = 0;
     char *inputBaseName = NULL;
-    rc4_key rc4key;
 
     /* Generate file pointers. */
     FILE *fp = NULL;
@@ -839,11 +915,8 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
         goto end;
     }
 
-    /* construct the RC4 key */
-    prepare_key((unsigned char *) key, keyLength, &rc4key);
-
     /* Invoke the native merge method. */
-    status |= merge_file(fp, devices, meta, &rc4key);
+    status |= merge_file(fp, devices, meta, key, keyLength);
     DEBUG1("Merge finished with status %d", status);
 
 end:
@@ -891,7 +964,6 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     int status = 0;
     unsigned char i;
     const int tmpLength = strlen(tempOutputDirPath);
-    rc4_key rc4key;
 
     /* Generate file pointers. */
     FILE *fp = NULL;
@@ -933,7 +1005,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     memcpy(outputBaseName, tempOutputDirPath, tmpLength);
     /* build the hash */
     sha256_buffer(inputFilePath, strlen(inputFilePath), resblock);
-    ascii_from_resbuf((unsigned char *) &outputBaseName[ tmpLength ] , resblock);
+    ascii_from_resbuf((unsigned char *) &outputBaseName[ tmpLength ], resblock);
 
     /* open the files */
     for(i = 0; i < 3; i++) {
@@ -966,11 +1038,8 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
         goto end;
     }
 
-    /* construct the RC4 key */
-    prepare_key((unsigned char *) key, keyLength, &rc4key);
-
     /* Invoke the native split method. */
-    status |= split_file(fp, devices, meta, &rc4key);
+    status |= split_file(fp, devices, meta, key, keyLength);
     DEBUG1("Split finished with status %d", status);
 
 end:

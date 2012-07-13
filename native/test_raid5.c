@@ -53,18 +53,18 @@ int main(void)
 #if CHECKING == 1
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
                        "",
-                       "51213026e91f4ca01a4522f55ae523f4c6a0d2247662db569846cf2226caceb3",
-                       "0c3c738a3ca13e0c68c06fb448d095a28cbb7b548d9f790759752212ee1ccf25",
+                       "e989f9691dd7804a165baeb59ec81b89ca24f1039395500703e49ab5ef18e983",
+                       "40c55f937954b8a6e5eb1949d03b8f957f946bd0c1384f87d2a2a3dca145fad3",
                        "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
-                       "390040c8833043de57990923b7406846f5d5ac8598e893f1dc54716f568abc15",
-                       "5a672ad40199303d6bc2d550a9e099cefdb5a5958c76bd2e5ef31e910b623680"
+                       "69545f42849bcf96fc6ab1f5b89ccb792ebf424bcbd279590870f3e4962ea0e0",
+                       "fcfef94dc055f58ad0830558ece2e38b8d35373cca7a89e7cc67e12ac0f95284"
                       };
 #endif
 #if BENCHMARK == 1
     struct timeval start, end;
     float elapsed_split, elapsed_merge;
 #endif
-    rc4_key rc4key;
+    /* rc4_key rc4key; */
 
 #if BENCHMARK != 1
     printf("Running test for RAID5:\n\n");
@@ -107,8 +107,6 @@ int main(void)
         return 1;
     }
 
-    prepare_key((unsigned char *) "password", 8, &rc4key);
-
     /** perform the split **/
 #if BENCHMARK != 1
     printf("Start split ... ");
@@ -117,7 +115,7 @@ int main(void)
 #if BENCHMARK == 1
     gettimeofday(&start, NULL);
 #endif
-    split_file(fp[0], &fp[1], fp[4], &rc4key);
+    split_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
 #if BENCHMARK == 1
     gettimeofday(&end, NULL);
 #endif
@@ -161,7 +159,6 @@ int main(void)
         return 1;
     }
 
-    prepare_key((unsigned char *) "password", 8, &rc4key);
     /** perform the merge **/
 #if BENCHMARK != 1
     printf("Start merge ... ");
@@ -170,7 +167,7 @@ int main(void)
 #if BENCHMARK == 1
     gettimeofday(&start, NULL);
 #endif
-    merge_file(fp[0], &fp[1], fp[4], &rc4key);
+    merge_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
 #if BENCHMARK == 1
     gettimeofday(&end, NULL);
 #endif
