@@ -52,17 +52,17 @@ extern "C"
     void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char *out, size_t *out_len);
     void split_byte_block(const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[]);
 
-    DLLEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key);
-    DLLEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key);
+    LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key);
+    LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key);
 
-    DLLEXPORT int cmp_metadata(raid5md *md1, raid5md *md2);
-    DLLEXPORT int cmp_metadata_hash(raid5md *md1, raid5md *md2, const int idx);
-    DLLEXPORT int create_metadata(FILE *devices[], raid5md *md);
-    DLLEXPORT void new_metadata(raid5md *md);
-    DLLEXPORT void print_metadata(raid5md *md);
-    DLLEXPORT int read_metadata(FILE *fp, raid5md *md);
-    DLLEXPORT void set_metadata_hash(raid5md *md, const int idx, const unsigned char hash[65]);
-    DLLEXPORT int write_metadata(FILE *fp, raid5md *md);
+    LIBEXPORT int cmp_metadata(raid5md *md1, raid5md *md2);
+    LIBEXPORT int cmp_metadata_hash(raid5md *md1, raid5md *md2, const int idx);
+    LIBEXPORT int create_metadata(FILE *devices[], raid5md *md);
+    LIBEXPORT void new_metadata(raid5md *md);
+    LIBEXPORT void print_metadata(raid5md *md);
+    LIBEXPORT int read_metadata(FILE *fp, raid5md *md);
+    LIBEXPORT void set_metadata_hash(raid5md *md, const int idx, const unsigned char hash[65]);
+    LIBEXPORT int write_metadata(FILE *fp, raid5md *md);
 
 #ifdef __cplusplus
 }

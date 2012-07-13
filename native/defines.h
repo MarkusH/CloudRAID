@@ -24,15 +24,15 @@
 #define CLOUDRAID_DEFINES_H 1
 
 #ifdef _WIN32
-#define DLLEXPORT __declspec(dllexport)
+#define LIBEXPORT __declspec(dllexport)
 #endif
 
 #ifdef _WIN64
-#define DLLEXPORT __declspec(dllexport)
+#define LIBEXPORT __declspec(dllexport)
 #endif
 
-#ifndef DLLEXPORT
-#define DLLEXPORT
+#ifndef LIBEXPORT
+#define LIBEXPORT
 #endif
 
 #endif

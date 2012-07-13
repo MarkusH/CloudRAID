@@ -119,10 +119,10 @@ extern "C"
     /**
      * Convert the RESBLOCK to an 65 character String, including the terminating NUL!
      */
-    DLLEXPORT void ascii_from_resbuf(unsigned char *ascii, void *resblock);
-    DLLEXPORT int build_sha256_sum(char *filename, unsigned char *hash);
-    DLLEXPORT int build_sha256_sum_file(FILE *filename, unsigned char *hash);
-    DLLEXPORT unsigned char *check_sha256_sum(char *filename, unsigned char *hash);
+    LIBEXPORT void ascii_from_resbuf(unsigned char *ascii, void *resblock);
+    LIBEXPORT int build_sha256_sum(char *filename, unsigned char *hash);
+    LIBEXPORT int build_sha256_sum_file(FILE *filename, unsigned char *hash);
+    LIBEXPORT unsigned char *check_sha256_sum(char *filename, unsigned char *hash);
 
 #ifdef __cplusplus
 }

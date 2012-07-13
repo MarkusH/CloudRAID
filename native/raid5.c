@@ -240,7 +240,7 @@ void split_byte_block(const unsigned char *in, const size_t in_len, unsigned cha
  * All other return codes than `SUCCESS_SPLIT` (0x04) mark a failure during
  * split.
  */
-DLLEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
+LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, rc4_key *key)
 {
     unsigned char *chars = NULL, *out = NULL, parity_pos = 2, *hash = NULL;
     size_t rlen, *out_len = NULL, l = 0, min = -1, max = 0;
@@ -436,7 +436,7 @@ end:
  * All other return codes than `SUCCESS_MERGE` mark a failure during
  * merge.
  */
-DLLEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
+LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, rc4_key *key)
 {
     unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i;
     size_t *in_len = NULL, out_len, l = 0;
@@ -577,7 +577,7 @@ end:
  *  - 0x20: missing information about missing bytes (METADATA_MISS_MISSING)
  *  - 0x80: memory error in md1 or md2 (METADATA_MEMORY_ERROR)
  */
-DLLEXPORT int cmp_metadata(raid5md *md1, raid5md *md2)
+LIBEXPORT int cmp_metadata(raid5md *md1, raid5md *md2)
 {
     int i, cmp = 0x00;
 
@@ -598,7 +598,7 @@ DLLEXPORT int cmp_metadata(raid5md *md1, raid5md *md2)
  * representations in `*md1` and `*md2` OR if the index is out of range [0..3].
  * Otherwize the error number (see `cmp_metadata()`).
  */
-DLLEXPORT int cmp_metadata_hash(raid5md *md1, raid5md *md2, const int idx)
+LIBEXPORT int cmp_metadata_hash(raid5md *md1, raid5md *md2, const int idx)
 {
     if(md1 == NULL || md2 == NULL) {
         return 0;
@@ -621,7 +621,7 @@ DLLEXPORT int cmp_metadata_hash(raid5md *md1, raid5md *md2, const int idx)
  * file. The checksums are stored into the given raid5 meta data `*md`.
  * The function returns 0 on success or non-zero on error.
  */
-DLLEXPORT int create_metadata(FILE *devices[], raid5md *md)
+LIBEXPORT int create_metadata(FILE *devices[], raid5md *md)
 {
     int i;
     unsigned char *ascii = NULL;
@@ -659,7 +659,7 @@ DLLEXPORT int create_metadata(FILE *devices[], raid5md *md)
 /**
  * Initialize a new raid5 meta data object `*md` with zeros.
  */
-DLLEXPORT void new_metadata(raid5md *md)
+LIBEXPORT void new_metadata(raid5md *md)
 {
     if(md != NULL) {
         memset(md->hash_dev0, 0, 65);
@@ -674,7 +674,7 @@ DLLEXPORT void new_metadata(raid5md *md)
 /**
  * Print the given raid5 meta data object `*md`.
  */
-DLLEXPORT void print_metadata(raid5md *md)
+LIBEXPORT void print_metadata(raid5md *md)
 {
     if(md != NULL) {
         printf("\nVersion: %02x\n", md->version);
@@ -693,7 +693,7 @@ DLLEXPORT void print_metadata(raid5md *md)
  * meta data object `*md`. The function returns 0 on success, 1 if `*fp` is
  * NULL and 2 if `*md` is NULL.
  */
-DLLEXPORT int read_metadata(FILE *fp, raid5md *md)
+LIBEXPORT int read_metadata(FILE *fp, raid5md *md)
 {
     if(fp != NULL && md != NULL) {
         new_metadata(md);    /* clean the metadata */
@@ -716,7 +716,7 @@ DLLEXPORT int read_metadata(FILE *fp, raid5md *md)
  *  - 2: raid5md->hash_dev2
  *  - 3: raid5md->hash_in
  */
-DLLEXPORT void set_metadata_hash(raid5md *md, const int idx, const unsigned char hash[65])
+LIBEXPORT void set_metadata_hash(raid5md *md, const int idx, const unsigned char hash[65])
 {
     if(md != NULL) {
         switch(idx) {
@@ -740,7 +740,7 @@ DLLEXPORT void set_metadata_hash(raid5md *md, const int idx, const unsigned char
  * Write the meta data object `*md` to file `*fp`. The function returns 0 on
  * success, METADATA_ERROR if either `*fp` or `*md` or both are NULL.
  */
-DLLEXPORT int write_metadata(FILE *fp, raid5md *md)
+LIBEXPORT int write_metadata(FILE *fp, raid5md *md)
 {
     if(fp != NULL && md != NULL) {
         fprintf(fp, "%02x", md->version);
@@ -1017,16 +1017,19 @@ end:
 }
 
 JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getName
-(JNIEnv *env, jclass cls) {
+(JNIEnv *env, jclass cls)
+{
     return (*env)->NewStringUTF(env, _NAME_);
 }
 
 JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getVendor
-(JNIEnv *env, jclass cls) {
+(JNIEnv *env, jclass cls)
+{
     return (*env)->NewStringUTF(env, _VENDOR_);
 }
 
 JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getVersion
-(JNIEnv *env, jclass cls) {
+(JNIEnv *env, jclass cls)
+{
     return (*env)->NewStringUTF(env, _VERSION_);
 }

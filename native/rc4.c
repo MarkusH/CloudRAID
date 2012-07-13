@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 
-DLLEXPORT void swap_byte(unsigned char *a, unsigned char *b)
+LIBEXPORT void swap_byte(unsigned char *a, unsigned char *b)
 {
     unsigned char swapByte;
 
@@ -16,7 +16,7 @@ DLLEXPORT void swap_byte(unsigned char *a, unsigned char *b)
     *b = swapByte;
 }
 
-DLLEXPORT void prepare_key(const unsigned char *key_data_ptr, int key_data_len, rc4_key *key)
+LIBEXPORT void prepare_key(const unsigned char *key_data_ptr, int key_data_len, rc4_key *key)
 {
     unsigned char index1;
     unsigned char index2;

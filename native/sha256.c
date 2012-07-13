@@ -465,7 +465,7 @@ void sha256_process_block(const void *buffer, size_t len, struct sha256_ctx *ctx
 #define SHAERR_INVALID 0x42
 #define SHAERR_VALID   0x43
 
-DLLEXPORT void ascii_from_resbuf(unsigned char *ascii, void *resblock)
+LIBEXPORT void ascii_from_resbuf(unsigned char *ascii, void *resblock)
 {
     int i;
     for(i = 0; i < 32; i++) {
@@ -473,7 +473,7 @@ DLLEXPORT void ascii_from_resbuf(unsigned char *ascii, void *resblock)
     }
 }
 
-DLLEXPORT int build_sha256_sum(char *filename, unsigned char *hash)
+LIBEXPORT int build_sha256_sum(char *filename, unsigned char *hash)
 {
     void *resblock = NULL;
     FILE *fp = NULL;
@@ -495,7 +495,7 @@ DLLEXPORT int build_sha256_sum(char *filename, unsigned char *hash)
     return 0;
 }
 
-DLLEXPORT int build_sha256_sum_file(FILE *fp, unsigned char *hash)
+LIBEXPORT int build_sha256_sum_file(FILE *fp, unsigned char *hash)
 {
     void *resblock = NULL;
 
@@ -515,7 +515,7 @@ DLLEXPORT int build_sha256_sum_file(FILE *fp, unsigned char *hash)
     return 0;
 }
 
-DLLEXPORT unsigned char *check_sha256_sum(char *filename, unsigned char *hash)
+LIBEXPORT unsigned char *check_sha256_sum(char *filename, unsigned char *hash)
 {
     unsigned char *ascii = NULL;
 
