@@ -67,9 +67,9 @@ public class DropboxConnector implements IStorageConnector {
 	private static final String META_URL = "https://api.dropbox.com/1/metadata/"
 			+ DropboxConnector.ROOT_NAME + "/";
 	private static final String RESTORE_URL = "https://api.dropbox.com/1/restore/"
-			+ ROOT_NAME + "/";
+			+ DropboxConnector.ROOT_NAME + "/";
 	private static final String REVISION_URL = "https://api.dropbox.com/1/revisions/"
-			+ ROOT_NAME + "/";
+			+ DropboxConnector.ROOT_NAME + "/";
 
 	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 
@@ -238,6 +238,52 @@ public class DropboxConnector implements IStorageConnector {
 	}
 
 	/**
+	 * Restores a file, if the meta data say that that it is deleted
+	 * ("is_deleted" must be "true"). This must be done to be able to overwrite
+	 * a deleted file on the Dropbox servers.
+	 * 
+	 * @param resource
+	 *            The resource name.
+	 * @param extension
+	 *            The file extension.
+	 */
+	private void maybeRestoreFile(String resource, String extension) {
+		OAuthRequest request = new OAuthRequest(GET,
+				DropboxConnector.REVISION_URL + resource + "." + extension);
+		this.service.signRequest(this.accessToken, request);
+		Response response = request.send();
+		System.out.println("Retrieve metadata for " + resource + "."
+				+ extension);
+		System.out.println(response.getCode());
+		System.out.println(response.getBody());
+		if (response.getCode() != 200) {
+			return;
+		}
+		try {
+			JSONArray jsonarray = new JSONArray(response.getBody());
+			for (int i = 0; i < jsonarray.length(); i++) {
+				JSONObject jsonbody = jsonarray.getJSONObject(i);
+				System.out.println(jsonbody);
+				if (jsonbody.optBoolean("is_deleted")) {
+					continue;
+				}
+				String rev = jsonbody.getString("rev");
+				request = new OAuthRequest(POST, DropboxConnector.RESTORE_URL
+						+ resource + "." + extension + "?rev=" + rev);
+				this.service.signRequest(this.accessToken, request);
+				response = request.send();
+				System.out.println("Restore revision " + rev + " for "
+						+ resource + "." + extension);
+				System.out.println(response.getCode());
+				System.out.println(response.getBody());
+			}
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return;
+	}
+
+	/**
 	 * Deletes a file from the Dropbox servers.
 	 * 
 	 * @param resource
@@ -384,41 +430,5 @@ public class DropboxConnector implements IStorageConnector {
 			}
 		}
 		return ret;
-	}
-
-	private void maybeRestoreFile(String resource, String extension) {
-		System.out.println("Maybe restore:");
-		OAuthRequest request = new OAuthRequest(GET,
-				DropboxConnector.REVISION_URL + resource + "." + extension);
-		this.service.signRequest(this.accessToken, request);
-		Response response = request.send();
-		System.out.println(response.getCode());
-		System.out.println(response.getBody());
-		if (response.getCode() != 200) {
-			return;
-		}
-		try {
-			JSONArray jsonarray = new JSONArray(response.getBody());
-			for (int i = 0; i < jsonarray.length(); i++) {
-				JSONObject jsonbody = jsonarray.getJSONObject(i);
-				System.out.println(jsonbody);
-				if (jsonbody.optBoolean("is_deleted")) {
-					continue;
-				}
-				String rev = jsonbody.getString("rev");
-				request = new OAuthRequest(POST, RESTORE_URL + resource + "."
-						+ extension + "?rev=" + rev);
-				this.service.signRequest(this.accessToken, request);
-				response = request.send();
-				System.out.println(response.getCode());
-				System.out.println(response.getBody());
-				if (response.getCode() == 200) {
-					return;
-				}
-			}
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		return;
 	}
 }

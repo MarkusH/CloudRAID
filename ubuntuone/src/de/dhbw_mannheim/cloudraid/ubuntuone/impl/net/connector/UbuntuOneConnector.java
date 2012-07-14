@@ -222,7 +222,8 @@ public class UbuntuOneConnector implements IStorageConnector {
 				this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
 						+ resource + ".m");
 		if (response.getCode() == 200) {
-			BufferedInputStream bis = new BufferedInputStream(response.getStream());
+			BufferedInputStream bis = new BufferedInputStream(
+					response.getStream());
 			byte meta[] = new byte[size];
 			Arrays.fill(meta, (byte) 0);
 			try {
