@@ -99,7 +99,7 @@ public interface IStorageConnector {
 	 *            Retrieve the given resource
 	 * @return A string containing the RAID meta data.
 	 */
-	public String getMetadata(String resource);
+	public byte[] getMetadata(String resource, int size);
 
 	/**
 	 * Changes an <b>existing</b> file to a cloud service. This method

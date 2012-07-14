@@ -26,10 +26,12 @@ import static org.scribe.model.Verb.GET;
 import static org.scribe.model.Verb.POST;
 import static org.scribe.model.Verb.PUT;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -214,12 +216,25 @@ public class DropboxConnector implements IStorageConnector {
 	}
 
 	@Override
-	public String getMetadata(String resource) {
+	public byte[] getMetadata(String resource, int size) {
 		Response response = performGet(resource, "m");
 		if (response == null) {
 			return null;
 		}
-		return response.getBody();
+		BufferedInputStream bis = new BufferedInputStream(response.getStream());
+		byte meta[] = new byte[size];
+		Arrays.fill(meta, (byte) 0);
+		try {
+			bis.read(meta, 0, size);
+		} catch (IOException ignore) {
+			meta = null;
+		} finally {
+			try {
+				bis.close();
+			} catch (Exception ignore) {
+			}
+		}
+		return meta;
 	}
 
 	/**

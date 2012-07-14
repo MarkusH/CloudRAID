@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Date;
 
 import org.osgi.framework.BundleContext;
@@ -225,9 +226,11 @@ public class CoreAccess extends Thread implements ICoreAccess {
 
 				// Elements 0 - 2 are taken from the connectors, 3 will be the
 				// final one
-				String metadata[] = { null, null, null, null };
+				byte metadata[][] = { null, null, null, null };
+				int mdlen = RaidAccessInterface.getMetadataByteLength();
 				for (int i = 0; i < 3; i++) {
-					metadata[i] = storageConnectors[i].getMetadata(this.hash);
+					metadata[i] = storageConnectors[i].getMetadata(this.hash,
+							mdlen);
 				}
 
 				// Find at least two common meta data strings to verify
@@ -235,15 +238,16 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				// check for (1 AND 2)
 				if (metadata[0] != null
 						&& (metadata[1] != null
-								&& metadata[0].equals(metadata[1]) || metadata[2] != null
-								&& metadata[0].equals(metadata[2]))) {
+								&& Arrays.equals(metadata[0], metadata[1]) || metadata[2] != null
+								&& Arrays.equals(metadata[0], metadata[2]))) {
 					metadata[3] = metadata[0];
 				} else {
 					if (metadata[1] != null && metadata[2] != null
-							&& metadata[1].equals(metadata[2])) {
+							&& Arrays.equals(metadata[1], metadata[2])) {
 						metadata[3] = metadata[1];
 					}
 				}
+
 				if (metadata[3] == null) {
 					// We don't have any meta data
 					throw new IllegalStateException(
@@ -258,7 +262,7 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				try {
 					bos = new BufferedOutputStream(new FileOutputStream(
 							metadatafile), bufsize);
-					bos.write(metadata[3].getBytes());
+					bos.write(metadata[3]);
 				} catch (IOException e) {
 					e.printStackTrace();
 				} finally {

@@ -22,10 +22,12 @@
 
 package de.dhbw_mannheim.cloudraid.ubuntuone.impl.net.connector;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import org.scribe.builder.ServiceBuilder;
 import org.scribe.model.OAuthRequest;
@@ -215,15 +217,27 @@ public class UbuntuOneConnector implements IStorageConnector {
 	}
 
 	@Override
-	public String getMetadata(String resource) {
+	public byte[] getMetadata(String resource, int size) {
 		Response response = sendRequest(Verb.GET,
 				this.service.getContentRootEndpoint() + "/~/Ubuntu%20One/"
 						+ resource + ".m");
 		if (response.getCode() == 200) {
-			return response.getBody();
-		} else {
-			return null;
+			BufferedInputStream bis = new BufferedInputStream(response.getStream());
+			byte meta[] = new byte[size];
+			Arrays.fill(meta, (byte) 0);
+			try {
+				bis.read(meta, 0, size);
+			} catch (IOException ignore) {
+				meta = null;
+			} finally {
+				try {
+					bis.close();
+				} catch (Exception ignore) {
+				}
+			}
+			return meta;
 		}
+		return null;
 	}
 
 	/**

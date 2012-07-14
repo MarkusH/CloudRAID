@@ -22,14 +22,14 @@
 
 package de.dhbw_mannheim.cloudraid.sugarsync.impl.net.connector;
 
-import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.Arrays;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.net.ssl.HttpsURLConnection;
@@ -448,27 +448,25 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	@Override
-	public String getMetadata(String resource) {
+	public byte[] getMetadata(String resource, int size) {
 		InputStream is = performGet(resource, "m");
 		if (is == null) {
 			return null;
 		}
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		StringBuilder sb = new StringBuilder();
-		char c;
+		BufferedInputStream bis = new BufferedInputStream(is);
+		byte meta[] = new byte[size];
+		Arrays.fill(meta, (byte) 0);
 		try {
-			while ((c = (char) br.read()) != 0) {
-				sb.append(c);
-			}
-		} catch (IOException e) {
-			return null;
+			bis.read(meta, 0, size);
+		} catch (IOException ignore) {
+			meta = null;
 		} finally {
 			try {
-				is.close();
-			} catch (IOException ignore) {
+				bis.close();
+			} catch (Exception ignore) {
 			}
 		}
-		return sb.toString();
+		return meta;
 	}
 
 	/**
