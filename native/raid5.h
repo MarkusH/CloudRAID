@@ -50,6 +50,7 @@ extern "C"
 
     static const unsigned int RAID5_BLOCKSIZE = RAID5BLOCKSIZE;
     static const unsigned char RAID5_METADATA_VERSION = 2;
+    static const unsigned int RAID5_METADATA_BYTES = 2 + 4*64 + ENCRYPTION_SALT_BYTES + 4;
 
     void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char *out, size_t *out_len);
     void split_byte_block(const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[]);

@@ -1102,3 +1102,9 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
 {
     return (*env)->NewStringUTF(env, _VERSION_);
 }
+
+JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getMetadataByteLength
+(JNIEnv *env, jclass cls)
+{
+  return RAID5_METADATA_BYTES;
+}

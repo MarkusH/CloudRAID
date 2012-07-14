@@ -29,6 +29,14 @@ extern "C" {
 #define de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface_SUCCESS_SPLIT 512L
 /*
  * Class:     de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface
+ * Method:    getMetadataByteLength
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getMetadataByteLength
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface
  * Method:    getName
  * Signature: ()Ljava/lang/String;
  */

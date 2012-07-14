@@ -77,6 +77,8 @@ public class RaidAccessInterface {
 		return sb.toString();
 	}
 
+	public static native int getMetadataByteLength();
+
 	public static native String getName();
 
 	public static native String getVendor();
