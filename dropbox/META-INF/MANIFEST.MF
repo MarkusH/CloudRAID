@@ -6,5 +6,6 @@ Bundle-Version: 0.0.1.prealpha
 Bundle-Vendor: cloudraid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1",
- scribe-java;bundle-version="1.3.0.1-osgi"
+ scribe-java;bundle-version="1.3.0.1-osgi",
+ JSON-java;bundle-version="1.0.0"
 Export-Package: de.dhbw_mannheim.cloudraid.dropbox.impl.net.connector
