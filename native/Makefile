@@ -47,6 +47,7 @@ clean:
 	rm -f *.dat
 
 test:
+	make clean
 	make DEBUG=${DEBUG} EMPTY_SALT=1
 	mkdir -p ./testing/
 	${CC} test_sha256.c ${CFLAGS} ${LIB} -o ./testing/test_sha256
