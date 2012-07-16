@@ -71,7 +71,7 @@ public class RestApiServlet extends HttpServlet {
 	/**
 	 * Indicates the version of the API.
 	 */
-	private static final String API_VERSION = "0.1";
+	private static final String API_VERSION = "0.2";
 
 	private ICloudRAIDConfig config;
 	private Pattern userpattern;
@@ -102,20 +102,19 @@ public class RestApiServlet extends HttpServlet {
 			NoSuchMethodException, InstantiationException {
 		RestApiServlet.mappings.add(new RestApiUrlMapping("^/api/info/$",
 				"GET", RestApiServlet.class, "apiInfo"));
+
 		RestApiServlet.mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
 				"DELETE", RestApiServlet.class, "fileDelete"));
 		RestApiServlet.mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
 				"GET", RestApiServlet.class, "fileDownload"));
 		RestApiServlet.mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
-				"PUT", RestApiServlet.class, "fileNew"));
-		RestApiServlet.mappings.add(new RestApiUrlMapping(
-				"^/file/([^/]+)/info/$", "GET", RestApiServlet.class,
-				"fileInfo"));
-		RestApiServlet.mappings.add(new RestApiUrlMapping(
-				"^/file/([^/]+)/update/$", "PUT", RestApiServlet.class,
-				"fileUpdate"));
+				"POST", RestApiServlet.class, "fileNew"));
+		RestApiServlet.mappings.add(new RestApiUrlMapping("^/file/([^/]+)/$",
+				"PUT", RestApiServlet.class, "fileUpdate"));
+
 		RestApiServlet.mappings.add(new RestApiUrlMapping("^/list/$", "GET",
 				RestApiServlet.class, "list"));
+
 		RestApiServlet.mappings.add(new RestApiUrlMapping("^/user/add/$",
 				"POST", RestApiServlet.class, "userAdd"));
 		RestApiServlet.mappings.add(new RestApiUrlMapping("^/user/auth/$",
@@ -125,8 +124,6 @@ public class RestApiServlet extends HttpServlet {
 				"userLogout"));
 		RestApiServlet.mappings.add(new RestApiUrlMapping("^/user/chgpw/$",
 				"POST", RestApiServlet.class, "userChangePass"));
-		RestApiServlet.mappings.add(new RestApiUrlMapping("^/user/del/$",
-				"DELETE", RestApiServlet.class, "userDelete"));
 
 		BundleContext ctx = FrameworkUtil.getBundle(RestApiServlet.class)
 				.getBundleContext();
@@ -415,56 +412,7 @@ public class RestApiServlet extends HttpServlet {
 	}
 
 	/**
-	 * View to show information about a file. Method must be <code>GET</code>
-	 * and path pattern <code>^/file/([^/]+)/info/$</code>.
-	 * 
-	 * @param req
-	 *            The request. Needs following HTTP header attributes:
-	 *            <ul>
-	 *            <li><code>Cookie: NAME=VALUE</code></li>
-	 *            </ul>
-	 * @param resp
-	 *            Status codes:
-	 *            <ul>
-	 *            <li>200 - Success</li>
-	 *            <li>401 - Not logged in</li>
-	 *            <li>404 - File not found</li>
-	 *            <li>405 - Session id not submitted via cookie</li>
-	 *            <li>500 - Error getting the file information</li>
-	 *            <li>503 - Session does not exist</li>
-	 *            </ul>
-	 * @param args
-	 *            <ol>
-	 *            <li>The filename</li>
-	 *            </ol>
-	 */
-	public void fileInfo(HttpServletRequest req, IRestApiResponse resp,
-			ArrayList<String> args) {
-		if (!this.validateSession(req, resp)) {
-			return;
-		}
-		HttpSession s = req.getSession();
-		ResultSet rs = this.metadata.fileGet(args.get(0),
-				(Integer) s.getAttribute("userid"));
-		try {
-			if (rs == null) {
-				resp.setStatusCode(404);
-				return;
-			}
-			resp.writeField("path", rs.getString("path_name"));
-			resp.writeField("hash", rs.getString("hash_name"));
-			resp.writeField("last modification", rs.getString("last_mod"));
-			resp.writeField("status", rs.getString("status"));
-		} catch (SQLException e) {
-			resp.setStatusCode(500);
-			e.printStackTrace();
-			return;
-		}
-		resp.setStatusCode(200);
-	}
-
-	/**
-	 * View to upload a new file. Method must be <code>PUT</code> and path
+	 * View to upload a new file. Method must be <code>POST</code> and path
 	 * pattern <code>^/file/([^/]+)/$</code>.
 	 * 
 	 * @param req
@@ -526,7 +474,7 @@ public class RestApiServlet extends HttpServlet {
 
 	/**
 	 * View to update a file. Method must be <code>PUT</code> and path pattern
-	 * <code>^/file/([^/]+)/update/$</code>.
+	 * <code>^/file/([^/]+)/$</code>.
 	 * 
 	 * @param req
 	 *            The request. Needs following HTTP header attributes:
@@ -593,6 +541,9 @@ public class RestApiServlet extends HttpServlet {
 	 * 
 	 * @param req
 	 *            The request
+	 *            <ul>
+	 *            <li><code>Cookie: NAME=VALUE</code></li>
+	 *            </ul>
 	 * @param resp
 	 *            Status codes:
 	 *            <ul>
@@ -784,38 +735,6 @@ public class RestApiServlet extends HttpServlet {
 			resp.setStatusCode(500);
 			resp.writeLine("Error while updating the user record");
 		}
-	}
-
-	/**
-	 * View to delete a user. Method must be <code>DELETE</code> and path
-	 * pattern <code>^/user/del/$</code>.
-	 * 
-	 * @param req
-	 *            The request. Needs following HTTP header attributes:
-	 *            <ul>
-	 *            <li><code>Cookie: NAME=VALUE</code></li>
-	 *            <li><code>X-Username: USERNAME</code></li>
-	 *            <li><code>X-Password: PASSWORD</code></li>
-	 *            </ul>
-	 * @param resp
-	 *            Status codes:
-	 *            <ul>
-	 *            <li>200 - Success</li>
-	 *            <li>400 - User name and/or password missing/wrong.</li>
-	 *            <li>401 - Not logged in405Session id not submitted via cookie</li>
-	 *            <li>500 - Error while updating the user record</li>
-	 *            <li>503 - Session does not exist</li>
-	 *            </ul>
-	 * @param args
-	 *            No arguments
-	 */
-	public void userDelete(HttpServletRequest req, IRestApiResponse resp,
-			ArrayList<String> args) {
-		if (!this.validateSession(req, resp)) {
-			return;
-		}
-		resp.setStatusCode(501);
-		resp.writeLine("Not implemented!");
 	}
 
 	/**
