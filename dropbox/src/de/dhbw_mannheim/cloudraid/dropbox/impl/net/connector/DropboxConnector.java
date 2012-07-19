@@ -261,21 +261,22 @@ public class DropboxConnector implements IStorageConnector {
 		}
 		try {
 			JSONArray jsonarray = new JSONArray(response.getBody());
-			for (int i = 0; i < jsonarray.length(); i++) {
+			for (int i = jsonarray.length() - 1; i >= 0; i--) {
 				JSONObject jsonbody = jsonarray.getJSONObject(i);
 				System.out.println(jsonbody);
-				if (jsonbody.optBoolean("is_deleted")) {
-					continue;
+				if (!jsonbody.optBoolean("is_deleted")) {
+					String rev = jsonbody.getString("rev");
+					request = new OAuthRequest(POST,
+							DropboxConnector.RESTORE_URL + resource + "."
+									+ extension + "?rev=" + rev);
+					this.service.signRequest(this.accessToken, request);
+					response = request.send();
+					System.out.println("Restore revision " + rev + " for "
+							+ resource + "." + extension);
+					System.out.println(response.getCode());
+					System.out.println(response.getBody());
+					break;
 				}
-				String rev = jsonbody.getString("rev");
-				request = new OAuthRequest(POST, DropboxConnector.RESTORE_URL
-						+ resource + "." + extension + "?rev=" + rev);
-				this.service.signRequest(this.accessToken, request);
-				response = request.send();
-				System.out.println("Restore revision " + rev + " for "
-						+ resource + "." + extension);
-				System.out.println(response.getCode());
-				System.out.println(response.getBody());
 			}
 		} catch (JSONException e) {
 			e.printStackTrace();
