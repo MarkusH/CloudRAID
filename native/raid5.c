@@ -254,7 +254,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     char *sha256_buf[4] = {NULL, NULL, NULL, NULL};
     void *sha256_resblock[4] = {NULL, NULL, NULL, NULL};
     int i;
-    unsigned char *salt = NULL, *salted_key;
+    unsigned char *salted_key = NULL;
     rc4_key rc4key;
 
     raid5md metadata;
@@ -264,8 +264,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     chars = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     out = (unsigned char *) calloc(3 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     out_len = (size_t *) calloc(3, sizeof(size_t));
-    salt = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
-    salted_key = (unsigned char *) calloc(65, sizeof(unsigned char));
+    salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES, sizeof(unsigned char));
     if(chars == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for read buffer");
@@ -279,11 +278,6 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     if(out_len == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for output length");
-        goto end;
-    }
-    if(salt == NULL) {
-        status |= MEMERR_BUF;
-        DEBUGPRINT("Cannot allocate memory for salt");
         goto end;
     }
     if(salted_key == NULL) {
@@ -315,22 +309,21 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     DEBUG3("Read %d bytes", rlen);
 #if ENCRYPT_DATA == 1
 #ifndef EMPTY_SALT
-    i = create_salt(salt);
+    i = create_salt((unsigned char *)metadata.salt);
     if(i != 0) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot generate salt");
         DEBUG1("Got return value %d but expected 0", i);
     }
-    metadata.salt = salt;
 #endif
 
-    i = hmac(key, keylen, salt, salted_key);
+    i = gen_salted_key(key, keylen, metadata.salt, salted_key);
     if(i != 0) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot compute salted hash");
         DEBUG1("Got return value %d but expected 0", i);
     }
-    prepare_key((unsigned char *) salted_key, 64, &rc4key);
+    prepare_key(salted_key, ENCRYPTION_SALT_BYTES, &rc4key);
 #endif
     while(rlen > 0) {
 #if ENCRYPT_DATA == 1
@@ -449,9 +442,6 @@ end:
     if(salted_key != NULL) {
         free(salted_key);
     }
-    if(salt != NULL) {
-        free(salt);
-    }
     if(out_len != NULL) {
         free(out_len);
     }
@@ -519,7 +509,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
     in = (unsigned char *) calloc(3 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     in_len = (size_t *) calloc(3, sizeof(size_t));
     buf = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
-    salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
+    salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES, sizeof(unsigned char));
     if(in == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for the input buffer");
@@ -546,13 +536,13 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
     in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5_BLOCKSIZE], sizeof(char), RAID5_BLOCKSIZE, devices[parity_pos]) : 0;
     DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
 #if ENCRYPT_DATA == 1
-    i = hmac(key, keylen, metadata.salt, salted_key);
+    i = gen_salted_key(key, keylen, metadata.salt, salted_key);
     if(i != 0) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot compute salted hash");
         DEBUG1("Got return value %d but expected 0", i);
     }
-    prepare_key((unsigned char *) salted_key, 64, &rc4key);
+    prepare_key(salted_key, ENCRYPTION_SALT_BYTES, &rc4key);
 #endif
     while(in_len[0] > 0 || in_len[1] > 0 || in_len[2] > 0) {
         /*
@@ -712,7 +702,6 @@ LIBEXPORT int create_metadata(FILE *devices[], raid5md *md)
         min = (min < l) ? min : l;
         max = (max > l) ? max : l;
     }
-    md->salt = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
     md->missing = l;
     free(ascii);
     return 0;
@@ -728,8 +717,7 @@ LIBEXPORT void new_metadata(raid5md *md)
         memset(md->hash_dev1, 0, 65);
         memset(md->hash_dev2, 0, 65);
         memset(md->hash_in, 0, 65);
-        md->salt = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
-        memset(md->salt, 0, ENCRYPTION_SALT_BYTES + 1);
+        memset(md->salt, 0, ENCRYPTION_SALT_BYTES);
         md->version = 0;
         md->missing = 0;
     }
@@ -1106,5 +1094,5 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
 JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccessInterface_getMetadataByteLength
 (JNIEnv *env, jclass cls)
 {
-  return RAID5_METADATA_BYTES;
+    return RAID5_METADATA_BYTES;
 }

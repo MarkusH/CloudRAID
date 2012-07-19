@@ -37,7 +37,7 @@ extern "C"
 
     LIBEXPORT int create_salt(unsigned char *salt);
     LIBEXPORT void print_salt(FILE *__stream, unsigned char *salt);
-    LIBEXPORT int hmac(const char *key, int keylen, unsigned char *salt, unsigned char *hash);
+    LIBEXPORT int gen_salted_key(const char *key, int keylen, unsigned char *salt, unsigned char *hash);
 
 #ifdef __cplusplus
 }
