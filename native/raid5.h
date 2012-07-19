@@ -44,7 +44,7 @@ extern "C"
         unsigned char hash_dev1[65];
         unsigned char hash_dev2[65];
         unsigned char hash_in[65];
-        unsigned char *salt;
+        unsigned char salt[ENCRYPTION_SALT_BYTES];
         unsigned int missing;
     } raid5md;
 

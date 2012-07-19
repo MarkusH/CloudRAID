@@ -70,11 +70,9 @@ void print_salt(FILE *__stream, unsigned char *salt)
     }
 }
 
-int hmac(const char *key, int keylen, unsigned char *salt, unsigned char *hash)
+int gen_salted_key(const char *key, int keylen, unsigned char *salt, unsigned char *hash)
 {
     int status = 0;
-    unsigned char *s = NULL; /* The temporary salt and digest input */
-    void *resblock = NULL;
 
     if(key == NULL) {
         return 1;
@@ -96,37 +94,12 @@ int hmac(const char *key, int keylen, unsigned char *salt, unsigned char *hash)
         return 5;
     }
 
-    /* No space for trailing \0 */
-    s = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES, sizeof(unsigned char));
-    if(s == NULL) {
-        return 6;
-    }
-
     /* copy the given salt for further usage */
-    memcpy(s, salt, ENCRYPTION_SALT_BYTES);
+    memcpy(hash, salt, ENCRYPTION_SALT_BYTES);
 
     /* copy the key to the beginning and the end of the temp salt array */
-    memcpy(s, key, keylen);
-    memcpy(&s[ENCRYPTION_SALT_BYTES - keylen], key, keylen);
+    memcpy(hash, key, keylen);
+    memcpy(&hash[ENCRYPTION_SALT_BYTES - keylen], key, keylen);
 
-    resblock = calloc(32, sizeof(unsigned char));
-    if(resblock == NULL) {
-        status = 7;
-        goto end;
-    }
-
-    sha256_buffer((const char*) s, ENCRYPTION_SALT_BYTES, resblock);
-
-    ascii_from_resbuf(hash, resblock);
-
-    status = 0;
-
-end:
-    if(resblock != NULL) {
-        free(resblock);
-    }
-    if(s != NULL) {
-        free(s);
-    }
-    return status;
+    return 0;
 }

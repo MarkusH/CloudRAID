@@ -30,49 +30,29 @@
 int main(void)
 {
     char *key = "no$xEe!1'-%FAn:z";
-    unsigned char *salt;
-    unsigned char hash[65];
+    unsigned char salt[] = "Kpq,@M&[/&C16>|LBA%m)ri=ExtRIGkDSjM$tdDSfP5v-Dp}g#3$`aPiO?J&#}I3e@`N+sSCm[-^q8;!hmUE1a-Yjr7)!CJ%4eA/?Fk1NXXwE^7I?2u9bxtylb?2}8,.52zl8!2vi^u#zrSbsl:;%Z%qiA(l6'OAc&}LpFZnkqW|',y,q_I|$Zm@/jYod)+?eV>_@yaTqHgb$sPJ+drvhmrTsl1%'E=leg[4[=Gga,Vyge6]\bU+<k#Dd?8P.aI&";
+    unsigned char salted_key[ENCRYPTION_SALT_BYTES];
     int ret = 0;
-
-    char *expected = "5c6d12e948525a8bd91b07b617b14314316812fe2943d269a97d90930429f33c";
-
-    salt = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES + 1, sizeof(unsigned char));
-    if(salt == NULL) {
-        printf("Cannot get memory for salt");
-        return 1;
-    }
+    unsigned char expected[] = "no$xEe!1'-%FAn:zBA%m)ri=ExtRIGkDSjM$tdDSfP5v-Dp}g#3$`aPiO?J&#}I3e@`N+sSCm[-^q8;!hmUE1a-Yjr7)!CJ%4eA/?Fk1NXXwE^7I?2u9bxtylb?2}8,.52zl8!2vi^u#zrSbsl:;%Z%qiA(l6'OAc&}LpFZnkqW|',y,q_I|$Zm@/jYod)+?eV>_@yaTqHgb$sPJ+drvhmrTsl1%'E=leg[4[=Gga,Vyge6]no$xEe!1'-%FAn:z";
 
     printf("Running test for hmac:\n\n");
+    printf("Salt: ");
+    print_salt(stdout, salt);
+    printf("\n");
 
+    ret = gen_salted_key(key, 16, salt, salted_key);
     if(ret == 0) {
-        printf("Salt is: ");
-        print_salt(stdout, salt);
+        printf("Salted Key: ");
+        print_salt(stdout, salted_key);
         printf("\n");
-
-        ret = hmac(key, 16, salt, hash);
-        if(ret == 0) {
-            if(hash == NULL) {
-                if(hash == NULL) {
-                    printf("Error: Hash is NULL\n");
-                }
-                return 2;
-            } else {
-                printf("Hash is: %s\n", hash);
-                memcpy(salt, key, 16);
-                memcpy(&salt[ENCRYPTION_SALT_BYTES - 16], key, 16);
-                if(memcmp(hash, expected, 64) == 0) {
-                    printf("Hash Correct\n");
-                } else {
-                    printf("Hash test failed: expected:\n%s\n", expected);
-                }
-            }
+        if(memcmp(salted_key, expected, ENCRYPTION_SALT_BYTES) == 0) {
+            printf("Salted Key correct\n");
         } else {
-            printf("Got result %d from hmac instead of 0\n", ret);
-            return 1;
+            printf("Salted Key failed:");
         }
     } else {
-        printf("Got result %d during salt creation\n", ret);
-        return 1;
+        printf("Got result %d from hmac instead of 0\n", ret);
+        return 2;
     }
 
     return 0;

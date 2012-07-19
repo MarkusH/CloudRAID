@@ -53,11 +53,11 @@ int main(void)
 #if CHECKING == 1
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
                        "",
-                       "e989f9691dd7804a165baeb59ec81b89ca24f1039395500703e49ab5ef18e983",
-                       "40c55f937954b8a6e5eb1949d03b8f957f946bd0c1384f87d2a2a3dca145fad3",
+                       "8e48fe4fc7f309b388a6555b397d9ef5bcfa6659291422e74c2549518e62dbf9",
+                       "ac064458e8d3d7bfe5842d1743c362039774aeae63731e0847c721f31db9c56d",
                        "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
-                       "69545f42849bcf96fc6ab1f5b89ccb792ebf424bcbd279590870f3e4962ea0e0",
-                       "fcfef94dc055f58ad0830558ece2e38b8d35373cca7a89e7cc67e12ac0f95284"
+                       "01b509bfacf36766a4419023ac2e7e74090241664fec3bbee23caa00880bf38c",
+                       "823739180c23dac353f0efeea20882f8a71ae67ae1fbb9af2621d450b0148cca"
                       };
 #endif
 #if BENCHMARK == 1
