@@ -79,7 +79,7 @@ int main(void)
     for(i = 0; i < BENCHSIZE; i++) {
         if (i < 0) {
             fprintf(stderr, "Aborting. Error while creating benchmark file\n");
-            return;
+            return 1;
         }
         /* Every device becomes the parity twice. dev2 three
            times but the third time only 512+256 Bytes
