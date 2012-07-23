@@ -35,7 +35,7 @@
 
 int main(void)
 {
-    int i;
+    unsigned long i;
     int status;
 #if CHECKING == 1
     unsigned char *ascii = NULL;
@@ -77,6 +77,10 @@ int main(void)
         return 1;
     }
     for(i = 0; i < BENCHSIZE; i++) {
+        if (i < 0) {
+            fprintf(stderr, "Aborting. Error while creating benchmark file\n");
+            return;
+        }
         /* Every device becomes the parity twice. dev2 three
            times but the third time only 512+256 Bytes
            (3/4 BLOCKSIZE).

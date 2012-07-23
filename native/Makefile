@@ -61,12 +61,12 @@ run-test:
 	./test_raid5.sh
 
 benchmark:
-	${CC} test_raid5.c -DBENCHSIZE=1073741824 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_1gib
-	${CC} test_raid5.c -DBENCHSIZE=524288000 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_500mib
-	${CC} test_raid5.c -DBENCHSIZE=262144000 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_250mib
-	${CC} test_raid5.c -DBENCHSIZE=104857600 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_100mib
-	${CC} test_raid5.c -DBENCHSIZE=52428800 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_50mib
-	${CC} test_raid5.c -DBENCHSIZE=20971520 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_20mib
-	${CC} test_raid5.c -DBENCHSIZE=1048576 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_1mib
-	${CC} test_raid5.c -DBENCHSIZE=102400 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_100kib
-	${CC} test_raid5.c -DBENCHSIZE=10240 -DBENCHMARK=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_10kib
+	${CC} test_raid5.c -DBENCHSIZE=1073741824 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_1gib
+	${CC} test_raid5.c -DBENCHSIZE=524288000 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_500mib
+	${CC} test_raid5.c -DBENCHSIZE=262144000 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_250mib
+	${CC} test_raid5.c -DBENCHSIZE=104857600 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_100mib
+	${CC} test_raid5.c -DBENCHSIZE=52428800 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_50mib
+	${CC} test_raid5.c -DBENCHSIZE=20971520 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_20mib
+	${CC} test_raid5.c -DBENCHSIZE=1048576 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_1mib
+	${CC} test_raid5.c -DBENCHSIZE=102400 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_100kib
+	${CC} test_raid5.c -DBENCHSIZE=10240 -DBENCHMARK=1 -DFILEID=1 ${CFLAGS} ${LIB} -o ./testing/test_raid5_10kib
