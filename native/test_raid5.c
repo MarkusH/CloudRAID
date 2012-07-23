@@ -69,6 +69,11 @@ int main(void)
 #if BENCHMARK != 1
     printf("Running test for RAID5:\n\n");
 #endif
+    i = BENCHSIZE;
+    if (i < 1) {
+        fprintf(stderr, "Aborting. BENCHSIZE out of range.\n");
+        return 1;
+    }
 
     /** Create test file **/
     fp[0] = fopen(filename[0], "wb");
@@ -77,10 +82,6 @@ int main(void)
         return 1;
     }
     for(i = 0; i < BENCHSIZE; i++) {
-        if (i < 0) {
-            fprintf(stderr, "Aborting. Error while creating benchmark file\n");
-            return 1;
-        }
         /* Every device becomes the parity twice. dev2 three
            times but the third time only 512+256 Bytes
            (3/4 BLOCKSIZE).
