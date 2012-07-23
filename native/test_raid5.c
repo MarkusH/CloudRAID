@@ -33,6 +33,8 @@
 #define BENCHSIZE 13056
 #endif
 
+#define MAXSIZE 10737418240 /* 10 GiB */
+
 int main(void)
 {
     unsigned long i;
@@ -70,7 +72,8 @@ int main(void)
     printf("Running test for RAID5:\n\n");
 #endif
     i = BENCHSIZE;
-    if (i < 1) {
+    /* BENCHSIZE must be between 1 byte and MAXSIZE */
+    if (i < 1 || i > MAXSIZE) {
         fprintf(stderr, "Aborting. BENCHSIZE out of range.\n");
         return 1;
     }
