@@ -138,7 +138,7 @@ There are two ways to compile and use the shared objects:
 #. Compile it for x86 and x86_64, and install it into the CloudRAID core/lib directory.
 
 First Approach
-^^^^^^^^^^^^^^
+--------------
 
 To build the shared objects change to the native source folder and
 execute::
@@ -160,7 +160,7 @@ Testing the C code::
    make run-test
 
 Second Approach
-^^^^^^^^^^^^^^^
+---------------
 
 Build the shared objects for both architectures and copy them
 into core/lib::
