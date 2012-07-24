@@ -37,8 +37,8 @@
 
 int main(void)
 {
-    unsigned long i;
-    int status;
+    unsigned long bs;
+    int i, status;
 #if CHECKING == 1
     unsigned char *ascii = NULL;
 #endif
@@ -71,9 +71,8 @@ int main(void)
 #if BENCHMARK != 1
     printf("Running test for RAID5:\n\n");
 #endif
-    i = BENCHSIZE;
     /* BENCHSIZE must be between 1 byte and MAXSIZE */
-    if (i < 1 || i > MAXSIZE) {
+    if (BENCHSIZE < 0 || BENCHSIZE > MAXSIZE) {
         fprintf(stderr, "Aborting. BENCHSIZE out of range.\n");
         return 1;
     }
@@ -84,12 +83,12 @@ int main(void)
         fprintf(stderr, "Cannot write test file!\n");
         return 1;
     }
-    for(i = 0; i < BENCHSIZE; i++) {
+    for(bs = 0; bs < BENCHSIZE; bs++) {
         /* Every device becomes the parity twice. dev2 three
            times but the third time only 512+256 Bytes
            (3/4 BLOCKSIZE).
            2 * BLOCKSIZE * 6 + 3/4 BLOCKSIZE = 13056 */
-        fprintf(fp[0], "%c", (i * i + i) % 256);
+        fprintf(fp[0], "%c", (unsigned char)((bs * bs + bs) % 256));
     }
     fclose(fp[0]);
 
