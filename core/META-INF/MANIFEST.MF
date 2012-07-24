@@ -8,3 +8,5 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Service-Component: OSGI-INF/component.xml
 Import-Package: org.osgi.framework;version="1.6.0"
 Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1"
+Bundle-NativeCode: lib/linux64/libcloudraid.so; osname = linux; processor=x86_64,
+ lib/linux/libcloudraid.so; osname = linux; processor=x86
