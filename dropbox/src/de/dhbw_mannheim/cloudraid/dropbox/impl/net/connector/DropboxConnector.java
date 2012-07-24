@@ -399,8 +399,6 @@ public class DropboxConnector implements IStorageConnector {
 
 	@Override
 	public boolean upload(String resource) {
-		maybeRestoreFile(resource, String.valueOf(this.id));
-		maybeRestoreFile(resource, "m");
 		System.out.println("Upload " + resource + "." + this.id);
 		OAuthRequest request = new OAuthRequest(GET, DropboxConnector.META_URL
 				+ resource + "." + this.id);
@@ -409,19 +407,32 @@ public class DropboxConnector implements IStorageConnector {
 		System.out.println(response.getCode());
 		System.out.println(response.getBody());
 		boolean ret = false;
-		if (response.getCode() == 404) {
-			ret = performUpload(resource, String.valueOf(this.id));
-			if (ret) {
-				System.out.println("Upload (and overwrite) " + resource + ".m");
-				// If the upload of the data file succeeded, the meta data file
-				// must be uploaded
-				ret = performUpload(resource, "m");
-				if (!ret) {
-					// If the meta data cannot be uploaded we will remove the
-					// data file
-					delete(resource);
+		try {
+			if (response.getCode() == 200) {
+				JSONObject jsonbody = new JSONObject(response.getBody());
+				if (!jsonbody.optBoolean("is_deleted")) {
+					return false;
 				}
 			}
+			if (response.getCode() == 200 || response.getCode() == 404) {
+				maybeRestoreFile(resource, String.valueOf(this.id));
+				maybeRestoreFile(resource, "m");
+				ret = performUpload(resource, String.valueOf(this.id));
+				if (ret) {
+					System.out.println("Upload (and overwrite) " + resource
+							+ ".m");
+					// If the upload of the data file succeeded, the meta data
+					// file must be uploaded
+					ret = performUpload(resource, "m");
+					if (!ret) {
+						// If the meta data cannot be uploaded we will remove
+						// the data file
+						delete(resource);
+					}
+				}
+			}
+		} catch (JSONException e) {
+			ret = false;
 		}
 		return ret;
 	}
