@@ -133,6 +133,13 @@ Native Libraries
 For performance reasons crucial parts of the application are not written
 in Java but in C.  The C source code is located in src/native.
 
+There are two ways to compile and use the shared objects:
+#. Compile it for your architecture (x86 or x86_64), and install it to /usr/lib.
+#. Compile it for x86 and x86_64, and install it into the CloudRAID core/lib directory.
+
+First Approach
+^^^^^^^^^^^^^^
+
 To build the shared objects change to the native source folder and
 execute::
 
@@ -151,6 +158,29 @@ Testing the C code::
    make clean (optional)
    make test (optional DEBUG=1)
    make run-test
+
+Second Approach
+^^^^^^^^^^^^^^^
+
+Build the shared objects for both architectures and copy them
+into core/lib::
+
+   make clean (optional, but recommended)
+   make crosscompile
+
+If you want to compile only for one architecture, use for x86::
+
+   make clean (optional)
+   make bundlecompile ARCH=-m32
+   make bundleinstall
+
+and use for x86_64::
+
+   make clean (optional)
+   make bundlecompile ARCH=-m64
+   make bundleinstall
+
+Note that the ARCH parameter is not optional. You have to define it for the bundlecompile command.
 
 Run
 ===
