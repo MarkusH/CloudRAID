@@ -134,6 +134,7 @@ For performance reasons crucial parts of the application are not written
 in Java but in C.  The C source code is located in src/native.
 
 There are two ways to compile and use the shared objects:
+
 #. Compile it for your architecture (x86 or x86_64), and install it to /usr/lib.
 #. Compile it for x86 and x86_64, and install it into the CloudRAID core/lib directory.
 
