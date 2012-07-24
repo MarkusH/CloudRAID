@@ -15,6 +15,17 @@ ifndef DESTDIR
 DESTDIR = /
 endif
 
+ifeq ($(ARCH),-m64)
+    TARGET = 64
+else
+    ifeq ($(ARCH),-m32)
+        TARGET =
+    else
+        TARGET =
+        ARCH =
+    endif
+endif
+
 CC = gcc
 
 JAVASOURCE = ./../core/src
@@ -22,6 +33,10 @@ JAVABIN = ./../core/bin
 SRC = raid5.c sha256.c rc4.c utils.c
 OBJ = $(SRC:.c=.o)
 LIB = ./build/usr/lib/libcloudraid.so
+ifneq ($(ARCH),)
+    LIB = ./build/lib/linux$(TARGET)/libcloudraid.so
+endif
+CFLAGS += $(ARCH)
 
 all: compile
 
@@ -34,11 +49,29 @@ compile: ${OBJ}
 	mkdir -p ./build/usr/lib
 	${CC} ${CFLAGS} -shared -o ${LIB} ${OBJ}
 
+bundlecompile: ${OBJ}
+ifeq ($(ARCH),)
+	exit 1
+endif
+	mkdir -p ./build/lib/linux${TARGET}
+	${CC} ${CFLAGS} -shared -o ${LIB} ${OBJ}
+
+crosscompile:
+	make bundlecompile ARCH=-m32
+	make bundleinstall
+	make clean
+	make bundlecompile ARCH=-m64
+	make bundleinstall
+
 .c.o:
 	${CC} -I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux -fPIC ${CFLAGS} -c $<
 
 install:
 	cp -rvf ./build/* ${DESTDIR}
+
+bundleinstall:
+	mkdir -p ../core/lib
+	cp -rvf ./build/lib/* ../core/lib/
 
 clean:
 	rm -rf ./build
