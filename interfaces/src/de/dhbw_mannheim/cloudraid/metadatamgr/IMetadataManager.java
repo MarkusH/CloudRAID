@@ -24,6 +24,8 @@ package de.dhbw_mannheim.cloudraid.metadatamgr;
 
 import java.sql.ResultSet;
 
+import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
+
 /**
  * @author Florian Bausch, Markus Holtermann
  * 
@@ -81,7 +83,10 @@ public interface IMetadataManager {
 	 * @param password
 	 *            The password
 	 * @return true, if and only if the new user has been created, otherwise
-	 *         false;
+	 *         false. If the {@link ICloudRAIDConfig} parameter allowUserAdd is
+	 *         set to false, this method has to return false (and does not
+	 *         create an user). If the parameter allowUserAdd is not set or set
+	 *         to true, it has to (try to) create the user.
 	 */
 	public boolean addUser(String username, String password);
 

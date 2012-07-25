@@ -603,7 +603,8 @@ public class RestApiServlet extends HttpServlet {
 	 *            <li>400 - User name and/or password and/or confirmation
 	 *            missing/wrong.</li>
 	 *            <li>406 - Already logged in</li>
-	 *            <li>500 - Error while adding the user to the database</li>
+	 *            <li>500 - Error while adding the user to the database or the
+	 *            creation of new users is disabled.</li>
 	 *            </ul>
 	 * @param args
 	 *            No arguments

@@ -36,6 +36,7 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
+import de.dhbw_mannheim.cloudraid.config.exceptions.ConfigException;
 import de.dhbw_mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
 
@@ -123,6 +124,9 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized boolean addUser(String username, String password) {
 		try {
+			if (!this.config.getBoolean("allowUserAdd", true)) {
+				return false;
+			}
 			this.getUserSaltStatement.setString(1, username);
 			this.getUserSaltStatement.execute();
 			ResultSet rs = this.getUserSaltStatement.getResultSet();
@@ -157,6 +161,8 @@ public class HSQLMetadataManager implements IMetadataManager {
 				e1.printStackTrace();
 			}
 		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} catch (ConfigException e) {
 			e.printStackTrace();
 		}
 		return false;
