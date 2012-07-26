@@ -38,8 +38,11 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define _SHA256_BLOCKSIZE 32768
-#if _SHA256_BLOCKSIZE % 64 != 0
+#ifndef SHA256_BLOCKSIZE
+#define SHA256_BLOCKSIZE 32768
+#endif
+
+#if SHA256_BLOCKSIZE % 64 != 0
 #error "invalid SHA256_BLOCKSIZE"
 #endif
 
@@ -47,8 +50,6 @@
 extern "C"
 {
 #endif
-
-    static const unsigned int SHA256_BLOCKSIZE = _SHA256_BLOCKSIZE;
 
     /**
      * Structure to save state of computation between the single steps.

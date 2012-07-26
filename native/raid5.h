@@ -34,8 +34,8 @@
 #define RAID5BLOCKSIZE 1024
 #endif
 
-#if _SHA256_BLOCKSIZE % (RAID5BLOCKSIZE * 2) != 0
-#error "invalid RAID5BLOCKSIZE. Twice the RAID5 BLOCKSIZE must be a factor of _SHA256_BLOCKSIZE"
+#if SHA256_BLOCKSIZE % (RAID5BLOCKSIZE * 2) != 0
+#error "invalid RAID5BLOCKSIZE. Twice the RAID5 BLOCKSIZE must be a factor of SHA256_BLOCKSIZE"
 #endif
 
 #define _VERSION_ "0.0.2prealpha"
