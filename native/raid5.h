@@ -26,12 +26,41 @@
 #include "defines.h"
 #include "rc4.h"
 #include "utils.h"
+#include "sha256.h"
 
 #include <stdio.h>
 #include <stddef.h>
 #ifndef RAID5BLOCKSIZE
 #define RAID5BLOCKSIZE 1024
 #endif
+
+#if _SHA256_BLOCKSIZE % (RAID5BLOCKSIZE * 2) != 0
+#error "invalid RAID5BLOCKSIZE. Twice the RAID5 BLOCKSIZE must be a factor of _SHA256_BLOCKSIZE"
+#endif
+
+#define _VERSION_ "0.0.2prealpha"
+#define _NAME_ "CloudRAID-RAID5"
+#define _VENDOR_ "cloudraid"
+
+#define SUCCESS_MERGE  0x0001
+#define MEMERR_BUF     0x0002
+#define MEMERR_SHA     0x0004
+#define OPENERR_DEV0   0x0008
+#define OPENERR_DEV1   0x0010
+#define OPENERR_DEV2   0x0020
+#define OPENERR_IN     0x0040
+#define OPENERR_OUT    0x0080
+#define METADATA_ERROR 0x0100
+#define SUCCESS_SPLIT  0x0200
+
+#define METADATA_MISS_DEV0    0x01
+#define METADATA_MISS_DEV1    0x02
+#define METADATA_MISS_DEV2    0x04
+#define METADATA_MISS_IN      0x08
+#define METADATA_MISS_VERSION 0x10
+#define METADATA_MISS_MISSING 0x20
+#define METADATA_MEMORY_ERROR 0x80
+
 
 #ifdef __cplusplus
 extern "C"
