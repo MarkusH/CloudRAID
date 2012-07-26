@@ -25,6 +25,7 @@ for fileid in 1 2 3 ; do
                 TOTERR=$(($TOTERR+1))
             fi
         fi
+        echo ""
     done
     rm test_raid5.*dat testing/test_raid5_*
 done

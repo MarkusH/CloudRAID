@@ -30,29 +30,6 @@
 #include <string.h>
 #include <stddef.h>
 
-#define _VERSION_ "0.0.2prealpha"
-#define _NAME_ "CloudRAID-RAID5"
-#define _VENDOR_ "cloudraid"
-
-#define SUCCESS_MERGE  0x0001
-#define MEMERR_BUF     0x0002
-#define MEMERR_SHA     0x0004
-#define OPENERR_DEV0   0x0008
-#define OPENERR_DEV1   0x0010
-#define OPENERR_DEV2   0x0020
-#define OPENERR_IN     0x0040
-#define OPENERR_OUT    0x0080
-#define METADATA_ERROR 0x0100
-#define SUCCESS_SPLIT  0x0200
-
-#define METADATA_MISS_DEV0    0x01
-#define METADATA_MISS_DEV1    0x02
-#define METADATA_MISS_DEV2    0x04
-#define METADATA_MISS_IN      0x08
-#define METADATA_MISS_VERSION 0x10
-#define METADATA_MISS_MISSING 0x20
-#define METADATA_MEMORY_ERROR 0x80
-
 #if DEBUG>=1
 #define DEBUGPRINT(...) fprintf (stderr, "%s:%s():%d: %s\n", __FILE__, __func__, __LINE__, __VA_ARGS__)
 #define DEBUG1(format, ...) fprintf (stderr, "DEBUG1: "); fprintf (stderr, format, ##__VA_ARGS__); fprintf (stderr, "\n")
@@ -265,6 +242,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     out = (unsigned char *) calloc(3 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     out_len = (size_t *) calloc(3, sizeof(size_t));
     salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES, sizeof(unsigned char));
+    hash = (unsigned char *) calloc(65, sizeof(unsigned char));
     if(chars == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for read buffer");
@@ -283,6 +261,11 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     if(salted_key == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for salted key");
+        goto end;
+    }
+    if(hash == NULL) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot allocate memory for hash");
         goto end;
     }
 
@@ -392,7 +375,6 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
         goto end;
     }
 
-    hash = (unsigned char *) calloc(65, sizeof(unsigned char));
     for(i = 0; i < 4; i++) {
         if(sha256_len[i] == SHA256_BLOCKSIZE) {
             sha256_process_block(sha256_buf[i], SHA256_BLOCKSIZE, &sha256_ctx[i]);
@@ -426,6 +408,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     status |= SUCCESS_SPLIT;
 
 end:
+    DEBUG1("Split finished with status %d", status);
 
     if(hash != NULL) {
         free(hash);
@@ -469,12 +452,16 @@ end:
  */
 LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key, const int keylen)
 {
-    unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i;
+    unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i, *hash = NULL;
     size_t *in_len = NULL, out_len, l = 0;
     int status = 0, mds;
     raid5md metadata, md_read;
     unsigned char *salted_key = NULL;
     rc4_key rc4key;
+    struct sha256_ctx sha256_ctx;
+    size_t sha256_len = 0;
+    char *sha256_buf = NULL;
+    void *sha256_resblock = NULL;
 
     new_metadata(&metadata);
     new_metadata(&md_read);
@@ -510,6 +497,9 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
     in_len = (size_t *) calloc(3, sizeof(size_t));
     buf = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
     salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES, sizeof(unsigned char));
+    sha256_resblock = calloc(32, sizeof(unsigned char));
+    sha256_buf = (char *) calloc(SHA256_BLOCKSIZE + 72, sizeof(unsigned char));
+    hash = (unsigned char *) calloc(65, sizeof(unsigned char));
     if(in == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for the input buffer");
@@ -530,6 +520,23 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
         DEBUGPRINT("Cannot allocate memory for salt");
         goto end;
     }
+    if(sha256_resblock == NULL) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot allocate memory for SHA256 resources");
+        goto end;
+    }
+    if(sha256_buf == NULL) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot allocate memory for buffer");
+        goto end;
+    }
+    if(hash == NULL) {
+        status |= MEMERR_BUF;
+        DEBUGPRINT("Cannot allocate memory for hash");
+        goto end;
+    }
+    sha256_init_ctx(&sha256_ctx);
+    sha256_len = 0;
 
     in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5_BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
     in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5_BLOCKSIZE], sizeof(char), RAID5_BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
@@ -569,6 +576,17 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
             DEBUGPRINT("The output contains no data.");
             goto end;
         }
+
+        if(sha256_len == SHA256_BLOCKSIZE) {
+            sha256_process_block(sha256_buf, SHA256_BLOCKSIZE, &sha256_ctx);
+            sha256_len = 0;
+        }
+        if(sha256_len < SHA256_BLOCKSIZE) {
+            memcpy(sha256_buf + sha256_len, buf, out_len);
+            sha256_len += out_len;
+        }
+
+
 #if ENCRYPT_DATA == 1
         /* encrypt the input file */
         DEBUG1("Encryption enabled");
@@ -598,10 +616,37 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
         DEBUGPRINT("Error reading from device 2 for during merge");
         goto end;
     }
-    status |= SUCCESS_MERGE;
+
+    if(sha256_len == SHA256_BLOCKSIZE) {
+        sha256_process_block(sha256_buf, SHA256_BLOCKSIZE, &sha256_ctx);
+    } else {
+        if(sha256_len > 0) {
+            sha256_process_bytes(sha256_buf, sha256_len, &sha256_ctx);
+        }
+    }
+    sha256_finish_ctx(&sha256_ctx, sha256_resblock);
+    ascii_from_resbuf(hash, sha256_resblock);
+
+    if(memcmp(hash, metadata.hash_in, 64) != 0) {
+        status |= METADATA_ERROR;
+        DEBUGPRINT("Hash sum failure during merge!");
+        DEBUG2("\tComputed: %s\n", hash);
+        DEBUG2("\tExpected: %s\n", metadata.hash_in);
+    } else {
+        status |= SUCCESS_MERGE;
+    }
+end:
     DEBUG1("Merge finished with status %d", status);
 
-end:
+    if(hash != NULL) {
+        free(hash);
+    }
+    if(sha256_buf != NULL) {
+        free(sha256_buf);
+    }
+    if(sha256_resblock != NULL) {
+        free(sha256_resblock);
+    }
     if(salted_key != NULL) {
         free(salted_key);
     }

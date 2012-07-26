@@ -39,9 +39,6 @@ int main(void)
 {
     unsigned long bs;
     int i, status;
-#if CHECKING == 1
-    unsigned char *ascii = NULL;
-#endif
     FILE *fp[5] = {NULL, NULL, NULL, NULL, NULL};
     char *filename[] = {"test_raid5.dat",
                         "test_raid5.dev0.dat",
@@ -53,6 +50,7 @@ int main(void)
                        };
 
 #if CHECKING == 1
+    unsigned char *ascii = NULL;
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
                        "",
                        "8e48fe4fc7f309b388a6555b397d9ef5bcfa6659291422e74c2549518e62dbf9",
@@ -62,17 +60,15 @@ int main(void)
                        "823739180c23dac353f0efeea20882f8a71ae67ae1fbb9af2621d450b0148cca"
                       };
 #endif
+		      
 #if BENCHMARK == 1
     struct timeval start, end;
     float elapsed_split, elapsed_merge;
-#endif
-    /* rc4_key rc4key; */
-
-#if BENCHMARK != 1
+#else
     printf("Running test for RAID5:\n\n");
 #endif
     /* BENCHSIZE must be between 1 byte and MAXSIZE */
-    if (BENCHSIZE < 0 || BENCHSIZE > MAXSIZE) {
+    if(BENCHSIZE < 0 || BENCHSIZE > MAXSIZE) {
         fprintf(stderr, "Aborting. BENCHSIZE out of range.\n");
         return 1;
     }
@@ -115,23 +111,20 @@ int main(void)
     }
 
     /** perform the split **/
-#if BENCHMARK != 1
-    printf("Start split ... ");
-    fflush(stdout);
-#endif
 #if BENCHMARK == 1
     gettimeofday(&start, NULL);
-#endif
     split_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
-#if BENCHMARK == 1
     gettimeofday(&end, NULL);
-#endif
-#if BENCHMARK != 1
+    elapsed_split = ((end.tv_sec - start.tv_sec) * 1000000.0f + end.tv_usec - start.tv_usec) / 1000.0f;
+#else
+    printf("Start split ... ");
+    fflush(stdout);
+    status = split_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
+    if((status & SUCCESS_SPLIT) == 0) {
+        fprintf(stderr, "Return code of split does not include the success flag(%d). Got %d.\n", SUCCESS_SPLIT, status);
+    }
     printf("Done\n");
     fflush(stdout);
-#endif
-#if BENCHMARK == 1
-    elapsed_split = ((end.tv_sec - start.tv_sec) * 1000000.0f + end.tv_usec - start.tv_usec) / 1000.0f;
 #endif
 
     /** Close the input file **/
@@ -145,11 +138,16 @@ int main(void)
             fprintf(stderr, "renamed %s to %s\n", filename[FILEID], filename[6]);
         }
         fp[i] = fopen(filename[i], "rb");
-        if(!fp[i]) {
 #if BENCHMARK != 1
-            fprintf(stderr, "Cannot open device file %d!\n", i - 1);
-#endif
+        if(!fp[i]) {
+            fprintf(stderr, "Cannot open device file %d!", i - 1);
+            if(i == FILEID) {
+                fprintf(stderr, " [OK]\n");
+            } else {
+                fprintf(stderr, "\n");
+            }
         }
+#endif
     }
 
     fclose(fp[4]);
@@ -167,23 +165,20 @@ int main(void)
     }
 
     /** perform the merge **/
-#if BENCHMARK != 1
-    printf("Start merge ... ");
-    fflush(stdout);
-#endif
 #if BENCHMARK == 1
     gettimeofday(&start, NULL);
-#endif
     merge_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
-#if BENCHMARK == 1
     gettimeofday(&end, NULL);
-#endif
-#if BENCHMARK != 1
+    elapsed_merge = ((end.tv_sec - start.tv_sec) * 1000000.0f + end.tv_usec - start.tv_usec) / 1000.0f;
+#else
+    printf("Start merge ... ");
+    fflush(stdout);
+    status = merge_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
+    if((status & SUCCESS_MERGE) == 0) {
+        fprintf(stderr, "Return code of merge does not include the success flag(%d). Got %d.\n", SUCCESS_MERGE, status);
+    }
     printf("Done\n");
     fflush(stdout);
-#endif
-#if BENCHMARK == 1
-    elapsed_merge = ((end.tv_sec - start.tv_sec) * 1000000.0f + end.tv_usec - start.tv_usec) / 1000.0f;
 #endif
 
     /** Close ALL files **/
