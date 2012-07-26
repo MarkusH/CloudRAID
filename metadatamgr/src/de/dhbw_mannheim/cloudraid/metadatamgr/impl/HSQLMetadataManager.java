@@ -124,7 +124,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized boolean addUser(String username, String password) {
 		try {
-			if (!this.config.getBoolean("allowUserAdd", false)) {
+			if (!this.config.getBoolean("allowUserAdd", true)) {
 				return false;
 			}
 			this.getUserSaltStatement.setString(1, username);

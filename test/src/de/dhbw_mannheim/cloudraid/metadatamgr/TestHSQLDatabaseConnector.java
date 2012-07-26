@@ -60,15 +60,20 @@ public class TestHSQLDatabaseConnector {
 		config.setCloudRAIDHome(System.getProperty("java.io.tmpdir")
 				+ File.separator + "cloudraid");
 		config.init("CloudRAID-unitTests");
+
 		dbc = new HSQLMetadataManager();
 		dbc.setConfig(config);
+
 		assertTrue(dbc.connect(config.getCloudRAIDHome() + DATABASE_FILE, "SA",
 				""));
 		assertTrue(dbc.initialize());
-		assertFalse(dbc.addUser("User1", "Password1"));
-		config.put("allowUserAdd", true);
+
 		assertTrue(dbc.addUser("User1", "Password1"));
+		config.put("allowUserAdd", false);
+		assertFalse(dbc.addUser("User2", "Password2"));
+		config.put("allowUserAdd", true);
 		assertTrue(dbc.addUser("User2", "Password2"));
+
 		user1Id = dbc.authUser("User1", "Password1");
 		user2Id = dbc.authUser("User2", "Password2");
 		assertTrue(user1Id >= 0);
