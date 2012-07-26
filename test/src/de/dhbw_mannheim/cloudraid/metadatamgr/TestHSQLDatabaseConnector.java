@@ -45,7 +45,7 @@ import de.dhbw_mannheim.cloudraid.metadatamgr.impl.HSQLMetadataManager;
  */
 public class TestHSQLDatabaseConnector {
 
-	private static IMetadataManager dbc;
+	private static HSQLMetadataManager dbc;
 	private static final String DATABASE_FILE = "testfiledb";
 	private static final String PATH = "path", PATH2 = "path2";
 	private static final String HASH = "hash", HASH2 = "hash2";
@@ -61,13 +61,18 @@ public class TestHSQLDatabaseConnector {
 				+ File.separator + "cloudraid");
 		config.init("CloudRAID-unitTests");
 		dbc = new HSQLMetadataManager();
+		dbc.setConfig(config);
 		assertTrue(dbc.connect(config.getCloudRAIDHome() + DATABASE_FILE, "SA",
 				""));
 		assertTrue(dbc.initialize());
-		dbc.addUser("User1", "Password1");
-		dbc.addUser("User2", "Password2");
+		assertFalse(dbc.addUser("User1", "Password1"));
+		config.put("allowUserAdd", true);
+		assertTrue(dbc.addUser("User1", "Password1"));
+		assertTrue(dbc.addUser("User2", "Password2"));
 		user1Id = dbc.authUser("User1", "Password1");
 		user2Id = dbc.authUser("User2", "Password2");
+		assertTrue(user1Id >= 0);
+		assertTrue(user2Id >= 0);
 	}
 
 	@AfterClass

@@ -124,7 +124,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	@Override
 	public synchronized boolean addUser(String username, String password) {
 		try {
-			if (!this.config.getBoolean("allowUserAdd", true)) {
+			if (!this.config.getBoolean("allowUserAdd", false)) {
 				return false;
 			}
 			this.getUserSaltStatement.setString(1, username);
@@ -558,7 +558,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	/**
 	 * @param config
 	 */
-	protected synchronized void setConfig(ICloudRAIDConfig config) {
+	public synchronized void setConfig(ICloudRAIDConfig config) {
 		System.out.println("HSQLMetadataManager: setConfig: begin");
 		this.config = config;
 		System.out.println("HSQLMetadataManager: setConfig: " + this.config);
@@ -603,7 +603,7 @@ public class HSQLMetadataManager implements IMetadataManager {
 	/**
 	 * @param config
 	 */
-	protected synchronized void unsetConfig(ICloudRAIDConfig config) {
+	public synchronized void unsetConfig(ICloudRAIDConfig config) {
 		System.out.println("CloudRAIDService: unsetConfig: begin");
 		System.out.println("CloudRAIDService: unsetConfig: " + config);
 		this.config = null;
