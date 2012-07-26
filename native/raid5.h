@@ -30,6 +30,11 @@
 
 #include <stdio.h>
 #include <stddef.h>
+
+#ifndef ENCRYPT_DATA
+#define ENCRYPT_DATA 1
+#endif
+
 #ifndef RAID5BLOCKSIZE
 #define RAID5BLOCKSIZE 1024
 #endif

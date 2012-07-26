@@ -3,7 +3,7 @@ TOTERR=0
 for fileid in 1 2 3 ; do
     for i in {0..28} ; do
         BS=$(($i*256))
-        gcc test_raid5.c -DCHECKING=0 -DBENCHSIZE=${BS} -DENCRYPT_DATA=1 -DFILEID=${fileid}\
+        gcc test_raid5.c -DCHECKING=0 -DBENCHSIZE=${BS} -DFILEID=${fileid}\
             -Wall -pedantic -g "./build/usr/lib/libcloudraid.so" \
             -o "./testing/test_raid5_${BS}"
 

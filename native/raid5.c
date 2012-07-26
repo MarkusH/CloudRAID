@@ -290,7 +290,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
 
     rlen = fread(chars, sizeof(unsigned char), 2 * RAID5BLOCKSIZE, in);
     DEBUG3("Read %d bytes", rlen);
-#if ENCRYPT_DATA == 1
+#if ENCRYPT_DATA != 0
 #ifndef EMPTY_SALT
     i = create_salt((unsigned char *)metadata.salt);
     if(i != 0) {
@@ -309,7 +309,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     prepare_key(salted_key, ENCRYPTION_SALT_BYTES, &rc4key);
 #endif
     while(rlen > 0) {
-#if ENCRYPT_DATA == 1
+#if ENCRYPT_DATA != 0
         /* encrypt the input file */
         DEBUG1("Encryption enabled");
         rc4(chars, rlen, &rc4key);
@@ -542,7 +542,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
     in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
     in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[parity_pos]) : 0;
     DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
-#if ENCRYPT_DATA == 1
+#if ENCRYPT_DATA != 0
     i = gen_salted_key(key, keylen, metadata.salt, salted_key);
     if(i != 0) {
         status |= MEMERR_BUF;
@@ -587,7 +587,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
         }
 
 
-#if ENCRYPT_DATA == 1
+#if ENCRYPT_DATA != 0
         /* encrypt the input file */
         DEBUG1("Encryption enabled");
         rc4(buf, out_len, &rc4key);
