@@ -53,10 +53,10 @@
 /**
  * This function is used to merge two input char arrays to the output array.
  *
- * `*in` MUST have a length of `3*RAID5_BLOCKSIZE`.
+ * `*in` MUST have a length of `3*RAID5BLOCKSIZE`.
  *
  * The `in_len` array contains the length of the three possible input char
- * arrays, where each in put array has at most `RAID5_BLOCKSIZE` characters.
+ * arrays, where each in put array has at most `RAID5BLOCKSIZE` characters.
  *
  * Depending on the current parity position `parity_pos`, the primary device is
  * `(parity_pos+1)%3` and the secondary device `(parity_pos+2)%3`.
@@ -69,7 +69,7 @@
  * from the meta data file and cannot be retrieved from the other parameters.
  *
  * `*out` is a pointer to the output char array. `*out` NEED NOT to be NULL and
- * MUST have a size of `2*RAID5_BLOCKSIZE`!
+ * MUST have a size of `2*RAID5BLOCKSIZE`!
  *
  * `*out_len` will contain the length of the `*out` buffer. Or -1 if something went wrong
  */
@@ -104,7 +104,7 @@ void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsi
         memcpy(&out[0], &in[0], in_len[0]);    /* Copy the first part of the read bytes */
         *out_len = in_len[0];
         if(in_len[1] > 0) {
-            memcpy(&out[RAID5_BLOCKSIZE], &in[RAID5_BLOCKSIZE], in_len[1]);    /* Copy the second part of the read bytes */
+            memcpy(&out[RAID5BLOCKSIZE], &in[RAID5BLOCKSIZE], in_len[1]);    /* Copy the second part of the read bytes */
             *out_len += in_len[1];
         }
     } else {
@@ -120,7 +120,7 @@ void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsi
             len = in_len[0] - missing; /* Set the expected length of the secondary device */
             *out_len = in_len[0] + len;
             for(i = 0; i < len; i++) {
-                out[RAID5_BLOCKSIZE + i] = in[i] ^ in[2 * RAID5_BLOCKSIZE + i];
+                out[RAID5BLOCKSIZE + i] = in[i] ^ in[2 * RAID5BLOCKSIZE + i];
             }
         }
 
@@ -136,12 +136,12 @@ void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsi
                  */
                 *out_len = in_len[1] + in_len[2];
                 for(i = 0; i < in_len[1]; i++) {
-                    out[i] = in[RAID5_BLOCKSIZE + i] ^ in[2 * RAID5_BLOCKSIZE + i];
+                    out[i] = in[RAID5BLOCKSIZE + i] ^ in[2 * RAID5BLOCKSIZE + i];
                 }
                 for(i = in_len[1]; i < in_len[2]; i++) {
-                    out[i] = in[2 * RAID5_BLOCKSIZE + i] ^ 0xFF;
+                    out[i] = in[2 * RAID5BLOCKSIZE + i] ^ 0xFF;
                 }
-                memcpy(&out[RAID5_BLOCKSIZE], &in[RAID5_BLOCKSIZE], in_len[1]);    /* Copy the second part of the read bytes */
+                memcpy(&out[RAID5BLOCKSIZE], &in[RAID5BLOCKSIZE], in_len[1]);    /* Copy the second part of the read bytes */
             } else {
                 DEBUG3("Unknown state for merge: dead device: %d, parity on %d", dead_device, parity_pos);
                 *out_len = -1;
@@ -160,9 +160,9 @@ void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsi
  *
  * The output will be stored in `*out` as follows:
  *  - The primary device will be stored at `&out[0]`.
- *  - The secondary device will be stored at `&out[RAID5_BLOCKSIZE]`.
+ *  - The secondary device will be stored at `&out[RAID5BLOCKSIZE]`.
  *  - The tertiary device, also know as the parity, will be stored in
- *    `&out[2*RAID5_BLOCKSIZE]`.
+ *    `&out[2*RAID5BLOCKSIZE]`.
  *
  * The length of the three output buffers, that are stored in `*out`, will be
  * saved in `out_len[]` as follows:
@@ -170,34 +170,34 @@ void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsi
  *  - `out_len[1]` contains the length for the secondary device.
  *  - `out_len[2]` contains the length for the tertiary device / parity.
  *
- * If the input length `in_len` is smaller or equal the `RAID5_BLOCKSIZE`, the
+ * If the input length `in_len` is smaller or equal the `RAID5BLOCKSIZE`, the
  * `out_len[0]` and `out_len[2]` will be `in_len` and `out_len[1]` will be 0.
  * Otherwise `out_len[0]` and `out_len[2]` will be equal to the
- * `RAID5_BLOCKSIZE` and `out_len[1]` will be the difference between `in_len`
- * and `RAID5_BLOCKSIZE`.
+ * `RAID5BLOCKSIZE` and `out_len[1]` will be the difference between `in_len`
+ * and `RAID5BLOCKSIZE`.
  */
 void split_byte_block(const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[])
 {
     int i, partial;
-    if(in_len > RAID5_BLOCKSIZE) {
+    if(in_len > RAID5BLOCKSIZE) {
         DEBUG3("The input length for this block is larger than the RAID5 blocksize. Hence using the secondary device file too.");
-        partial = in_len - RAID5_BLOCKSIZE; /* in case of in in_len == 2 * RAID5_BLOCKSIZE, partial == RAID5_BLOCKSIZE */
-        memcpy(&out[0], &in[0], RAID5_BLOCKSIZE);    /* Copy the first part of the read bytes */
-        memcpy(&out[RAID5_BLOCKSIZE], &in[RAID5_BLOCKSIZE], partial);    /* Copy the second part of the read bytes */
+        partial = in_len - RAID5BLOCKSIZE; /* in case of in in_len == 2 * RAID5BLOCKSIZE, partial == RAID5BLOCKSIZE */
+        memcpy(&out[0], &in[0], RAID5BLOCKSIZE);    /* Copy the first part of the read bytes */
+        memcpy(&out[RAID5BLOCKSIZE], &in[RAID5BLOCKSIZE], partial);    /* Copy the second part of the read bytes */
         for(i = 0; i < partial; i++) {
-            out[2 * RAID5_BLOCKSIZE + i] = out[i] ^ out[RAID5_BLOCKSIZE + i]; /* Bytewise calculation of the parity */
+            out[2 * RAID5BLOCKSIZE + i] = out[i] ^ out[RAID5BLOCKSIZE + i]; /* Bytewise calculation of the parity */
         }
-        for(i = partial; i < RAID5_BLOCKSIZE; i++) {  /* no effect for in_len == 2 * RAID5_BLOCKSIZE */
-            out[2 * RAID5_BLOCKSIZE + i] = ~out[i]; /* Parity of the overflowing bytes */
+        for(i = partial; i < RAID5BLOCKSIZE; i++) {  /* no effect for in_len == 2 * RAID5BLOCKSIZE */
+            out[2 * RAID5BLOCKSIZE + i] = ~out[i]; /* Parity of the overflowing bytes */
         }
-        out_len[0] = RAID5_BLOCKSIZE;
+        out_len[0] = RAID5BLOCKSIZE;
         out_len[1] = partial;
-        out_len[2] = RAID5_BLOCKSIZE;
+        out_len[2] = RAID5BLOCKSIZE;
     } else {
         DEBUG3("The input length for this block is smaller or equal to the RAID5 blocksize. No need for the secondary device file.");
         memcpy(&out[0], &in[0], in_len);    /* Copy the first part of the read bytes */
         for(i = 0; i < in_len; i++) {
-            out[2 * RAID5_BLOCKSIZE + i] = ~out[i]; /* Parity of the overflowing bytes */
+            out[2 * RAID5BLOCKSIZE + i] = ~out[i]; /* Parity of the overflowing bytes */
         }
         out_len[0] = in_len;
         out_len[1] = 0;
@@ -207,7 +207,7 @@ void split_byte_block(const unsigned char *in, const size_t in_len, unsigned cha
 
 /**
  * Split the input file `*in` into three device files `devices[0]`,
- * `devices[1]` and `devices[2]`. The parity for the first `2*RAID5_BLOCKSIZE`
+ * `devices[1]` and `devices[2]`. The parity for the first `2*RAID5BLOCKSIZE`
  * characters read from `*in` will be stored in `devices[2]` and will continue
  * on devices`[0]` and devices`[1]`
  *
@@ -238,8 +238,8 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     new_metadata(&metadata);
     metadata.version = RAID5_METADATA_VERSION;
 
-    chars = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
-    out = (unsigned char *) calloc(3 * RAID5_BLOCKSIZE, sizeof(unsigned char));
+    chars = (unsigned char *) calloc(2 * RAID5BLOCKSIZE, sizeof(unsigned char));
+    out = (unsigned char *) calloc(3 * RAID5BLOCKSIZE, sizeof(unsigned char));
     out_len = (size_t *) calloc(3, sizeof(size_t));
     salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES, sizeof(unsigned char));
     hash = (unsigned char *) calloc(65, sizeof(unsigned char));
@@ -288,7 +288,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
         sha256_len[i] = 0;
     }
 
-    rlen = fread(chars, sizeof(unsigned char), 2 * RAID5_BLOCKSIZE, in);
+    rlen = fread(chars, sizeof(unsigned char), 2 * RAID5BLOCKSIZE, in);
     DEBUG3("Read %d bytes", rlen);
 #if ENCRYPT_DATA == 1
 #ifndef EMPTY_SALT
@@ -326,9 +326,9 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
         DEBUG3("Split %d input bytes into %d (%d/%d/%d) for devices %d/%d/%d", rlen, out_len[0] + out_len[1] + out_len[2], out_len[0], out_len[1], out_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
         fwrite(&out[0], sizeof(unsigned char), out_len[0], devices[(parity_pos + 1) % 3]);
         if(out_len[1] > 0) {
-            fwrite(&out[RAID5_BLOCKSIZE], sizeof(unsigned char), out_len[1], devices[(parity_pos + 2) % 3]);
+            fwrite(&out[RAID5BLOCKSIZE], sizeof(unsigned char), out_len[1], devices[(parity_pos + 2) % 3]);
         }
-        fwrite(&out[2 * RAID5_BLOCKSIZE], sizeof(unsigned char), out_len[2], devices[parity_pos]);
+        fwrite(&out[2 * RAID5BLOCKSIZE], sizeof(unsigned char), out_len[2], devices[parity_pos]);
 
         for(i = 0; i < 3; i++) {
             if(sha256_len[i] == SHA256_BLOCKSIZE) {
@@ -351,22 +351,22 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
          */
         if(sha256_len[0] < SHA256_BLOCKSIZE) {
             i = (parity_pos == 2) ? 0 : (parity_pos == 0) ? 2 : 1;
-            memcpy(sha256_buf[0] + sha256_len[0], &out[i * RAID5_BLOCKSIZE], out_len[i]);
+            memcpy(sha256_buf[0] + sha256_len[0], &out[i * RAID5BLOCKSIZE], out_len[i]);
             sha256_len[0] += out_len[i];
         }
         if(sha256_len[1] < SHA256_BLOCKSIZE) {
             i = (parity_pos == 2) ? 1 : (parity_pos == 0) ? 0 : 2;
-            memcpy(sha256_buf[1] + sha256_len[1], &out[i * RAID5_BLOCKSIZE], out_len[i]);
+            memcpy(sha256_buf[1] + sha256_len[1], &out[i * RAID5BLOCKSIZE], out_len[i]);
             sha256_len[1] += out_len[i];
         }
         if(sha256_len[2] < SHA256_BLOCKSIZE) {
             i = (parity_pos == 2) ? 2 : (parity_pos == 0) ? 1 : 0;
-            memcpy(sha256_buf[2] + sha256_len[2], &out[i * RAID5_BLOCKSIZE], out_len[i]);
+            memcpy(sha256_buf[2] + sha256_len[2], &out[i * RAID5BLOCKSIZE], out_len[i]);
             sha256_len[2] += out_len[i];
         }
 
         parity_pos = (parity_pos + 1) % 3;
-        rlen = fread(chars, sizeof(char), 2 * RAID5_BLOCKSIZE, in);
+        rlen = fread(chars, sizeof(char), 2 * RAID5BLOCKSIZE, in);
         DEBUG3("Read %d bytes", rlen);
     }
     if(ferror(in)) {
@@ -439,7 +439,7 @@ end:
 
 /**
  * Merge the device files `devices[0]`, `devices[1]` and `devices[2]` and write
- * them to `*out`. The parity for the first `2*RAID5_BLOCKSIZE` characters
+ * them to `*out`. The parity for the first `2*RAID5BLOCKSIZE` characters
  * written to `*out` will be taken from `devices[2]` and will continue on
  * devices`[0]` and devices`[1]`.
  *
@@ -493,9 +493,9 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
         }
     }
 
-    in = (unsigned char *) calloc(3 * RAID5_BLOCKSIZE, sizeof(unsigned char));
+    in = (unsigned char *) calloc(3 * RAID5BLOCKSIZE, sizeof(unsigned char));
     in_len = (size_t *) calloc(3, sizeof(size_t));
-    buf = (unsigned char *) calloc(2 * RAID5_BLOCKSIZE, sizeof(unsigned char));
+    buf = (unsigned char *) calloc(2 * RAID5BLOCKSIZE, sizeof(unsigned char));
     salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES, sizeof(unsigned char));
     sha256_resblock = calloc(32, sizeof(unsigned char));
     sha256_buf = (char *) calloc(SHA256_BLOCKSIZE + 72, sizeof(unsigned char));
@@ -538,9 +538,9 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
     sha256_init_ctx(&sha256_ctx);
     sha256_len = 0;
 
-    in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5_BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
-    in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5_BLOCKSIZE], sizeof(char), RAID5_BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
-    in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5_BLOCKSIZE], sizeof(char), RAID5_BLOCKSIZE, devices[parity_pos]) : 0;
+    in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
+    in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
+    in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[parity_pos]) : 0;
     DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
 #if ENCRYPT_DATA == 1
     i = gen_salted_key(key, keylen, metadata.salt, salted_key);
@@ -596,9 +596,9 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
         fwrite(buf, sizeof(unsigned char), out_len, out);
 
         parity_pos = (parity_pos + 1) % 3;
-        in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5_BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
-        in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5_BLOCKSIZE], sizeof(char), RAID5_BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
-        in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5_BLOCKSIZE], sizeof(char), RAID5_BLOCKSIZE, devices[parity_pos]) : 0;
+        in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
+        in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
+        in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[parity_pos]) : 0;
         DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
     }
     if(devices[0] && ferror(devices[0])) {

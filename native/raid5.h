@@ -77,7 +77,6 @@ extern "C"
         unsigned int missing;
     } raid5md;
 
-    static const unsigned int RAID5_BLOCKSIZE = RAID5BLOCKSIZE;
     static const unsigned char RAID5_METADATA_VERSION = 2;
     static const unsigned int RAID5_METADATA_BYTES = 2 + 4*64 + ENCRYPTION_SALT_BYTES + 4;
 
