@@ -27,6 +27,9 @@ else
 endif
 
 CC = gcc
+ifdef C
+CC = $(C)
+endif
 
 JAVASOURCE = ./../core/src
 JAVABIN = ./../core/bin
