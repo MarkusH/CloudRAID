@@ -31,7 +31,6 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Arrays;
 
-import javax.activation.MimetypesFileTypeMap;
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -55,7 +54,6 @@ import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
 public class SugarSyncConnector implements IStorageConnector {
 
 	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
-	private final static MimetypesFileTypeMap MIME_MAP = new MimetypesFileTypeMap();
 	private final static String USER_INFO_URL = "https://api.sugarsync.com/user";
 
 	/**
@@ -216,7 +214,6 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private void createFile(String name, File f, String parent)
 			throws IOException, SAXException, ParserConfigurationException {
-		// String mime = SugarSyncConnector.MIME_MAP.getContentType(f);
 		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><file><displayName>"
 				+ name
 				+ "</displayName><mediaType>"
@@ -231,17 +228,13 @@ public class SugarSyncConnector implements IStorageConnector {
 		try {
 			con.getOutputStream().write(request.getBytes());
 			con.getOutputStream().close();
+			// Do not remove the following line.
+			con.getResponseCode();
 		} finally {
 			con.disconnect();
 		}
-		System.out.println(con.getResponseCode());
-		System.out.println(con.getResponseMessage());
 
-		// String file = this.findFileInFolder(name, parent
-		// + "/contents?type=file")
-		// + "/data";
 		String file = con.getHeaderField("Location") + "/data";
-		System.out.println(file);
 
 		con = SugarSyncConnector.getConnection(file, this.token, "PUT");
 		con.setDoOutput(true);
@@ -269,42 +262,8 @@ public class SugarSyncConnector implements IStorageConnector {
 				}
 			} catch (IOException ignore) {
 			}
-			System.out.println(con.getResponseCode());
-			System.out.println(con.getResponseMessage());
-			con.disconnect();
-		}
-	}
-
-	/**
-	 * Creates a folder on SugarSync.
-	 * 
-	 * @param name
-	 *            The name of the folder.
-	 * @param parent
-	 *            The URL to the parent folder.
-	 * @throws IOException
-	 *             Thrown, if the content cannot be processed
-	 */
-	private void createFolder(String name, String parent) throws IOException {
-		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-				+ "<folder>" + "\t<displayName>" + name + "</displayName>"
-				+ "</folder>";
-		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.token, "POST");
-		con.setRequestProperty("Content-Type", "text/xml");
-		con.setDoOutput(true);
-		con.setDoInput(true);
-
-		con.connect();
-		try {
-			con.getOutputStream().write(request.getBytes());
-			InputStream is = con.getInputStream();
-			int i;
-			while ((i = is.read()) >= 0) {
-				System.out.print((char) i);
-			}
-			con.getInputStream().close();
-		} finally {
+			// Do not remove the following line.
+			con.getResponseCode();
 			con.disconnect();
 		}
 	}
@@ -341,9 +300,10 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * @throws ParserConfigurationException
 	 *             Thrown, if the content cannot be parsed
 	 */
-	private String findFileInFolder(String name, String parent)
-			throws SAXException, IOException, ParserConfigurationException {
+	private String findFileInFolder(String name) throws SAXException,
+			IOException, ParserConfigurationException {
 		Document doc = null;
+		String parent = this.getBaseUrl() + "/contents?type=file";
 		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
 				this.token, "GET");
 		con.setDoInput(true);
@@ -478,119 +438,6 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	/**
-	 * Returns the parent folder of a folder
-	 * 
-	 * @param folder
-	 *            The URL to the folder.
-	 * @return The URL of the parent folder.
-	 * @throws IOException
-	 *             Thrown, if no connection can be established
-	 * @throws SAXException
-	 *             Thrown, if the content cannot be parsed
-	 */
-	private String getParentFolder(String folder) throws IOException,
-			SAXException {
-		Document doc = null;
-		HttpsURLConnection con = SugarSyncConnector.getConnection(folder,
-				this.token, "GET");
-		con.setDoInput(true);
-
-		con.connect();
-		try {
-			doc = this.docBuilder.parse(con.getInputStream());
-			con.getInputStream().close();
-		} finally {
-			con.disconnect();
-		}
-
-		return doc.getDocumentElement().getElementsByTagName("parent").item(0)
-				.getTextContent();
-	}
-
-	/**
-	 * Runs recursively through the folders in 'Magic Briefcase' to find the
-	 * specified folder.
-	 * 
-	 * @param resource
-	 *            The folder to be found.
-	 * @param createResource
-	 *            Create missing folders.
-	 * @return The URL to the folder.
-	 */
-	private String getResourceURL(String resource, boolean createResource) {
-		try {
-			String folder = this.getBaseUrl();
-			System.out.println(folder);
-			while (resource.contains("/")) {
-				String parent = folder;
-				this.isFolderEmpty(folder);
-				folder += "/contents?type=folder";
-				String nextName = resource.substring(0, resource.indexOf("/"));
-				System.out.println(resource);
-
-				folder = this.findFolderInFolder(nextName, folder);
-
-				resource = resource.substring(resource.indexOf("/") + 1);
-				if (createResource && folder == null) {
-					this.createFolder(nextName, parent);
-					folder = this.findFolderInFolder(nextName, parent
-							+ "/contents?type=folder");
-				}
-			}
-			return folder;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	/**
-	 * Returns if a folder is empty and can be deleted.
-	 * 
-	 * @param folder
-	 *            The URL of the folder.
-	 * @return true, if the folder is empty.
-	 * @throws IOException
-	 *             Thrown, if no connection can be established
-	 * @throws SAXException
-	 *             Thrown, if the content cannot be parsed
-	 */
-	private boolean isFolderEmpty(String folder) throws IOException,
-			SAXException {
-		Document doc = null;
-		HttpsURLConnection con = SugarSyncConnector.getConnection(folder
-				+ "/contents", this.token, "GET");
-		con.setDoInput(true);
-
-		con.connect();
-		try {
-			doc = this.docBuilder.parse(con.getInputStream());
-			con.getInputStream().close();
-		} finally {
-			con.disconnect();
-		}
-
-		if (!doc.getDocumentElement().hasAttribute("end")
-				|| !doc.getDocumentElement().getAttribute("end").equals("0")) {
-			return false;
-		}
-
-		con = SugarSyncConnector.getConnection(folder, this.token, "GET");
-		con.setDoInput(true);
-
-		con.connect();
-		try {
-			doc = this.docBuilder.parse(con.getInputStream());
-			con.getInputStream().close();
-		} finally {
-			con.disconnect();
-		}
-
-		return !doc.getDocumentElement().getElementsByTagName("displayName")
-				.item(0).getTextContent().equals("Magic Briefcase");
-	}
-
-	/**
 	 * Executes the actual deletion of a file.
 	 * 
 	 * @param resource
@@ -601,41 +448,34 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private boolean performDelete(String resource, String extension) {
 		resource += "." + extension;
-		// Find URL to parent directory.
-		String parent;
-		if (resource.contains("/")) {
-			parent = this
-					.getResourceURL(resource.substring(0,
-							resource.lastIndexOf("/") + 1), false);
-		} else {
-			parent = this.getResourceURL("", false);
-		}
-
-		if (parent == null) {
-			return true;
-		}
-
 		// Find URL of resource in parent directory
-		String resourceURL;
 		try {
-			resourceURL = this.findFileInFolder(
-					resource.substring(resource.lastIndexOf("/") + 1), parent
-							+ "/contents?type=file");
+			String resourceURL = this.findFileInFolder(resource);
+			if (!this.performDeleteResource(resourceURL)) {
+				return false;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return true;
 		}
+		return true;
+	}
 
+	/**
+	 * Actually deletes a resource on the given URL.
+	 * 
+	 * @param resourceURL
+	 *            The URL of the resource.
+	 */
+	private boolean performDeleteResource(String resourceURL) {
 		HttpsURLConnection con = null;
 		try {
 			con = SugarSyncConnector.getConnection(resourceURL, this.token,
 					"DELETE");
 			con.setDoInput(true);
 			con.connect();
-			InputStream is = con.getInputStream();
-			while (is.read() >= 0) {
-			}
-			con.getInputStream().close();
+			// Do not remove the following line.
+			con.getResponseCode();
 		} catch (Exception e) {
 			e.printStackTrace();
 			int returnCode = -1;
@@ -650,19 +490,6 @@ public class SugarSyncConnector implements IStorageConnector {
 			if (con != null) {
 				con.disconnect();
 			}
-		}
-
-		try {
-			while (this.isFolderEmpty(parent)) {
-				String oldParent = parent;
-				parent = this.getParentFolder(parent);
-				con = SugarSyncConnector.getConnection(oldParent, this.token,
-						"DELETE");
-				con.connect();
-				con.disconnect();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		return true;
 	}
@@ -680,17 +507,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		connect();
 		resource += "." + extension;
 		try {
-			String parent;
-			if (resource.contains("/")) {
-				parent = this.getResourceURL(
-						resource.substring(0, resource.lastIndexOf("/") + 1),
-						false);
-			} else {
-				parent = this.getResourceURL("", false);
-			}
-			String resourceURL = this.findFileInFolder(
-					resource.substring(resource.lastIndexOf("/") + 1), parent
-							+ "/contents?type=file");
+			String resourceURL = this.findFileInFolder(resource);
 
 			HttpsURLConnection con;
 			con = SugarSyncConnector.getConnection(resourceURL + "/data",
@@ -728,39 +545,13 @@ public class SugarSyncConnector implements IStorageConnector {
 		} else if (f.length() > maxFilesize) {
 			System.err.println("File too big");
 		} else {
-			String parent;
-			if (resource.contains("/")) {
-				parent = this.getResourceURL(
-						resource.substring(0, resource.lastIndexOf("/") + 1),
-						true);
-			} else {
-				parent = this.getResourceURL("", true);
-			}
-
 			try {
-				String fileName = resource
-						.substring(resource.lastIndexOf("/") + 1);
-				String resourceURL = this.findFileInFolder(fileName, parent
-						+ "/contents?type=file");
+				String resourceURL = this.findFileInFolder(resource);
 				if (resourceURL != null) {
 					System.err.println("The file already exists. DELETE it. "
 							+ resourceURL);
-					HttpsURLConnection con = SugarSyncConnector.getConnection(
-							resourceURL, this.token, "DELETE");
-					con.setDoInput(true);
-					con.connect();
-					// Do the following steps to _really_ delete the file.
-					// If the following steps are missing, the files do not
-					// get deleted.
-					try {
-						InputStream is = con.getInputStream();
-						while (is.read() >= 0) {
-						}
-						con.getInputStream().close();
-					} finally {
-						con.disconnect();
-					}
-					this.createFile(fileName, f, parent);
+					this.performDeleteResource(resourceURL);
+					this.createFile(resource, f, this.getBaseUrl());
 					return true;
 				} else {
 					System.err.println("No file found for update.");
@@ -800,26 +591,14 @@ public class SugarSyncConnector implements IStorageConnector {
 		} else if (f.length() > maxFilesize) {
 			System.err.println("File too big");
 		} else {
-			String parent;
-			if (resource.contains("/")) {
-				parent = this.getResourceURL(
-						resource.substring(0, resource.lastIndexOf("/") + 1),
-						true);
-			} else {
-				parent = this.getResourceURL("", true);
-			}
-
 			try {
-				String fileName = resource
-						.substring(resource.lastIndexOf("/") + 1);
-				String resourceURL = this.findFileInFolder(fileName, parent
-						+ "/contents?type=file");
+				String resourceURL = this.findFileInFolder(resource);
 				if (resourceURL != null) {
 					System.err.println("The file already exists. DELETE it. "
 							+ resourceURL);
 					return false;
 				}
-				this.createFile(fileName, f, parent);
+				this.createFile(resource, f, this.getBaseUrl());
 			} catch (IOException e) {
 				e.printStackTrace();
 				return false;
