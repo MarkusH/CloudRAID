@@ -22,7 +22,7 @@
 
 package de.dhbw_mannheim.cloudraid.metadatamgr;
 
-import java.sql.ResultSet;
+import java.util.Collection;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 
@@ -145,7 +145,7 @@ public interface IMetadataManager {
 	 *            The id of the file
 	 * @return The SQL ResultSet matching the given file id.
 	 */
-	public ResultSet fileById(int fileId);
+	public ICloudFile fileById(int fileId);
 
 	/**
 	 * Deletes a data set in the database defined by the path.
@@ -165,7 +165,7 @@ public interface IMetadataManager {
 	 *            The user id this file belongs to
 	 * @return The SQL ResultSet of the file
 	 */
-	public ResultSet fileGet(String path, int userId);
+	public ICloudFile fileGet(String path, int userId);
 
 	/**
 	 * Returns a ResultSet that contains all files of a user.
@@ -174,7 +174,7 @@ public interface IMetadataManager {
 	 *            The user id this file belongs to
 	 * @return The SQL ResultSet of all file belonging to the given user.
 	 */
-	public ResultSet fileList(int userId);
+	public Collection<ICloudFile> fileList(int userId);
 
 	/**
 	 * Inserts a data set into the database.
@@ -220,51 +220,6 @@ public interface IMetadataManager {
 	 * @return True if the status has been updated
 	 */
 	public boolean fileUpdateState(int id, FILE_STATUS state);
-
-	/**
-	 * Looks up the hash value of an entry in the database.
-	 * 
-	 * @deprecated Not needed
-	 * 
-	 * @param path
-	 *            The path of the file (identifies the data set).
-	 * @param userId
-	 *            The user id this file belongs to
-	 * @return The hash value. Or <code>null</code>, if the path does not exist
-	 *         in the database.
-	 */
-	@Deprecated
-	public String getHash(String path, int userId);
-
-	/**
-	 * Looks up the last modification date of a file.
-	 * 
-	 * @deprecated Not needed
-	 * 
-	 * @param path
-	 *            The path of the file.
-	 * @param userId
-	 *            The user id this file belongs to
-	 * @return The last modification date. Or <code>-1L</code>, if the path does
-	 *         not exist in the database.
-	 */
-	@Deprecated
-	public long getLastMod(String path, int userId);
-
-	/**
-	 * Looks up a file name for a given hash value.
-	 * 
-	 * @deprecated Not needed
-	 * 
-	 * @param hash
-	 *            The hash value.
-	 * @param userId
-	 *            The user id this file belongs to
-	 * @return The path of the file. Or <code>null</code>, if the hash does not
-	 *         exist in the database.
-	 */
-	@Deprecated
-	public String getName(String hash, int userId);
 
 	/**
 	 * Creates the database schemas.

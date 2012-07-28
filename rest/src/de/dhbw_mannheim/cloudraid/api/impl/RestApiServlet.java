@@ -27,9 +27,10 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,7 @@ import de.dhbw_mannheim.cloudraid.api.impl.responses.PlainApiResponse;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.core.ICoreAccess;
+import de.dhbw_mannheim.cloudraid.metadatamgr.ICloudFile;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
 
 /**
@@ -82,6 +84,12 @@ public class RestApiServlet extends HttpServlet {
 	private IMetadataManager metadata = null;
 
 	private ICloudRAIDService coreService = null;
+
+	/**
+	 * The date format for the file list.
+	 */
+	private SimpleDateFormat cloudraidDateFormat = new SimpleDateFormat(
+			"yyyy-MM-dd hh:mm:ss.S");
 
 	/**
 	 * Initializes all URL mappings and stores a reference to the
@@ -302,20 +310,18 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = this.metadata.fileGet(path, userid);
-		if (rs == null) {
+		ICloudFile cf = this.metadata.fileGet(path, userid);
+		if (cf == null) {
 			resp.setStatusCode(404);
 			return;
 		}
 		try {
-			int fileid = rs.getInt("id");
+			int fileid = cf.getFileId();
 			ICoreAccess slot = this.coreService.getSlot();
 			if (slot.deleteData(fileid)) {
 				resp.setStatusCode(200);
 				return;
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		} catch (InstantiationException e) {
 			e.printStackTrace();
 		}
@@ -355,8 +361,8 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = this.metadata.fileGet(path, userid);
-		if (rs == null) {
+		ICloudFile cf = this.metadata.fileGet(path, userid);
+		if (cf == null) {
 			resp.setStatusCode(404);
 			return;
 		}
@@ -367,7 +373,7 @@ public class RestApiServlet extends HttpServlet {
 		int fileid = -1;
 		try {
 			slot = this.coreService.getSlot();
-			fileid = rs.getInt("id");
+			fileid = cf.getFileId();
 			int bufsize = 4096;
 
 			InputStream is = slot.getData(fileid);
@@ -386,8 +392,6 @@ public class RestApiServlet extends HttpServlet {
 
 			statusCode = 200;
 		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -444,8 +448,8 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = this.metadata.fileGet(path, userid);
-		if (rs != null) {
+		ICloudFile cf = this.metadata.fileGet(path, userid);
+		if (cf != null) {
 			resp.setStatusCode(409);
 			return;
 		}
@@ -505,8 +509,8 @@ public class RestApiServlet extends HttpServlet {
 		String path = args.get(0);
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = this.metadata.fileGet(path, userid);
-		if (rs == null) {
+		ICloudFile cf = this.metadata.fileGet(path, userid);
+		if (cf == null) {
 			resp.setStatusCode(404);
 			return;
 		}
@@ -516,7 +520,7 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		try {
-			int fileid = rs.getInt("id");
+			int fileid = cf.getFileId();
 			ICoreAccess slot = this.coreService.getSlot();
 			this.metadata.fileUpdate(fileid, path, "", 0L, userid);
 			if (fileid >= 0) {
@@ -527,8 +531,6 @@ public class RestApiServlet extends HttpServlet {
 		} catch (InstantiationException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 
@@ -563,23 +565,18 @@ public class RestApiServlet extends HttpServlet {
 		}
 		HttpSession s = req.getSession();
 		int userid = (Integer) s.getAttribute("userid");
-		ResultSet rs = this.metadata.fileList(userid);
-		if (rs == null) {
+		Collection<ICloudFile> cfl = this.metadata.fileList(userid);
+		if (cfl == null) {
 			resp.writeLine("No files uploaded yet.");
 		} else {
-			try {
-				LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
-				while (rs.next()) {
-					map.put("path_name", rs.getString("path_name"));
-					map.put("hash_name", rs.getString("hash_name"));
-					map.put("last_mod", rs.getTimestamp("last_mod").toString());
-					map.put("status", rs.getString("status"));
-					resp.addRow(map);
-				}
-			} catch (SQLException e) {
-				resp.setStatusCode(500);
-				e.printStackTrace();
-				return;
+			LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
+			for (ICloudFile cf : cfl) {
+				map.put("path_name", cf.getName());
+				map.put("hash_name", cf.getHash());
+				map.put("last_mod", this.cloudraidDateFormat.format(new Date(cf
+						.getLastMod())));
+				map.put("status", cf.getStatus());
+				resp.addRow(map);
 			}
 		}
 		resp.setStatusCode(200);

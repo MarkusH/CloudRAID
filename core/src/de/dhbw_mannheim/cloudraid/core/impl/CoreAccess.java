@@ -30,8 +30,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -45,6 +43,7 @@ import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.core.ICoreAccess;
 import de.dhbw_mannheim.cloudraid.core.impl.jni.RaidAccessInterface;
 import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
+import de.dhbw_mannheim.cloudraid.metadatamgr.ICloudFile;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager.FILE_STATUS;
 
@@ -104,9 +103,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		boolean state = false;
 		try {
 			// Retrieve the metadata from the database
-			ResultSet rs = this.metadata.fileById(this.fileid);
-			if (rs != null) {
-				setByResultSet(rs);
+			ICloudFile cf = this.metadata.fileById(this.fileid);
+			if (cf != null) {
+				setByCloudFile(cf);
 
 				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
 					throw new IllegalStateException(String.format(
@@ -128,8 +127,6 @@ public class CoreAccess extends Thread implements ICoreAccess {
 				state = true;
 
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		} catch (IllegalStateException e) {
 			e.printStackTrace();
 		}
@@ -141,9 +138,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		this.fileid = fileid;
 		try {
 			// Retrieve the meta data from the database
-			ResultSet rs = this.metadata.fileById(this.fileid);
-			if (rs != null) {
-				setByResultSet(rs);
+			ICloudFile cf = this.metadata.fileById(this.fileid);
+			if (cf != null) {
+				setByCloudFile(cf);
 
 				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
 					throw new IllegalStateException(String.format(
@@ -168,9 +165,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		int bufsize = 4096;
 		try {
 			// Retrieve the metadata from the database
-			ResultSet rs = this.metadata.fileById(this.fileid);
-			if (rs != null) {
-				setByResultSet(rs);
+			ICloudFile cf = this.metadata.fileById(this.fileid);
+			if (cf != null) {
+				setByCloudFile(cf);
 
 				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.READY) {
 					throw new IllegalStateException(String.format(
@@ -297,8 +294,6 @@ public class CoreAccess extends Thread implements ICoreAccess {
 						new FileInputStream(this.file), bufsize);
 				return bis;
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
 		} catch (FileNotFoundException e) {
@@ -327,9 +322,9 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		BufferedOutputStream bos = null;
 		try {
 			// Retrieve the metadata from the database
-			ResultSet rs = this.metadata.fileById(this.fileid);
-			if (rs != null) {
-				setByResultSet(rs);
+			ICloudFile cf = this.metadata.fileById(this.fileid);
+			if (cf != null) {
+				setByCloudFile(cf);
 
 				if (FILE_STATUS.valueOf(this.status) != FILE_STATUS.UPLOADING) {
 					throw new IllegalStateException(String.format(
@@ -366,9 +361,6 @@ public class CoreAccess extends Thread implements ICoreAccess {
 					this.run();
 				}
 			}
-		} catch (SQLException e) {
-			this.uploadstate = false;
-			e.printStackTrace();
 		} catch (MissingConfigValueException e) {
 			this.uploadstate = false;
 			e.printStackTrace();
@@ -526,11 +518,11 @@ public class CoreAccess extends Thread implements ICoreAccess {
 		this.uploadstate = true;
 	}
 
-	private void setByResultSet(ResultSet rs) throws SQLException {
-		this.path = rs.getString("path_name");
-		this.hash = rs.getString("hash_name");
-		this.userid = rs.getInt("user_id");
-		this.status = rs.getString("status");
+	private void setByCloudFile(ICloudFile cf) {
+		this.path = cf.getName();
+		this.hash = cf.getHash();
+		this.userid = cf.getUserId();
+		this.status = cf.getStatus();
 	}
 
 	private void silentRemove(String path) {

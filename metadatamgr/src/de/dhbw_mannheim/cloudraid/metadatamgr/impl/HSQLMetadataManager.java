@@ -32,12 +32,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Random;
 
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.config.exceptions.ConfigException;
 import de.dhbw_mannheim.cloudraid.config.exceptions.InvalidConfigValueException;
+import de.dhbw_mannheim.cloudraid.metadatamgr.ICloudFile;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
 
 /**
@@ -95,11 +97,6 @@ public class HSQLMetadataManager implements IMetadataManager {
 	 * 
 	 */
 	private PreparedStatement fileUpdateStmnt = null;
-
-	/**
-	 * 
-	 */
-	private PreparedStatement findNameStatement = null;
 
 	/**
 	 * 
@@ -278,8 +275,6 @@ public class HSQLMetadataManager implements IMetadataManager {
 		this.fileUpdateStatusStmnt = null;
 		this.fileUpdateStmnt = null;
 
-		this.findNameStatement = null;
-
 		this.getUserSaltStatement = null;
 
 		this.listFiles = null;
@@ -296,13 +291,13 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public ResultSet fileById(int fileId) {
+	public ICloudFile fileById(int fileId) {
 		try {
 			this.fileByIdStmnt.setInt(1, fileId);
 			this.fileByIdStmnt.execute();
 			ResultSet rs = this.fileByIdStmnt.getResultSet();
 			if (rs != null && rs.next()) {
-				return rs;
+				return new HSQLCloudFile(rs);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -328,14 +323,14 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public synchronized ResultSet fileGet(String path, int userId) {
+	public synchronized ICloudFile fileGet(String path, int userId) {
 		try {
 			this.fileGetStmnt.setString(1, path);
 			this.fileGetStmnt.setInt(2, userId);
 			this.fileGetStmnt.execute();
 			ResultSet rs = this.fileGetStmnt.getResultSet();
 			if (rs != null && rs.next()) {
-				return rs;
+				return new HSQLCloudFile(rs);
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -346,11 +341,11 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public synchronized ResultSet fileList(int userId) {
+	public synchronized Collection<ICloudFile> fileList(int userId) {
 		try {
 			this.listFiles.setInt(1, userId);
 			this.listFiles.execute();
-			return this.listFiles.getResultSet();
+			return HSQLCloudFile.createFileList(this.listFiles.getResultSet());
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
@@ -426,66 +421,6 @@ public class HSQLMetadataManager implements IMetadataManager {
 	}
 
 	@Override
-	public synchronized String getHash(String path, int userId) {
-		try {
-			this.fileGetStmnt.setString(1, path);
-			this.fileGetStmnt.setInt(2, userId);
-			this.fileGetStmnt.execute();
-			ResultSet rs = this.fileGetStmnt.getResultSet();
-			if (rs != null && rs.next()) {
-				return rs.getString("hash_name");
-			}
-			return null;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return null;
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	@Override
-	public synchronized long getLastMod(String path, int userId) {
-		try {
-			this.fileGetStmnt.setString(1, path);
-			this.fileGetStmnt.setInt(2, userId);
-			this.fileGetStmnt.execute();
-			ResultSet rs = this.fileGetStmnt.getResultSet();
-			if (rs != null && rs.next()) {
-				return rs.getTimestamp("last_mod").getTime();
-			}
-			return -1L;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return -1L;
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-			return -1L;
-		}
-	}
-
-	@Override
-	public synchronized String getName(String hash, int userId) {
-		try {
-			this.findNameStatement.setString(1, hash);
-			this.findNameStatement.setInt(2, userId);
-			this.findNameStatement.execute();
-			ResultSet rs = this.findNameStatement.getResultSet();
-			if (rs != null && rs.next()) {
-				return rs.getString("path_name");
-			}
-			return null;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return null;
-		} catch (NullPointerException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	@Override
 	public synchronized boolean initialize() {
 		try {
 			this.statement = this.con.createStatement();
@@ -527,9 +462,6 @@ public class HSQLMetadataManager implements IMetadataManager {
 					.prepareStatement("UPDATE cloudraid_files SET status = ? WHERE id = ? ;");
 			this.fileUpdateStmnt = this.con
 					.prepareStatement("UPDATE cloudraid_files SET path_name = ? , hash_name = ? , last_mod = ? , status = ? , user_id = ? WHERE id = ? ;");
-
-			this.findNameStatement = this.con
-					.prepareStatement("SELECT * FROM cloudraid_files WHERE hash_name = ? AND user_id = ?;");
 
 			this.getUserSaltStatement = this.con
 					.prepareCall("SELECT salt FROM cloudraid_users WHERE username = ?");
