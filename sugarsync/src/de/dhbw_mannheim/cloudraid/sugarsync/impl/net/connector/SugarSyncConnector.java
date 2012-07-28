@@ -29,7 +29,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.xml.parsers.DocumentBuilder;
@@ -53,8 +55,8 @@ import de.dhbw_mannheim.cloudraid.core.net.connector.IStorageConnector;
  */
 public class SugarSyncConnector implements IStorageConnector {
 
+	private final static String APP_AUTH_URL = "https://api.sugarsync.com/app-authorization";
 	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
-	private final static String USER_INFO_URL = "https://api.sugarsync.com/user";
 
 	/**
 	 * Creates an HTTPS connection with some predefined values
@@ -93,13 +95,32 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	private DocumentBuilder docBuilder;
 
-	private String token = "";
+	private String accessToken = "";
 
-	private String username, password, accessKeyId, privateAccessKey;
+	private String accessKeyId, privateAccessKey, refreshToken, userURL;
 	private int id = -1;
+
+	private long expirationDate = 0L;
+
+	/**
+	 * A SimpleDateFormat for parsing the expiration date from SugarSync.
+	 */
+	private SimpleDateFormat sdf = new SimpleDateFormat(
+			"yyyy-MM-dd'T'hhmmss.S Z");
+
+	/**
+	 * This HashMap contains name -> URL mappings, where name is the name of a
+	 * resource and URL the regarding URL.
+	 */
+	private HashMap<String, String> urlCache = new HashMap<String, String>();
 
 	@Override
 	public boolean connect() {
+		// Do not connect, if the current accessToken does not expire within the
+		// next two minutes.
+		if (this.expirationDate - 2L * 60 * 1000 > System.currentTimeMillis()) {
+			return true;
+		}
 		try {
 			// Get the Access Token
 			HttpsURLConnection con = SugarSyncConnector.getConnection(
@@ -110,21 +131,32 @@ public class SugarSyncConnector implements IStorageConnector {
 
 			// Create authentication request
 			String authReq = String.format(
-					"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<authRequest><username>%s"
-							+ "</username><password>%s"
-							+ "</password>\n\t<accessKeyId>%s"
+					"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+							+ "<tokenAuthRequest><accessKeyId>%s"
 							+ "</accessKeyId><privateAccessKey>%s"
-							+ "</privateAccessKey></authRequest>",
-					new Object[] { this.username, this.password,
-							this.accessKeyId, this.privateAccessKey });
+							+ "</privateAccessKey><refreshToken>%s"
+							+ "</refreshToken></tokenAuthRequest>",
+					new Object[] { this.accessKeyId, this.privateAccessKey,
+							this.refreshToken });
 
 			con.connect();
+			Document doc = null;
 			try {
 				con.getOutputStream().write(authReq.getBytes());
-				this.token = con.getHeaderField("Location");
+				this.accessToken = con.getHeaderField("Location");
+				doc = this.docBuilder.parse(con.getInputStream());
+				con.getInputStream().close();
 			} finally {
 				con.disconnect();
 			}
+			String expiration = doc.getElementsByTagName("expiration").item(0)
+					.getTextContent().trim();
+			expiration = expiration.substring(0, 23) + " "
+					+ expiration.substring(23);
+			this.expirationDate = this.sdf.parse(expiration.replace(":", ""))
+					.getTime();
+			this.userURL = doc.getElementsByTagName("user").item(0)
+					.getTextContent().trim();
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -164,21 +196,47 @@ public class SugarSyncConnector implements IStorageConnector {
 		String kAccessKey = String.format("connector.%d.accessKey", this.id);
 		String kPrivateAccessKey = String.format(
 				"connector.%d.privateAccessKey", this.id);
+		String kRefresh = String.format("connector.%d.refreshToken", this.id);
+		String kAppKey = String.format("connector.%d.appKey", this.id);
 		try {
 			this.splitOutputDir = this.config.getString("split.output.dir");
-			if (this.config.keyExists(kUsername)
-					&& this.config.keyExists(kPassword)
-					&& this.config.keyExists(kAccessKey)
-					&& this.config.keyExists(kPrivateAccessKey)) {
-				this.username = this.config.getString(kUsername);
-				this.password = this.config.getString(kPassword);
-				this.accessKeyId = this.config.getString(kAccessKey);
-				this.privateAccessKey = this.config
-						.getString(kPrivateAccessKey);
+			if (!this.config.keyExists(kRefresh)) {
+				if (this.config.keyExists(kUsername)
+						&& this.config.keyExists(kPassword)
+						&& this.config.keyExists(kAccessKey)
+						&& this.config.keyExists(kPrivateAccessKey)
+						&& this.config.keyExists(kAppKey)) {
+					this.accessKeyId = this.config.getString(kAccessKey);
+					this.privateAccessKey = this.config
+							.getString(kPrivateAccessKey);
+				} else {
+					throw new InstantiationException(kUsername + ", "
+							+ kPassword + ", " + kAccessKey + " and "
+							+ kPrivateAccessKey
+							+ " have to be set in the config!");
+				}
+				this.refreshToken = getRefreshToken(
+						this.config.getString(kUsername),
+						this.config.getString(kPassword),
+						this.config.getString(kAppKey));
+				if (this.refreshToken == null) {
+					throw new InstantiationException(
+							"Could not get SugarSync refresh token.");
+				}
+				this.config.put(kRefresh, this.refreshToken, true);
+				this.config.save();
 			} else {
-				throw new InstantiationException(kUsername + ", " + kPassword
-						+ ", " + kAccessKey + " and " + kPrivateAccessKey
-						+ " have to be set in the config!");
+				if (this.config.keyExists(kAccessKey)
+						&& this.config.keyExists(kPrivateAccessKey)) {
+					this.accessKeyId = this.config.getString(kAccessKey);
+					this.privateAccessKey = this.config
+							.getString(kPrivateAccessKey);
+				} else {
+					throw new InstantiationException(kAccessKey + " and "
+							+ kPrivateAccessKey
+							+ " have to be set in the config!");
+				}
+				this.refreshToken = config.getString(kRefresh);
 			}
 			this.docBuilder = null;
 			try {
@@ -186,11 +244,9 @@ public class SugarSyncConnector implements IStorageConnector {
 						.newDocumentBuilder();
 				this.docBuilder.setErrorHandler(null);
 			} catch (ParserConfigurationException e) {
-				e.printStackTrace();
 				throw new InstantiationException(e.getMessage());
 			}
 		} catch (MissingConfigValueException e) {
-			e.printStackTrace();
 			throw new InstantiationException(e.getMessage());
 		}
 		return this;
@@ -220,7 +276,7 @@ public class SugarSyncConnector implements IStorageConnector {
 				+ "application/pdf"
 				+ "</mediaType></file>";
 		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.token, "POST");
+				this.accessToken, "POST");
 		con.setRequestProperty("Content-Type", "text/xml");
 		con.setDoOutput(true);
 
@@ -234,9 +290,11 @@ public class SugarSyncConnector implements IStorageConnector {
 			con.disconnect();
 		}
 
-		String file = con.getHeaderField("Location") + "/data";
+		String url = con.getHeaderField("Location");
+		this.urlCache.put(name, url);
 
-		con = SugarSyncConnector.getConnection(file, this.token, "PUT");
+		con = SugarSyncConnector.getConnection(url + "/data", this.accessToken,
+				"PUT");
 		con.setDoOutput(true);
 		con.setRequestProperty("Content-Type", "application/pdf");
 		OutputStream os = null;
@@ -302,10 +360,14 @@ public class SugarSyncConnector implements IStorageConnector {
 	 */
 	private String findFileInFolder(String name) throws SAXException,
 			IOException, ParserConfigurationException {
+		String url = this.urlCache.get(name);
+		if (url != null) {
+			return url;
+		}
 		Document doc = null;
 		String parent = this.getBaseUrl() + "/contents?type=file";
 		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.token, "GET");
+				this.accessToken, "GET");
 		con.setDoInput(true);
 
 		// Build the XML tree.
@@ -322,52 +384,10 @@ public class SugarSyncConnector implements IStorageConnector {
 					.getElementsByTagName("displayName").item(0)
 					.getTextContent();
 			if (displayName.equalsIgnoreCase(name)) {
-				return ((Element) nl.item(i)).getElementsByTagName("ref")
+				url = ((Element) nl.item(i)).getElementsByTagName("ref")
 						.item(0).getTextContent();
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Checks, if a folder is in the specific folder on the SugarSync servers.
-	 * 
-	 * @param name
-	 *            The folder name.
-	 * @param parent
-	 *            The URL to the parent folder.
-	 * @return The URL to the file, or null, if it could not be found.
-	 * @throws SAXException
-	 *             Thrown, if the content cannot be parsed
-	 * @throws IOException
-	 *             Thrown, if no data can be written
-	 * @throws ParserConfigurationException
-	 *             Thrown, if the content cannot be parsed
-	 */
-	private String findFolderInFolder(String name, String parent)
-			throws ParserConfigurationException, SAXException, IOException {
-		Document doc = null;
-		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.token, "GET");
-		con.setDoInput(true);
-
-		// Build the XML tree.
-		con.connect();
-		try {
-			doc = this.docBuilder.parse(con.getInputStream());
-			con.getInputStream().close();
-		} finally {
-			con.disconnect();
-		}
-		NodeList nl = doc.getDocumentElement().getElementsByTagName(
-				"collection");
-		for (int i = 0; i < nl.getLength(); i++) {
-			String displayName = ((Element) nl.item(i))
-					.getElementsByTagName("displayName").item(0)
-					.getTextContent();
-			if (displayName.equalsIgnoreCase(name)) {
-				return ((Element) nl.item(i)).getElementsByTagName("ref")
-						.item(0).getTextContent();
+				this.urlCache.put(name, url);
+				return url;
 			}
 		}
 		return null;
@@ -394,7 +414,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		if (this.baseURL == null) {
 			Document doc = null;
 			HttpsURLConnection con = SugarSyncConnector.getConnection(
-					SugarSyncConnector.USER_INFO_URL, this.token, "GET");
+					this.userURL, this.accessToken, "GET");
 			con.setDoInput(true);
 
 			// Build the XML tree.
@@ -407,10 +427,8 @@ public class SugarSyncConnector implements IStorageConnector {
 			}
 
 			Element node = (Element) doc.getDocumentElement()
-					.getElementsByTagName("syncfolders").item(0);
-			String folder = node.getTextContent().trim();
-
-			this.baseURL = this.findFolderInFolder("Magic Briefcase", folder);
+					.getElementsByTagName("webArchive").item(0);
+			this.baseURL = node.getTextContent().trim();
 		}
 		return this.baseURL;
 	}
@@ -437,6 +455,39 @@ public class SugarSyncConnector implements IStorageConnector {
 		return meta;
 	}
 
+	private String getRefreshToken(String username, String password,
+			String appKey) {
+		try {
+			// Get the Access Token
+			HttpsURLConnection con = SugarSyncConnector.getConnection(
+					SugarSyncConnector.APP_AUTH_URL, "", "POST");
+			con.setDoOutput(true);
+			con.setRequestProperty("Content-Type",
+					"application/xml; charset=UTF-8");
+
+			// Create authentication request
+			String authReq = String.format(
+					"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<appAuthorization><username>%s"
+							+ "</username><password>%s"
+							+ "</password>\n\t<application>%s"
+							+ "</application>\n\t<accessKeyId>%s"
+							+ "</accessKeyId><privateAccessKey>%s"
+							+ "</privateAccessKey></appAuthorization>",
+					new Object[] { username, password, appKey,
+							this.accessKeyId, this.privateAccessKey });
+
+			con.connect();
+			try {
+				con.getOutputStream().write(authReq.getBytes());
+				return con.getHeaderField("Location");
+			} finally {
+				con.disconnect();
+			}
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	/**
 	 * Executes the actual deletion of a file.
 	 * 
@@ -451,7 +502,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		// Find URL of resource in parent directory
 		try {
 			String resourceURL = this.findFileInFolder(resource);
-			if (!this.performDeleteResource(resourceURL)) {
+			if (!this.performDeleteResource(resource, resourceURL)) {
 				return false;
 			}
 		} catch (Exception e) {
@@ -464,33 +515,30 @@ public class SugarSyncConnector implements IStorageConnector {
 	/**
 	 * Actually deletes a resource on the given URL.
 	 * 
+	 * @param name
+	 *            The name of the resource.
 	 * @param resourceURL
 	 *            The URL of the resource.
 	 */
-	private boolean performDeleteResource(String resourceURL) {
+	private boolean performDeleteResource(String name, String resourceURL) {
 		HttpsURLConnection con = null;
 		try {
-			con = SugarSyncConnector.getConnection(resourceURL, this.token,
-					"DELETE");
+			con = SugarSyncConnector.getConnection(resourceURL,
+					this.accessToken, "DELETE");
 			con.setDoInput(true);
 			con.connect();
-			// Do not remove the following line.
-			con.getResponseCode();
+			int respCode = con.getResponseCode();
+			if (!(respCode == 404 || (respCode >= 200 && respCode <= 299))) {
+				return false;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			int returnCode = -1;
-			try {
-				returnCode = con.getResponseCode();
-				if (!(returnCode == 404 || returnCode == 204)) {
-					return false;
-				}
-			} catch (Exception e1) {
-			}
 		} finally {
 			if (con != null) {
 				con.disconnect();
 			}
 		}
+		this.urlCache.remove(name);
 		return true;
 	}
 
@@ -511,7 +559,7 @@ public class SugarSyncConnector implements IStorageConnector {
 
 			HttpsURLConnection con;
 			con = SugarSyncConnector.getConnection(resourceURL + "/data",
-					this.token, "GET");
+					this.accessToken, "GET");
 			con.setDoInput(true);
 
 			return con.getInputStream();
@@ -550,7 +598,7 @@ public class SugarSyncConnector implements IStorageConnector {
 				if (resourceURL != null) {
 					System.err.println("The file already exists. DELETE it. "
 							+ resourceURL);
-					this.performDeleteResource(resourceURL);
+					this.performDeleteResource(resource, resourceURL);
 					this.createFile(resource, f, this.getBaseUrl());
 					return true;
 				} else {
