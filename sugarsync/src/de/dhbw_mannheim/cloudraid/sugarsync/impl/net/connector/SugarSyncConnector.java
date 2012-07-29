@@ -57,6 +57,8 @@ public class SugarSyncConnector implements IStorageConnector {
 
 	private final static String APP_AUTH_URL = "https://api.sugarsync.com/app-authorization";
 	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
+	private static final String FILE_CREATION = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><file><displayName>%s</displayName><mediaType>application/cloudraid</mediaType></file>";
+	private static final String AUTH_REQUEST = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<appAuthorization><username>%s</username><password>%s</password>\n\t<application>%s</application>\n\t<accessKeyId>%s</accessKeyId><privateAccessKey>%s</privateAccessKey></appAuthorization>";
 
 	/**
 	 * Creates an HTTPS connection with some predefined values
@@ -72,15 +74,17 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * @throws IOException
 	 *             Thrown, if the connection cannot be established
 	 */
-	private static HttpsURLConnection getConnection(String address,
-			String authToken, String method) throws IOException {
+	private HttpsURLConnection getConnection(String address, String method)
+			throws IOException {
 		System.out.println("getConnection: " + address);
 		HttpsURLConnection con = (HttpsURLConnection) new URL(address)
 				.openConnection();
 		con.setRequestMethod(method);
 		con.setRequestProperty("User-Agent", "CloudRAID");
 		con.setRequestProperty("Accept", "*/*");
-		con.setRequestProperty("Authorization", authToken);
+		if (this.accessToken != null) {
+			con.setRequestProperty("Authorization", this.accessToken);
+		}
 		return con;
 	}
 
@@ -123,8 +127,8 @@ public class SugarSyncConnector implements IStorageConnector {
 		}
 		try {
 			// Get the Access Token
-			HttpsURLConnection con = SugarSyncConnector.getConnection(
-					SugarSyncConnector.AUTH_URL, "", "POST");
+			HttpsURLConnection con = this.getConnection(
+					SugarSyncConnector.AUTH_URL, "POST");
 			con.setDoOutput(true);
 			con.setRequestProperty("Content-Type",
 					"application/xml; charset=UTF-8");
@@ -253,7 +257,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	/**
-	 * Creates a file on SugarSync.
+	 * Creates or updates a file on SugarSync.
 	 * 
 	 * @param name
 	 *            The file name.
@@ -261,6 +265,9 @@ public class SugarSyncConnector implements IStorageConnector {
 	 *            The file to be uploaded.
 	 * @param parent
 	 *            The URL to the parent.
+	 * @param create
+	 *            Indicates, if the resource should be created (true) or updated
+	 *            (false).
 	 * @throws IOException
 	 *             Thrown, if no data can be read
 	 * @throws SAXException
@@ -268,18 +275,17 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * @throws ParserConfigurationException
 	 *             Thrown, if the content cannot be parsed
 	 */
-	private void createFile(String name, File f, String parent)
+	private void createFile(String name, File f, String parent, boolean create)
 			throws IOException, SAXException, ParserConfigurationException {
-		String request = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><file><displayName>"
-				+ name
-				+ "</displayName><mediaType>"
-				+ "application/pdf"
-				+ "</mediaType></file>";
-		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.accessToken, "POST");
+		HttpsURLConnection con;
+		String request = String.format(FILE_CREATION, name);
+		if (create) {
+			con = this.getConnection(parent, "POST");
+		} else {
+			con = this.getConnection(getFileURL(name) + "/version", "POST");
+		}
 		con.setRequestProperty("Content-Type", "text/xml");
 		con.setDoOutput(true);
-
 		con.connect();
 		try {
 			con.getOutputStream().write(request.getBytes());
@@ -293,10 +299,9 @@ public class SugarSyncConnector implements IStorageConnector {
 		String url = con.getHeaderField("Location");
 		this.urlCache.put(name, url);
 
-		con = SugarSyncConnector.getConnection(url + "/data", this.accessToken,
-				"PUT");
+		con = this.getConnection(url + "/data", "PUT");
 		con.setDoOutput(true);
-		con.setRequestProperty("Content-Type", "application/pdf");
+		con.setRequestProperty("Content-Type", "application/cloudraid");
 		OutputStream os = null;
 		InputStream is = null;
 		try {
@@ -307,6 +312,10 @@ public class SugarSyncConnector implements IStorageConnector {
 			while ((i = is.read()) >= 0) {
 				os.write(i);
 			}
+			// Do not remove the following line.
+			con.getResponseCode();
+			System.out.println(con.getResponseCode());
+			System.out.println(con.getResponseMessage());
 		} finally {
 			try {
 				if (os != null) {
@@ -320,8 +329,6 @@ public class SugarSyncConnector implements IStorageConnector {
 				}
 			} catch (IOException ignore) {
 			}
-			// Do not remove the following line.
-			con.getResponseCode();
 			con.disconnect();
 		}
 	}
@@ -358,16 +365,15 @@ public class SugarSyncConnector implements IStorageConnector {
 	 * @throws ParserConfigurationException
 	 *             Thrown, if the content cannot be parsed
 	 */
-	private String findFileInFolder(String name) throws SAXException,
-			IOException, ParserConfigurationException {
+	private String getFileURL(String name) throws SAXException, IOException,
+			ParserConfigurationException {
 		String url = this.urlCache.get(name);
 		if (url != null) {
 			return url;
 		}
 		Document doc = null;
 		String parent = this.getBaseUrl() + "/contents?type=file";
-		HttpsURLConnection con = SugarSyncConnector.getConnection(parent,
-				this.accessToken, "GET");
+		HttpsURLConnection con = this.getConnection(parent, "GET");
 		con.setDoInput(true);
 
 		// Build the XML tree.
@@ -413,8 +419,7 @@ public class SugarSyncConnector implements IStorageConnector {
 			ParserConfigurationException {
 		if (this.baseURL == null) {
 			Document doc = null;
-			HttpsURLConnection con = SugarSyncConnector.getConnection(
-					this.userURL, this.accessToken, "GET");
+			HttpsURLConnection con = this.getConnection(this.userURL, "GET");
 			con.setDoInput(true);
 
 			// Build the XML tree.
@@ -455,26 +460,31 @@ public class SugarSyncConnector implements IStorageConnector {
 		return meta;
 	}
 
+	/**
+	 * Gets a refresh token from the SugarSync servers.
+	 * 
+	 * @param username
+	 *            The user name of a SugarSync user.
+	 * @param password
+	 *            The regarding password.
+	 * @param appKey
+	 *            The app key of this app.
+	 * @return The refresh token, or null on error.
+	 */
 	private String getRefreshToken(String username, String password,
 			String appKey) {
 		try {
 			// Get the Access Token
-			HttpsURLConnection con = SugarSyncConnector.getConnection(
-					SugarSyncConnector.APP_AUTH_URL, "", "POST");
+			HttpsURLConnection con = this.getConnection(
+					SugarSyncConnector.APP_AUTH_URL, "POST");
 			con.setDoOutput(true);
 			con.setRequestProperty("Content-Type",
 					"application/xml; charset=UTF-8");
 
 			// Create authentication request
-			String authReq = String.format(
-					"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<appAuthorization><username>%s"
-							+ "</username><password>%s"
-							+ "</password>\n\t<application>%s"
-							+ "</application>\n\t<accessKeyId>%s"
-							+ "</accessKeyId><privateAccessKey>%s"
-							+ "</privateAccessKey></appAuthorization>",
-					new Object[] { username, password, appKey,
-							this.accessKeyId, this.privateAccessKey });
+			String authReq = String.format(AUTH_REQUEST, new Object[] {
+					username, password, appKey, this.accessKeyId,
+					this.privateAccessKey });
 
 			con.connect();
 			try {
@@ -501,7 +511,7 @@ public class SugarSyncConnector implements IStorageConnector {
 		resource += "." + extension;
 		// Find URL of resource in parent directory
 		try {
-			String resourceURL = this.findFileInFolder(resource);
+			String resourceURL = this.getFileURL(resource);
 			if (!this.performDeleteResource(resource, resourceURL)) {
 				return false;
 			}
@@ -523,8 +533,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	private boolean performDeleteResource(String name, String resourceURL) {
 		HttpsURLConnection con = null;
 		try {
-			con = SugarSyncConnector.getConnection(resourceURL,
-					this.accessToken, "DELETE");
+			con = this.getConnection(resourceURL, "DELETE");
 			con.setDoInput(true);
 			con.connect();
 			int respCode = con.getResponseCode();
@@ -555,13 +564,12 @@ public class SugarSyncConnector implements IStorageConnector {
 		connect();
 		resource += "." + extension;
 		try {
-			String resourceURL = this.findFileInFolder(resource);
+			String resourceURL = this.getFileURL(resource);
 
 			HttpsURLConnection con;
-			con = SugarSyncConnector.getConnection(resourceURL + "/data",
-					this.accessToken, "GET");
+			con = this.getConnection(resourceURL + "/data", "GET");
 			con.setDoInput(true);
-
+			
 			return con.getInputStream();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -570,15 +578,19 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	/**
-	 * Executes the actual update of a resource to the SugarSync servers.
+	 * Executes the actual file upload to the SugarSync servers.
 	 * 
 	 * @param resource
 	 *            The resource name.
 	 * @param extension
 	 *            The extension of the resource.
-	 * @return true, if the update was successful; false, if not.
+	 * @param create
+	 *            Indicates whether the resource should be created (true) or
+	 *            updated (false).
+	 * @return true, if the upload was successful; false, if not.
 	 */
-	private boolean performUpdate(String resource, String extension) {
+	private boolean performUpload(String resource, String extension,
+			boolean create) {
 		resource += "." + extension;
 		File f = new File(this.splitOutputDir + "/" + resource);
 		int maxFilesize;
@@ -594,13 +606,14 @@ public class SugarSyncConnector implements IStorageConnector {
 			System.err.println("File too big");
 		} else {
 			try {
-				String resourceURL = this.findFileInFolder(resource);
-				if (resourceURL != null) {
+				String resourceURL = this.getFileURL(resource);
+				if ((create && resourceURL == null)
+						|| (!create && resourceURL != null)) {
+					this.createFile(resource, f, this.getBaseUrl(), create);
+					return true;
+				} else if (create && resourceURL != null) {
 					System.err.println("The file already exists. DELETE it. "
 							+ resourceURL);
-					this.performDeleteResource(resource, resourceURL);
-					this.createFile(resource, f, this.getBaseUrl());
-					return true;
 				} else {
 					System.err.println("No file found for update.");
 				}
@@ -615,60 +628,13 @@ public class SugarSyncConnector implements IStorageConnector {
 		return false;
 	}
 
-	/**
-	 * Executes the actual file upload to the SugarSync servers.
-	 * 
-	 * @param resource
-	 *            The resource name.
-	 * @param extension
-	 *            The extension of the resource.
-	 * @return true, if the upload was successful; false, if not.
-	 */
-	private boolean performUpload(String resource, String extension) {
-		resource += "." + extension;
-		File f = new File(this.splitOutputDir + "/" + resource);
-		int maxFilesize;
-		try {
-			maxFilesize = this.config.getInt("filesize.max", null);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		if (!f.exists()) {
-			System.err.println("File does not exist");
-		} else if (f.length() > maxFilesize) {
-			System.err.println("File too big");
-		} else {
-			try {
-				String resourceURL = this.findFileInFolder(resource);
-				if (resourceURL != null) {
-					System.err.println("The file already exists. DELETE it. "
-							+ resourceURL);
-					return false;
-				}
-				this.createFile(resource, f, this.getBaseUrl());
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			} catch (SAXException e) {
-				e.printStackTrace();
-				return false;
-			} catch (ParserConfigurationException e) {
-				e.printStackTrace();
-				return false;
-			}
-			return true;
-		}
-		return false;
-	}
-
 	@Override
 	public boolean update(String resource) {
 		connect();
-		boolean ret = performUpdate(resource, String.valueOf(this.id));
+		boolean ret = performUpload(resource, String.valueOf(this.id), false);
 		if (ret) {
 			// Upload metadata after successful data update.
-			ret = performUpdate(resource, "m");
+			ret = performUpload(resource, "m", false);
 			if (!ret) {
 				// If the metadata could not be updated, remove the data file.
 				delete(resource);
@@ -680,10 +646,10 @@ public class SugarSyncConnector implements IStorageConnector {
 	@Override
 	public boolean upload(String resource) {
 		connect();
-		boolean ret = performUpload(resource, String.valueOf(this.id));
+		boolean ret = performUpload(resource, String.valueOf(this.id), true);
 		if (ret) {
 			// Upload metadata after successful data upload.
-			ret = performUpload(resource, "m");
+			ret = performUpload(resource, "m", true);
 			if (!ret) {
 				// If the metadata could not be uploaded, remove the data file.
 				delete(resource);
