@@ -60,34 +60,6 @@ public class SugarSyncConnector implements IStorageConnector {
 	private static final String FILE_CREATION = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><file><displayName>%s</displayName><mediaType>application/cloudraid</mediaType></file>";
 	private static final String AUTH_REQUEST = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<appAuthorization><username>%s</username><password>%s</password>\n\t<application>%s</application>\n\t<accessKeyId>%s</accessKeyId><privateAccessKey>%s</privateAccessKey></appAuthorization>";
 
-	/**
-	 * Creates an HTTPS connection with some predefined values
-	 * 
-	 * @param address
-	 *            The address to connect to
-	 * @param authToken
-	 *            The authentication token
-	 * @param method
-	 *            The HTTP method
-	 * 
-	 * @return A preconfigured connection.
-	 * @throws IOException
-	 *             Thrown, if the connection cannot be established
-	 */
-	private HttpsURLConnection getConnection(String address, String method)
-			throws IOException {
-		System.out.println("getConnection: " + address);
-		HttpsURLConnection con = (HttpsURLConnection) new URL(address)
-				.openConnection();
-		con.setRequestMethod(method);
-		con.setRequestProperty("User-Agent", "CloudRAID");
-		con.setRequestProperty("Accept", "*/*");
-		if (this.accessToken != null) {
-			con.setRequestProperty("Authorization", this.accessToken);
-		}
-		return con;
-	}
-
 	private String splitOutputDir = null;
 
 	/**
@@ -102,8 +74,8 @@ public class SugarSyncConnector implements IStorageConnector {
 	private String accessToken = "";
 
 	private String accessKeyId, privateAccessKey, refreshToken, userURL;
-	private int id = -1;
 
+	private int id = -1;
 	private long expirationDate = 0L;
 
 	/**
@@ -278,7 +250,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	private void createFile(String name, File f, String parent, boolean create)
 			throws IOException, SAXException, ParserConfigurationException {
 		HttpsURLConnection con;
-		String request = String.format(FILE_CREATION, name);
+		String request = String.format(SugarSyncConnector.FILE_CREATION, name);
 		if (create) {
 			con = this.getConnection(parent, "POST");
 		} else {
@@ -350,6 +322,73 @@ public class SugarSyncConnector implements IStorageConnector {
 	public void disconnect() {
 	}
 
+	@Override
+	public InputStream get(String resource) {
+		return performGet(resource, String.valueOf(this.id));
+	}
+
+	/**
+	 * Loads and caches the URL to the 'Magic Briefcase' folder.
+	 * 
+	 * @return The URL to the 'Magic Briefcase' folder on SugarSync.
+	 * @throws IOException
+	 *             Thrown, if no connection can be established
+	 * @throws SAXException
+	 *             Thrown, if the content cannot be parsed
+	 * @throws ParserConfigurationException
+	 *             Thrown, if the content cannot be parsed
+	 */
+	private synchronized String getBaseUrl() throws IOException, SAXException,
+			ParserConfigurationException {
+		if (this.baseURL == null) {
+			Document doc = null;
+			HttpsURLConnection con = this.getConnection(this.userURL, "GET");
+			con.setDoInput(true);
+
+			// Build the XML tree.
+			con.connect();
+			try {
+				doc = this.docBuilder.parse(con.getInputStream());
+				con.getInputStream().close();
+			} finally {
+				con.disconnect();
+			}
+
+			Element node = (Element) doc.getDocumentElement()
+					.getElementsByTagName("webArchive").item(0);
+			this.baseURL = node.getTextContent().trim();
+		}
+		return this.baseURL;
+	}
+
+	/**
+	 * Creates an HTTPS connection with some predefined values
+	 * 
+	 * @param address
+	 *            The address to connect to
+	 * @param authToken
+	 *            The authentication token
+	 * @param method
+	 *            The HTTP method
+	 * 
+	 * @return A preconfigured connection.
+	 * @throws IOException
+	 *             Thrown, if the connection cannot be established
+	 */
+	private HttpsURLConnection getConnection(String address, String method)
+			throws IOException {
+		System.out.println("getConnection: " + address);
+		HttpsURLConnection con = (HttpsURLConnection) new URL(address)
+				.openConnection();
+		con.setRequestMethod(method);
+		con.setRequestProperty("User-Agent", "CloudRAID");
+		con.setRequestProperty("Accept", "*/*");
+		if (this.accessToken != null) {
+			con.setRequestProperty("Authorization", this.accessToken);
+		}
+		return con;
+	}
+
 	/**
 	 * Checks, if a file is in the specific folder on the SugarSync servers.
 	 * 
@@ -400,45 +439,6 @@ public class SugarSyncConnector implements IStorageConnector {
 	}
 
 	@Override
-	public InputStream get(String resource) {
-		return performGet(resource, String.valueOf(this.id));
-	}
-
-	/**
-	 * Loads and caches the URL to the 'Magic Briefcase' folder.
-	 * 
-	 * @return The URL to the 'Magic Briefcase' folder on SugarSync.
-	 * @throws IOException
-	 *             Thrown, if no connection can be established
-	 * @throws SAXException
-	 *             Thrown, if the content cannot be parsed
-	 * @throws ParserConfigurationException
-	 *             Thrown, if the content cannot be parsed
-	 */
-	private synchronized String getBaseUrl() throws IOException, SAXException,
-			ParserConfigurationException {
-		if (this.baseURL == null) {
-			Document doc = null;
-			HttpsURLConnection con = this.getConnection(this.userURL, "GET");
-			con.setDoInput(true);
-
-			// Build the XML tree.
-			con.connect();
-			try {
-				doc = this.docBuilder.parse(con.getInputStream());
-				con.getInputStream().close();
-			} finally {
-				con.disconnect();
-			}
-
-			Element node = (Element) doc.getDocumentElement()
-					.getElementsByTagName("webArchive").item(0);
-			this.baseURL = node.getTextContent().trim();
-		}
-		return this.baseURL;
-	}
-
-	@Override
 	public byte[] getMetadata(String resource, int size) {
 		InputStream is = performGet(resource, "m");
 		if (is == null) {
@@ -482,9 +482,9 @@ public class SugarSyncConnector implements IStorageConnector {
 					"application/xml; charset=UTF-8");
 
 			// Create authentication request
-			String authReq = String.format(AUTH_REQUEST, new Object[] {
-					username, password, appKey, this.accessKeyId,
-					this.privateAccessKey });
+			String authReq = String.format(SugarSyncConnector.AUTH_REQUEST,
+					new Object[] { username, password, appKey,
+							this.accessKeyId, this.privateAccessKey });
 
 			con.connect();
 			try {
@@ -569,7 +569,7 @@ public class SugarSyncConnector implements IStorageConnector {
 			HttpsURLConnection con;
 			con = this.getConnection(resourceURL + "/data", "GET");
 			con.setDoInput(true);
-			
+
 			return con.getInputStream();
 		} catch (Exception e) {
 			e.printStackTrace();
