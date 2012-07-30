@@ -53,11 +53,11 @@ int main(void)
     unsigned char *ascii = NULL;
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
                        "",
-                       "8e48fe4fc7f309b388a6555b397d9ef5bcfa6659291422e74c2549518e62dbf9",
-                       "ac064458e8d3d7bfe5842d1743c362039774aeae63731e0847c721f31db9c56d",
+                       "c8c350678afd7656e65f9dbbfae8d5e445bbff3db7a0de1ac72ba1734ab2255e",
+                       "dc6cde04382b7c728c628a3354cd6d383dca8faecbbbf50e684540054ceb5670",
                        "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
-                       "01b509bfacf36766a4419023ac2e7e74090241664fec3bbee23caa00880bf38c",
-                       "823739180c23dac353f0efeea20882f8a71ae67ae1fbb9af2621d450b0148cca"
+                       "c4605b168b3d11a6651e841cf11ced84ff0bdff06635c181a6ea7d389174d2f8",
+                       "837c2811c51c36d4acbcd89047577088efb3868b889721a9e2664c426ba2a8fa"
                       };
 #endif
 		      

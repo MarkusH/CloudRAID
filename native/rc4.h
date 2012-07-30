@@ -18,7 +18,7 @@ extern "C"
         unsigned char y;
     } rc4_key;
 
-    void swap_byte(unsigned char *a, unsigned char *b);
+    LIBEXPORT void swap_byte(unsigned char *a, unsigned char *b);
     LIBEXPORT void prepare_key(const unsigned char *key_data_ptr, int key_data_len, rc4_key *key);
     LIBEXPORT void rc4(unsigned char *buffer_ptr, int buffer_len, rc4_key *key);
 
