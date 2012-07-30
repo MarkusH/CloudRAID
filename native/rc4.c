@@ -40,7 +40,7 @@ LIBEXPORT void prepare_key(const unsigned char *key_data_ptr, int key_data_len, 
     }
 
     /*
-     * It is recommendet to use the first 3072 bytes after initializing the key
+     * It is recommended to use the first 3072 bytes after initializing the key
      */
     for(counter = 0; counter < 3072; counter++) {
         clean[counter] = counter % 256;
