@@ -22,6 +22,7 @@ LIBEXPORT void prepare_key(const unsigned char *key_data_ptr, int key_data_len, 
     unsigned char index2;
     unsigned char *state = NULL;
     short counter;
+    unsigned char clean[3072];
 
     state = &key->state[0];
     for(counter = 0; counter < 256; counter++) {
@@ -37,9 +38,17 @@ LIBEXPORT void prepare_key(const unsigned char *key_data_ptr, int key_data_len, 
 
         index1 = (index1 + 1) % key_data_len;
     }
+
+    /*
+     * It is recommended to use the first 3072 bytes after initializing the key
+     */
+    for(counter = 0; counter < 3072; counter++) {
+        clean[counter] = counter % 256;
+    }
+    rc4(clean, 3072, key);
 }
 
-void rc4(unsigned char *buffer_ptr, int buffer_len, rc4_key *key)
+LIBEXPORT void rc4(unsigned char *buffer_ptr, int buffer_len, rc4_key *key)
 {
     unsigned char x;
     unsigned char y;
