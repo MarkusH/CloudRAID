@@ -59,6 +59,7 @@ public class SugarSyncConnector implements IStorageConnector {
 	private final static String AUTH_URL = "https://api.sugarsync.com/authorization";
 	private static final String FILE_CREATION = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><file><displayName>%s</displayName><mediaType>application/cloudraid</mediaType></file>";
 	private static final String AUTH_REQUEST = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<appAuthorization><username>%s</username><password>%s</password>\n\t<application>%s</application>\n\t<accessKeyId>%s</accessKeyId><privateAccessKey>%s</privateAccessKey></appAuthorization>";
+	private static final String TOKEN_AUTH_REQUEST = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<tokenAuthRequest><accessKeyId>%s</accessKeyId><privateAccessKey>%s</privateAccessKey><refreshToken>%s</refreshToken></tokenAuthRequest>";
 
 	private String splitOutputDir = null;
 
@@ -107,12 +108,8 @@ public class SugarSyncConnector implements IStorageConnector {
 
 			// Create authentication request
 			String authReq = String.format(
-					"<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
-							+ "<tokenAuthRequest><accessKeyId>%s"
-							+ "</accessKeyId><privateAccessKey>%s"
-							+ "</privateAccessKey><refreshToken>%s"
-							+ "</refreshToken></tokenAuthRequest>",
-					new Object[] { this.accessKeyId, this.privateAccessKey,
+					SugarSyncConnector.TOKEN_AUTH_REQUEST, new Object[] {
+							this.accessKeyId, this.privateAccessKey,
 							this.refreshToken });
 
 			con.connect();
@@ -286,8 +283,6 @@ public class SugarSyncConnector implements IStorageConnector {
 			}
 			// Do not remove the following line.
 			con.getResponseCode();
-			System.out.println(con.getResponseCode());
-			System.out.println(con.getResponseMessage());
 		} finally {
 			try {
 				if (os != null) {
