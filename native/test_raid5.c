@@ -182,7 +182,7 @@ int main(void)
 #endif
 
     /** Close ALL files **/
-    for(i = 0; i <= 3; i++) {
+    for(i = 0; i <= 4; i++) {
         if(fp[i]) {
             fclose(fp[i]);
         }
