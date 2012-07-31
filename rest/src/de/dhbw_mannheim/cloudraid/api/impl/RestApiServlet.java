@@ -46,6 +46,7 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 
 import de.dhbw_mannheim.cloudraid.api.impl.RestApiUrlMapping.MatchResult;
+import de.dhbw_mannheim.cloudraid.api.impl.responses.CompressedApiResponse;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.IRestApiResponse;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.PlainApiResponse;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
@@ -73,7 +74,7 @@ public class RestApiServlet extends HttpServlet {
 	/**
 	 * Indicates the version of the API.
 	 */
-	private static final String API_VERSION = "0.2";
+	private static final String API_VERSION = "0.3";
 
 	private ICloudRAIDConfig config;
 	private Pattern userpattern;
@@ -245,8 +246,14 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	protected void doRequest(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
+		String comps = req.getHeader("Accept-Encoding");
 		IRestApiResponse r;
-		r = new PlainApiResponse();
+		if (comps != null && comps.indexOf("gzip") >= 0) {
+			r = new CompressedApiResponse();
+		} else {
+			r = new PlainApiResponse();
+		}
+		System.out.println("Switch to " + r.getClass());
 		r.setResponseObject(resp);
 		resp.addHeader("X-Powered-By", "CloudRAID/"
 				+ RestApiServlet.API_VERSION);

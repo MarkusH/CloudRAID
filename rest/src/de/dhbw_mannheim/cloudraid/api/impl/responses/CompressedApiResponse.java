@@ -25,6 +25,7 @@ package de.dhbw_mannheim.cloudraid.api.impl.responses;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -32,51 +33,51 @@ import javax.servlet.http.HttpServletResponse;
  * @author Markus Holtermann
  * 
  */
-public class PlainApiResponse implements IRestApiResponse {
+public class CompressedApiResponse implements IRestApiResponse {
 
 	public static String DEFAULT_MIMETYPE = "text/plain; charset=utf-8";
 	private String mime = null;
 
 	private HttpServletResponse resp = null;
+	private GZIPOutputStream out = null;
 
 	@Override
 	public void addRow(Map<String, Object> map) {
-		StringBuffer table = new StringBuffer();
-		for (Map.Entry<String, Object> e : map.entrySet()) {
-			table.append("\""
-					+ e.getValue().toString().replace("\\", "\\\\")
-							.replace("\"", "\\\"") + "\",");
-		}
-		table.setLength(table.length() - 1);
-		table.append("\n");
-		try {
-			this.resp.getOutputStream().write(table.toString().getBytes());
-		} catch (IOException e1) {
-			e1.printStackTrace();
+		if (this.out != null) {
+			StringBuffer table = new StringBuffer();
+			for (Map.Entry<String, Object> e : map.entrySet()) {
+				table.append("\""
+						+ e.getValue().toString().replace("\\", "\\\\")
+								.replace("\"", "\\\"") + "\",");
+			}
+			table.setLength(table.length() - 1);
+			table.append("\n");
+			try {
+				this.out.write(table.toString().getBytes());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 		}
 	}
 
 	@Override
 	public void flush() throws IOException {
-		if (this.resp != null) {
-			this.resp.getOutputStream().flush();
+		if (this.out != null) {
+			this.out.flush();
 		}
 	}
 
 	@Override
 	public OutputStream getOutputStream() throws IOException {
-		if (this.resp != null) {
-			return this.resp.getOutputStream();
-		}
-		return null;
+		return this.out;
 	}
 
 	@Override
 	public void send() throws IOException {
-		if (this.resp != null) {
+		if (this.resp != null && this.out != null) {
 			this.resp.setContentType(this.mime);
-			this.resp.getOutputStream().flush();
-			this.resp.getOutputStream().close();
+			this.out.flush();
+			this.out.close();
 		}
 	}
 
@@ -104,7 +105,13 @@ public class PlainApiResponse implements IRestApiResponse {
 	@Override
 	public void setResponseObject(HttpServletResponse resp) {
 		this.resp = resp;
-		this.mime = PlainApiResponse.DEFAULT_MIMETYPE;
+		try {
+			this.out = new GZIPOutputStream(resp.getOutputStream());
+			this.resp.setHeader("Content-Encoding", "gzip");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		this.mime = CompressedApiResponse.DEFAULT_MIMETYPE;
 	}
 
 	@Override
@@ -116,9 +123,9 @@ public class PlainApiResponse implements IRestApiResponse {
 
 	@Override
 	public void write(String content) {
-		if (this.resp != null) {
+		if (this.out != null) {
 			try {
-				this.resp.getOutputStream().write(content.getBytes());
+				this.out.write(content.getBytes());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -132,10 +139,10 @@ public class PlainApiResponse implements IRestApiResponse {
 
 	@Override
 	public void writeLine(String line) {
-		if (this.resp != null) {
+		if (this.out != null) {
 			String s = line + "\n";
 			try {
-				this.resp.getOutputStream().write(s.getBytes());
+				this.out.write(s.getBytes());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
