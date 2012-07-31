@@ -34,6 +34,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.InflaterInputStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -50,6 +51,7 @@ import de.dhbw_mannheim.cloudraid.api.impl.RestApiUrlMapping.MatchResult;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.GZIPPlainApiResponse;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.IRestApiResponse;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.PlainApiResponse;
+import de.dhbw_mannheim.cloudraid.api.impl.responses.ZLIBPlainApiResponse;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.core.ICoreAccess;
@@ -61,6 +63,15 @@ import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;
  * 
  */
 public class RestApiServlet extends HttpServlet {
+
+	/**
+	 * Available compression methods.
+	 * 
+	 * @author Florian Bausch
+	 */
+	private enum Compression {
+		NO, GZIP, ZLIB;
+	}
 
 	/**
 	 * Stores all URL mappings.
@@ -76,8 +87,8 @@ public class RestApiServlet extends HttpServlet {
 	 * Indicates the version of the API.
 	 */
 	private static final String API_VERSION = "0.3";
-
 	private ICloudRAIDConfig config;
+
 	private Pattern userpattern;
 
 	/**
@@ -93,7 +104,10 @@ public class RestApiServlet extends HttpServlet {
 	private SimpleDateFormat cloudraidDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd hh:mm:ss.S");
 
-	private boolean acceptCompression = false;
+	/**
+	 * The compression method to be used.
+	 */
+	private Compression compression = Compression.NO;
 
 	/**
 	 * Initializes all URL mappings and stores a reference to the
@@ -250,13 +264,19 @@ public class RestApiServlet extends HttpServlet {
 	protected void doRequest(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
 		String comps = req.getHeader("Accept-Encoding");
-		this.acceptCompression = (comps != null && comps.indexOf("gzip") >= 0);
 		IRestApiResponse r;
-		if (this.acceptCompression) {
+		if (comps == null) {
+			r = new PlainApiResponse();
+		} else if (comps.indexOf("gzip") < comps.indexOf("zlib")) {
+			this.compression = Compression.GZIP;
 			r = new GZIPPlainApiResponse();
+		} else if (comps.indexOf("gzip") > comps.indexOf("zlib")) {
+			this.compression = Compression.ZLIB;
+			r = new ZLIBPlainApiResponse();
 		} else {
 			r = new PlainApiResponse();
 		}
+
 		System.out.println("Switch to " + r.getClass());
 		r.setResponseObject(resp);
 		resp.addHeader("X-Powered-By", "CloudRAID/"
@@ -471,16 +491,10 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		try {
-			InputStream is;
-			if (this.acceptCompression) {
-				is = new GZIPInputStream(req.getInputStream());
-			} else {
-				is = req.getInputStream();
-			}
 			ICoreAccess slot = this.coreService.getSlot();
 			int fileid = this.metadata.fileNew(path, "", 0L, userid);
 			if (fileid >= 0) {
-				slot.putData(is, fileid);
+				slot.putData(getInputStream(req), fileid);
 				resp.setStatusCode(201);
 				return;
 			}
@@ -537,17 +551,11 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		try {
-			InputStream is;
-			if (this.acceptCompression) {
-				is = new GZIPInputStream(req.getInputStream());
-			} else {
-				is = req.getInputStream();
-			}
 			int fileid = cf.getFileId();
 			ICoreAccess slot = this.coreService.getSlot();
 			this.metadata.fileUpdate(fileid, path, "", 0L, userid);
 			if (fileid >= 0) {
-				slot.putData(is, fileid, true);
+				slot.putData(getInputStream(req), fileid, true);
 				resp.setStatusCode(201);
 				return;
 			}
@@ -558,6 +566,27 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		resp.setStatusCode(500);
+	}
+
+	/**
+	 * Gets an InputStream depending on the {@link Compression} method.
+	 * 
+	 * @param req
+	 *            The request object.
+	 * @return The {@link InputStream}.
+	 * @throws IOException
+	 */
+	private InputStream getInputStream(HttpServletRequest req)
+			throws IOException {
+		InputStream is = req.getInputStream();
+		switch (this.compression) {
+		case GZIP:
+			return new GZIPInputStream(is);
+		case ZLIB:
+			return new InflaterInputStream(is);
+		default:
+			return is;
+		}
 	}
 
 	/**
@@ -826,5 +855,4 @@ public class RestApiServlet extends HttpServlet {
 		}
 		return true;
 	}
-
 }
