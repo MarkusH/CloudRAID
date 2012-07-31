@@ -109,7 +109,7 @@ public class PlainApiResponse implements IRestApiResponse {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		this.mime = GZIPPlainApiResponse.DEFAULT_MIMETYPE;
+		this.mime = PlainApiResponse.DEFAULT_MIMETYPE;
 	}
 
 	@Override

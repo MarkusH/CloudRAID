@@ -38,7 +38,7 @@ public class GZIPPlainApiResponse extends PlainApiResponse {
 		this.resp = resp;
 		try {
 			this.out = new GZIPOutputStream(resp.getOutputStream());
-			this.resp.setHeader("Content-Encoding", "gzip");
+			this.setHeader("Content-Encoding", "gzip");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

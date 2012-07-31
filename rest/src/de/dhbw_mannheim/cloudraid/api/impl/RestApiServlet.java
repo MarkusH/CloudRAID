@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -91,6 +92,8 @@ public class RestApiServlet extends HttpServlet {
 	 */
 	private SimpleDateFormat cloudraidDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd hh:mm:ss.S");
+
+	private boolean acceptCompression = false;
 
 	/**
 	 * Initializes all URL mappings and stores a reference to the
@@ -247,8 +250,9 @@ public class RestApiServlet extends HttpServlet {
 	protected void doRequest(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
 		String comps = req.getHeader("Accept-Encoding");
+		this.acceptCompression = (comps != null && comps.indexOf("gzip") >= 0);
 		IRestApiResponse r;
-		if (comps != null && comps.indexOf("gzip") >= 0) {
+		if (this.acceptCompression) {
 			r = new GZIPPlainApiResponse();
 		} else {
 			r = new PlainApiResponse();
@@ -467,10 +471,16 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		try {
+			InputStream is;
+			if (this.acceptCompression) {
+				is = new GZIPInputStream(req.getInputStream());
+			} else {
+				is = req.getInputStream();
+			}
 			ICoreAccess slot = this.coreService.getSlot();
 			int fileid = this.metadata.fileNew(path, "", 0L, userid);
 			if (fileid >= 0) {
-				slot.putData(req.getInputStream(), fileid);
+				slot.putData(is, fileid);
 				resp.setStatusCode(201);
 				return;
 			}
@@ -527,11 +537,17 @@ public class RestApiServlet extends HttpServlet {
 		}
 
 		try {
+			InputStream is;
+			if (this.acceptCompression) {
+				is = new GZIPInputStream(req.getInputStream());
+			} else {
+				is = req.getInputStream();
+			}
 			int fileid = cf.getFileId();
 			ICoreAccess slot = this.coreService.getSlot();
 			this.metadata.fileUpdate(fileid, path, "", 0L, userid);
 			if (fileid >= 0) {
-				slot.putData(req.getInputStream(), fileid, true);
+				slot.putData(is, fileid, true);
 				resp.setStatusCode(201);
 				return;
 			}
