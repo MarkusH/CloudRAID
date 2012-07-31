@@ -119,7 +119,7 @@ int main(void)
 #else
     printf("Start split ... ");
     fflush(stdout);
-    status = split_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
+    status = split_file(fp[0], &fp[1], fp[4], (unsigned char*) "password", 8);
     if((status & SUCCESS_SPLIT) == 0) {
         fprintf(stderr, "Return code of split does not include the success flag(%d). Got %d.\n", SUCCESS_SPLIT, status);
     }
@@ -173,7 +173,7 @@ int main(void)
 #else
     printf("Start merge ... ");
     fflush(stdout);
-    status = merge_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
+    status = merge_file(fp[0], &fp[1], fp[4], (unsigned char*) "password", 8);
     if((status & SUCCESS_MERGE) == 0) {
         fprintf(stderr, "Return code of merge does not include the success flag(%d). Got %d.\n", SUCCESS_MERGE, status);
     }

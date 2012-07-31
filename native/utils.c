@@ -70,10 +70,8 @@ void print_salt(FILE *__stream, unsigned char *salt)
     }
 }
 
-int gen_salted_key(const char *key, int keylen, unsigned char *salt, unsigned char *hash)
+int hmac(const unsigned char *key, const unsigned int keylen, const unsigned char *salt, unsigned char *hash)
 {
-    int status = 0;
-
     if(key == NULL) {
         return 1;
     }

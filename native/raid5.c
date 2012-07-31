@@ -218,7 +218,7 @@ void split_byte_block(const unsigned char *in, const size_t in_len, unsigned cha
  * All other return codes than `SUCCESS_SPLIT` (0x04) mark a failure during
  * split.
  */
-LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key, const int keylen)
+LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned char *key, const int keylen)
 {
     unsigned char *chars = NULL, *out = NULL, parity_pos = 2, *hash = NULL;
     size_t rlen, *out_len = NULL, l = 0, min = -1, max = 0;
@@ -289,7 +289,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     }
 
     rlen = fread(chars, sizeof(unsigned char), 2 * RAID5BLOCKSIZE, in);
-    DEBUG3("Read %d bytes", rlen);
+    DEBUG3("Read %lu bytes", rlen);
 #if ENCRYPT_DATA != 0
 #ifndef EMPTY_SALT
     i = create_salt((unsigned char *)metadata.salt);
@@ -300,7 +300,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
     }
 #endif
 
-    i = gen_salted_key(key, keylen, metadata.salt, salted_key);
+    i = hmac(key, keylen, metadata.salt, salted_key);
     if(i != 0) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot compute salted hash");
@@ -323,7 +323,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
             sha256_len[3] += rlen;
         }
         split_byte_block(chars, rlen, out, out_len);
-        DEBUG3("Split %d input bytes into %d (%d/%d/%d) for devices %d/%d/%d", rlen, out_len[0] + out_len[1] + out_len[2], out_len[0], out_len[1], out_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
+        DEBUG3("Split %lu input bytes into %lu (%lu/%lu/%lu) for devices %d/%d/%d", rlen, out_len[0] + out_len[1] + out_len[2], out_len[0], out_len[1], out_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
         fwrite(&out[0], sizeof(unsigned char), out_len[0], devices[(parity_pos + 1) % 3]);
         if(out_len[1] > 0) {
             fwrite(&out[RAID5BLOCKSIZE], sizeof(unsigned char), out_len[1], devices[(parity_pos + 2) % 3]);
@@ -367,7 +367,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key,
 
         parity_pos = (parity_pos + 1) % 3;
         rlen = fread(chars, sizeof(char), 2 * RAID5BLOCKSIZE, in);
-        DEBUG3("Read %d bytes", rlen);
+        DEBUG3("Read %lu bytes", rlen);
     }
     if(ferror(in)) {
         status |= OPENERR_IN;
@@ -450,7 +450,7 @@ end:
  * All other return codes than `SUCCESS_MERGE` mark a failure during
  * merge.
  */
-LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key, const int keylen)
+LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned char *key, const int keylen)
 {
     unsigned char *in = NULL, *buf = NULL, parity_pos = 2, dead_device, i, *hash = NULL;
     size_t *in_len = NULL, out_len, l = 0;
@@ -541,9 +541,9 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
     in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
     in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
     in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[parity_pos]) : 0;
-    DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
+    DEBUG3("Read %lu (%lu/%lu/%lu) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
 #if ENCRYPT_DATA != 0
-    i = gen_salted_key(key, keylen, metadata.salt, salted_key);
+    i = hmac(key, keylen, metadata.salt, salted_key);
     if(i != 0) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot compute salted hash");
@@ -570,7 +570,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
         }
         /* Call the merge */
         merge_byte_block(in, in_len, parity_pos, dead_device, l, buf, &out_len);
-        DEBUG3("Merged %d bytes into %d", in_len[0] + in_len[1] + in_len[2], out_len);
+        DEBUG3("Merged %lu bytes into %lu", in_len[0] + in_len[1] + in_len[2], out_len);
         if(out_len == -1) {
             status |= OPENERR_IN;
             DEBUGPRINT("The output contains no data.");
@@ -599,7 +599,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key
         in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
         in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
         in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[parity_pos]) : 0;
-        DEBUG3("Read %d (%d/%d/%d) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
+        DEBUG3("Read %lu (%lu/%lu/%lu) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
     }
     if(devices[0] && ferror(devices[0])) {
         status |= OPENERR_DEV0;
@@ -875,7 +875,7 @@ JNIEXPORT jint JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAccess
     const char *tempInputDirPath = (*env)->GetStringUTFChars(env, _tempInputDirPath, 0);
     const char *hash = (*env)->GetStringUTFChars(env, _hash, 0);
     const char *outputFilePath = (*env)->GetStringUTFChars(env, _outputFilePath, 0);
-    const char *key = (*env)->GetStringUTFChars(env, _key, 0);
+    const unsigned char *key = (unsigned char *)(*env)->GetStringUTFChars(env, _key, 0);
     const int keyLength = (*env)->GetStringLength(env, _key);
 
     const int tmpLength = strlen((char *) tempInputDirPath);
@@ -974,7 +974,7 @@ end:
     (*env)->ReleaseStringUTFChars(env, _tempInputDirPath, tempInputDirPath);
     (*env)->ReleaseStringUTFChars(env, _hash, hash);
     (*env)->ReleaseStringUTFChars(env, _outputFilePath, outputFilePath);
-    (*env)->ReleaseStringUTFChars(env, _key, key);
+    (*env)->ReleaseStringUTFChars(env, _key, (char*)key);
     return status;
 }
 
@@ -989,7 +989,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     const char *inputBasePath = (*env)->GetStringUTFChars(env, _inputBasePath, 0);
     const char *inputFilePath = (*env)->GetStringUTFChars(env, _inputFilePath, 0);
     const char *tempOutputDirPath = (*env)->GetStringUTFChars(env, _tempOutputDirPath, 0);
-    const char *key = (*env)->GetStringUTFChars(env, _key, 0);
+    const unsigned char *key = (unsigned char *)(*env)->GetStringUTFChars(env, _key, 0);
     const int keyLength = (*env)->GetStringLength(env, _key);
 
     void *resblock = NULL;
@@ -1114,7 +1114,7 @@ end:
     (*env)->ReleaseStringUTFChars(env, _inputFilePath, inputBasePath);
     (*env)->ReleaseStringUTFChars(env, _inputFilePath, inputFilePath);
     (*env)->ReleaseStringUTFChars(env, _tempOutputDirPath, tempOutputDirPath);
-    (*env)->ReleaseStringUTFChars(env, _key, key);
+    (*env)->ReleaseStringUTFChars(env, _key, (char*)key);
     return (*env)->NewStringUTF(env, retvalue);
 }
 

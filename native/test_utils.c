@@ -29,7 +29,7 @@
 
 int main(void)
 {
-    char *key = "no$xEe!1'-%FAn:z";
+    unsigned char key[] = "no$xEe!1'-%FAn:z";
     unsigned char salt[] = "Kpq,@M&[/&C16>|LBA%m)ri=ExtRIGkDSjM$tdDSfP5v-Dp}g#3$`aPiO?J&#}I3e@`N+sSCm[-^q8;!hmUE1a-Yjr7)!CJ%4eA/?Fk1NXXwE^7I?2u9bxtylb?2}8,.52zl8!2vi^u#zrSbsl:;%Z%qiA(l6'OAc&}LpFZnkqW|',y,q_I|$Zm@/jYod)+?eV>_@yaTqHgb$sPJ+drvhmrTsl1%'E=leg[4[=Gga,Vyge6]\bU+<k#Dd?8P.aI&";
     unsigned char salted_key[ENCRYPTION_SALT_BYTES];
     int ret = 0;
@@ -40,7 +40,7 @@ int main(void)
     print_salt(stdout, salt);
     printf("\n");
 
-    ret = gen_salted_key(key, 16, salt, salted_key);
+    ret = hmac(key, 16, salt, salted_key);
     if(ret == 0) {
         printf("Salted Key: ");
         print_salt(stdout, salted_key);
