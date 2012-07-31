@@ -53,14 +53,14 @@ int main(void)
     unsigned char *ascii = NULL;
     char *assumed[] = {"3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
                        "",
-                       "c8c350678afd7656e65f9dbbfae8d5e445bbff3db7a0de1ac72ba1734ab2255e",
-                       "dc6cde04382b7c728c628a3354cd6d383dca8faecbbbf50e684540054ceb5670",
+                       "7d325d944a81a11c86b904ddd113d418bb1de188db55a14654cc489cb761f011",
+                       "ea9a1b730b11572714cedc1cdf3d3dd31b37283b608587661edf6e781c05f5fe",
                        "3b6f5cf4c8c3e8b6c6894da81c1fcea588db14d088c5970c1b98faed940b2ce4",
-                       "c4605b168b3d11a6651e841cf11ced84ff0bdff06635c181a6ea7d389174d2f8",
-                       "837c2811c51c36d4acbcd89047577088efb3868b889721a9e2664c426ba2a8fa"
+                       "27a24e8b433337896e1559fd0359cc4e2df9c9c2a085668f0f336c1553d5ab7c",
+                       "f7e1a1681fef523d4091b91d5d27ac56015698548ffc32a29ca521ba1926ea20"
                       };
 #endif
-		      
+
 #if BENCHMARK == 1
     struct timeval start, end;
     float elapsed_split, elapsed_merge;
@@ -119,7 +119,7 @@ int main(void)
 #else
     printf("Start split ... ");
     fflush(stdout);
-    status = split_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
+    status = split_file(fp[0], &fp[1], fp[4], (unsigned char *) "password", 8);
     if((status & SUCCESS_SPLIT) == 0) {
         fprintf(stderr, "Return code of split does not include the success flag(%d). Got %d.\n", SUCCESS_SPLIT, status);
     }
@@ -173,7 +173,7 @@ int main(void)
 #else
     printf("Start merge ... ");
     fflush(stdout);
-    status = merge_file(fp[0], &fp[1], fp[4], (char *) "password", 8);
+    status = merge_file(fp[0], &fp[1], fp[4], (unsigned char *) "password", 8);
     if((status & SUCCESS_MERGE) == 0) {
         fprintf(stderr, "Return code of merge does not include the success flag(%d). Got %d.\n", SUCCESS_MERGE, status);
     }
@@ -182,7 +182,7 @@ int main(void)
 #endif
 
     /** Close ALL files **/
-    for(i = 0; i <= 3; i++) {
+    for(i = 0; i <= 4; i++) {
         if(fp[i]) {
             fclose(fp[i]);
         }

@@ -88,8 +88,8 @@ extern "C"
     void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char *out, size_t *out_len);
     void split_byte_block(const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[]);
 
-    LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const char *key, const int keylen);
-    LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const char *key, const int keylen);
+    LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned char *key, const int keylen);
+    LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned char *key, const int keylen);
 
     LIBEXPORT int cmp_metadata(raid5md *md1, raid5md *md2);
     LIBEXPORT int cmp_metadata_hash(raid5md *md1, raid5md *md2, const int idx);

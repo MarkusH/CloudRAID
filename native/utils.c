@@ -32,7 +32,7 @@
 #include <Windows.h>
 #endif
 
-int create_salt(unsigned char *salt)
+LIBEXPORT int create_salt(unsigned char *salt)
 {
 #if defined(_WIN32) || defined(_WIN64)
     int i;
@@ -62,44 +62,138 @@ int create_salt(unsigned char *salt)
     return 0;
 }
 
-void print_salt(FILE *__stream, unsigned char *salt)
+LIBEXPORT void print_salt(FILE *__stream, unsigned char *salt, const unsigned int saltlen)
 {
     int i;
-    for(i = 0; i < ENCRYPTION_SALT_BYTES; i++) {
+    for(i = 0; i < saltlen; i++) {
         fprintf(__stream, "%02x", ((unsigned char *) salt) [i]);
     }
 }
 
-int gen_salted_key(const char *key, int keylen, unsigned char *salt, unsigned char *hash)
+LIBEXPORT unsigned long hmac(const unsigned char *key, const unsigned int keylen, const unsigned char *salt, const unsigned int saltlen, unsigned char *hash)
 {
-    int status = 0;
-
+#define B 64
+#define L 32
+#define IPAD 0x36
+#define OPAD 0x5c
+    unsigned char *k0 = NULL, *k0_ipad = NULL, *k0_ipad_text = NULL, *h_k0_ipad_text = NULL,
+                   *k0_opad = NULL, *k0_opad_h_k0_ipad_text = NULL, *h_k0_opad_h_k0_ipad_text = NULL;
+    unsigned long status = 0;
+    unsigned int itr = 0;
+    struct sha256_ctx sha256_ctx;
     if(key == NULL) {
-        return 1;
-    }
-
-    if(keylen < MIN_KEY_LENGTH) {
-        return 2;
-    }
-
-    if(keylen > ENCRYPTION_SALT_BYTES / 3) {
-        return 3;
+        return 0x0001;
     }
 
     if(salt == NULL) {
-        return 4;
+        return 0x0002;
     }
 
     if(hash == NULL) {
-        return 5;
+        return 0x0004;
     }
 
-    /* copy the given salt for further usage */
-    memcpy(hash, salt, ENCRYPTION_SALT_BYTES);
+    k0 = (unsigned char *) calloc(B, sizeof(unsigned char));
+    if(k0 == NULL) {
+        status = 0x0008;
+        goto end;
+    }
+    if(keylen <= B) {  /* STEP 1 and STEP 3*/
+        memcpy(k0, key, keylen);
+        /* FOR STEP 3: No need to append zeros here, since calloc already filles the memory with zeros */
+    } else if(keylen > B) {  /* STEP 2 */
+      /* The key is larger than the hash internal block size, thus hash it */
+        sha256_init_ctx(&sha256_ctx);
+        sha256_process_bytes(key, keylen, &sha256_ctx);
+        sha256_finish_ctx(&sha256_ctx, k0);
+        /* No need to append zeros here, since calloc already filles the memory with zeros */
+    }
 
-    /* copy the key to the beginning and the end of the temp salt array */
-    memcpy(hash, key, keylen);
-    memcpy(&hash[ENCRYPTION_SALT_BYTES - keylen], key, keylen);
+    /* STEP 4: byte-wise XOR the key with the IPAD */
+    k0_ipad = (unsigned char *) calloc(B, sizeof(unsigned char));
+    if(k0_ipad == NULL) {
+        status = 0x0010;
+        goto end;
+    }
+    for(itr = 0; itr < B; itr++) {
+        k0_ipad[itr] = k0[itr] ^ IPAD;
+    }
 
-    return 0;
+    /* STEP 5: Appending the text to the ipadded key */
+    k0_ipad_text = (unsigned char *) calloc(B + saltlen, sizeof(unsigned char));
+    if(k0_ipad_text == NULL) {
+        status = 0x0020;
+        goto end;
+    }
+    memcpy(k0_ipad_text, k0_ipad, B);
+    memcpy(&k0_ipad_text[B], salt, saltlen);
+
+    /* STEP 6: hash the output of step 5 */
+    h_k0_ipad_text = (unsigned char *) calloc(L, sizeof(unsigned char));
+    if(h_k0_ipad_text == NULL) {
+        status = 0x0040;
+        goto end;
+    }
+    memset(&sha256_ctx, 0, sizeof(struct sha256_ctx));
+    sha256_init_ctx(&sha256_ctx);
+    sha256_process_bytes(k0_ipad_text, B + saltlen, &sha256_ctx);
+    sha256_finish_ctx(&sha256_ctx, h_k0_ipad_text);
+
+    /* STEP 7: byte-wise XOR the key with the OPAD */
+    k0_opad = (unsigned char *) calloc(B, sizeof(unsigned char));
+    if(k0_opad == NULL) {
+        status = 0x0080;
+        goto end;
+    }
+    for(itr = 0; itr < B; itr++) {
+        k0_opad[itr] = k0[itr] ^ OPAD;
+    }
+
+    /* STEP 8: append the data from step 6 to the opadded key */
+    k0_opad_h_k0_ipad_text = (unsigned char *) calloc(B + L, sizeof(unsigned char));
+    if(k0_opad_h_k0_ipad_text == NULL) {
+        status = 0x0100;
+        goto end;
+    }
+    memcpy(k0_opad_h_k0_ipad_text, k0_opad, B);
+    memcpy(&k0_opad_h_k0_ipad_text[B], h_k0_ipad_text, L);
+
+    /* STEP 9: hash the output from step 8 */
+    h_k0_opad_h_k0_ipad_text = (unsigned char *) calloc(L, sizeof(unsigned char));
+    if(h_k0_opad_h_k0_ipad_text == NULL) {
+        status = 0x0200;
+        goto end;
+    }
+    memset(&sha256_ctx, 0, sizeof(struct sha256_ctx));
+    sha256_init_ctx(&sha256_ctx);
+    sha256_process_bytes(k0_opad_h_k0_ipad_text, B + L, &sha256_ctx);
+    sha256_finish_ctx(&sha256_ctx, h_k0_opad_h_k0_ipad_text);
+
+    /* STEP 10: copy the final hash to the call-by-reference hash */
+    memcpy(hash, h_k0_opad_h_k0_ipad_text, L);
+
+end:
+    if(h_k0_opad_h_k0_ipad_text != NULL) {
+        free(h_k0_opad_h_k0_ipad_text);
+    }
+    if(k0_opad_h_k0_ipad_text != NULL) {
+        free(k0_opad_h_k0_ipad_text);
+    }
+    if(k0_opad != NULL) {
+        free(k0_opad);
+    }
+    if(h_k0_ipad_text != NULL) {
+        free(h_k0_ipad_text);
+    }
+    if(k0_ipad_text != NULL) {
+        free(k0_ipad_text);
+    }
+    if(k0_ipad != NULL) {
+        free(k0_ipad);
+    }
+    if(k0 != NULL) {
+        free(k0);
+    }
+
+    return status;
 }
