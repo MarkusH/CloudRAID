@@ -27,7 +27,6 @@
 
 #include <stdio.h>
 
-#define MIN_KEY_LENGTH 8
 #define ENCRYPTION_SALT_BYTES 256
 
 #ifdef __cplusplus
