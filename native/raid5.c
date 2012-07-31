@@ -233,6 +233,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned c
     int i;
     unsigned char *salted_key = NULL;
     rc4_key rc4key;
+    unsigned long hmac_ret = 0;
 
     raid5md metadata;
     new_metadata(&metadata);
@@ -300,11 +301,11 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned c
     }
 #endif
 
-    i = hmac(key, keylen, metadata.salt, salted_key);
-    if(i != 0) {
+    hmac_ret = hmac(key, keylen, metadata.salt, ENCRYPTION_SALT_BYTES, salted_key);
+    if(hmac_ret != 0) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot compute salted hash");
-        DEBUG1("Got return value %d but expected 0", i);
+        DEBUG1("Got return value %lu for HMAC but expected 0", hmac_ret);
     }
     prepare_key(salted_key, ENCRYPTION_SALT_BYTES, &rc4key);
 #endif
@@ -462,6 +463,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned 
     size_t sha256_len = 0;
     char *sha256_buf = NULL;
     void *sha256_resblock = NULL;
+    unsigned long hmac_ret = 0;
 
     new_metadata(&metadata);
     new_metadata(&md_read);
@@ -543,11 +545,11 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned 
     in_len[2] = (devices[parity_pos]) ? fread(&in[2 * RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[parity_pos]) : 0;
     DEBUG3("Read %lu (%lu/%lu/%lu) bytes for devices %d/%d/%d", in_len[0] + in_len[1] + in_len[2], in_len[0], in_len[1], in_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
 #if ENCRYPT_DATA != 0
-    i = hmac(key, keylen, metadata.salt, salted_key);
-    if(i != 0) {
+    hmac_ret = hmac(key, keylen, metadata.salt, ENCRYPTION_SALT_BYTES, salted_key);
+    if(hmac_ret != 0) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot compute salted hash");
-        DEBUG1("Got return value %d but expected 0", i);
+        DEBUG1("Got return value %lu for HMAC but expected 0", hmac_ret);
     }
     prepare_key(salted_key, ENCRYPTION_SALT_BYTES, &rc4key);
 #endif
@@ -781,7 +783,7 @@ LIBEXPORT void print_metadata(raid5md *md)
         printf("2: %64s\n", md->hash_dev2);
         printf("I: %64s\n", md->hash_in);
         printf("S: ");
-        print_salt(stdout, md->salt);
+        print_salt(stdout, md->salt, ENCRYPTION_SALT_BYTES);
         printf("\n");
     } else {
         printf("\nNo metadata given!\n");

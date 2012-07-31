@@ -29,32 +29,72 @@
 
 int main(void)
 {
-    unsigned char key[] = "no$xEe!1'-%FAn:z";
-    unsigned char salt[] = "Kpq,@M&[/&C16>|LBA%m)ri=ExtRIGkDSjM$tdDSfP5v-Dp}g#3$`aPiO?J&#}I3e@`N+sSCm[-^q8;!hmUE1a-Yjr7)!CJ%4eA/?Fk1NXXwE^7I?2u9bxtylb?2}8,.52zl8!2vi^u#zrSbsl:;%Z%qiA(l6'OAc&}LpFZnkqW|',y,q_I|$Zm@/jYod)+?eV>_@yaTqHgb$sPJ+drvhmrTsl1%'E=leg[4[=Gga,Vyge6]\bU+<k#Dd?8P.aI&";
-    unsigned char salted_key[ENCRYPTION_SALT_BYTES];
-    int ret = 0;
-    unsigned char expected[] = "no$xEe!1'-%FAn:zBA%m)ri=ExtRIGkDSjM$tdDSfP5v-Dp}g#3$`aPiO?J&#}I3e@`N+sSCm[-^q8;!hmUE1a-Yjr7)!CJ%4eA/?Fk1NXXwE^7I?2u9bxtylb?2}8,.52zl8!2vi^u#zrSbsl:;%Z%qiA(l6'OAc&}LpFZnkqW|',y,q_I|$Zm@/jYod)+?eV>_@yaTqHgb$sPJ+drvhmrTsl1%'E=leg[4[=Gga,Vyge6]no$xEe!1'-%FAn:z";
+    char *key[] = {
+        "",
+        "key",
+        "\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b",
+        "Jefe",
+        "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
+        "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19",
+        "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa",
+        "\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+    };
+    char *salt[] = {
+        "",
+        "The quick brown fox jumps over the lazy dog",
+        "Hi There",
+        "what do ya want for nothing?",
+        "\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd\xdd",
+        "\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd\xcd",
+        "Test Using Larger Than Block-Size Key - Hash Key First",
+        "This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm."
+    };
+    char *expected[] = {
+        "b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad",
+        "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8",
+        "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7",
+        "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3844",
+        "773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe",
+        "82558a389a443c0ea4cc819899f2083a85f0faa3e578f8077a2e3ff46729665b",
+        "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54",
+        "9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2",
+    };
+    unsigned char hash[32] = {0x00};
+    unsigned char ascii[65] = {0x00};
+    int ret = 0, i = 0;
 
-    printf("Running test for hmac:\n\n");
-    printf("Salt: ");
-    print_salt(stdout, salt);
-    printf("\n");
-
-    ret = hmac(key, 16, salt, salted_key);
-    if(ret == 0) {
-        printf("Salted Key: ");
-        print_salt(stdout, salted_key);
-        printf("\n");
-        if(memcmp(salted_key, expected, ENCRYPTION_SALT_BYTES) == 0) {
-            printf("Salted Key correct\n");
+    printf("Running test for hmac:\n");
+    for(i = 0; i < 8; i++) {
+        /*printf("Key:  %s\nSalt: %s\nExp:  %s\n", key[i], salt[i], expected[i]);*/
+        printf("\nKey:  ");
+        if(i == 0 || i == 1 || i == 3) {
+            printf("%s", key[i]);
         } else {
-            printf("Salted Key failed:");
+            printf("0x");
+            print_salt(stdout, key[i], strlen(key[i]));
         }
-    } else {
-        printf("Got result %d from hmac instead of 0\n", ret);
-        return 2;
+        printf("\nSalt: ");
+        if(i == 4 || i == 5) {
+            printf("0x");
+            print_salt(stdout, salt[i], strlen(salt[i]));
+        } else {
+            printf("%s", salt[i]);
+        }
+        printf("\nExp:  %s\n", expected[i]);
+        ret = hmac(key[i], strlen(key[i]), salt[i], strlen(salt[i]), hash);
+        ascii_from_resbuf(ascii, hash);
+        if(ret == 0) {
+            printf("HMAC: %s\n", ascii);
+            if(memcmp(ascii, expected[i], 64) == 0) {
+                printf("Salted Key correct\n");
+            } else {
+                printf("Salted Key failed!\n");
+            }
+        } else {
+            printf("Got result %u from HMAC instead of 0.\n", ret);
+            ret |= (1 << i);
+        }
     }
 
-    return 0;
+    return ret;
 }
-
