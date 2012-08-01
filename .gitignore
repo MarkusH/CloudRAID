@@ -11,6 +11,7 @@ native/testing/
 *.kdev4
 *.o
 *.dat
+*.zip
 
 # ignore DevC++ files
 *.res
@@ -29,6 +30,7 @@ native/DevC++/test*
 !interfaces/.project
 !metadatamgr/.classpath
 !metadatamgr/.project
+!osgi-feature/.project
 !passwordmgr/.classpath
 !passwordmgr/.project
 !rest/.classpath
