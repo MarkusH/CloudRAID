@@ -267,10 +267,10 @@ public class RestApiServlet extends HttpServlet {
 		IRestApiResponse r;
 		if (comps == null) {
 			r = new PlainApiResponse();
-		} else if (comps.indexOf("gzip") > 0) {
+		} else if (comps.indexOf("gzip") > -1) {
 			this.compression = Compression.GZIP;
 			r = new GZIPPlainApiResponse();
-		} else if (comps.indexOf("deflate") > 0) {
+		} else if (comps.indexOf("deflate") > -1) {
 			this.compression = Compression.ZLIB;
 			r = new ZLIBPlainApiResponse();
 		} else {
