@@ -11,10 +11,9 @@ Import-Package: de.dhbw_mannheim.cloudraid.config,
  de.dhbw_mannheim.cloudraid.metadatamgr,
  javax.servlet,
  javax.servlet.http;version="2.5.0",
- org.osgi.framework;version="1.6.0",
- org.osgi.service.http;version="1.2.1"
+ org.eclipse.equinox.http.servlet;version="[1.1.0,1.1.200]",
+ org.osgi.framework;version="1.6.0"
 Service-Component: OSGI-INF/component.xml
 Require-Bundle: javax.servlet;bundle-version="2.5.0",
  org.eclipse.osgi.services;bundle-version="3.3.0",
  JSON-java;bundle-version="1.0.0"
-
