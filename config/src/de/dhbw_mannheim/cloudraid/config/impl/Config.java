@@ -220,7 +220,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	private synchronized String get(String key) throws NoSuchElementException,
 			InvalidConfigValueException {
 		if (!this.containsKey(key)) {
-			throw new NoSuchElementException();
+			throw new NoSuchElementException(key);
 		}
 		try {
 			if (this.salts.containsKey(key)) {
@@ -322,7 +322,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		} catch (NoSuchElementException e) {
 			if (defaultVal == null) {
 				if (!Config.defaultData.containsKey(key)) {
-					throw new NoSuchElementException();
+					throw new NoSuchElementException(key);
 				}
 				return Double.parseDouble(Config.defaultData.get(key));
 			}
@@ -350,7 +350,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		} catch (NoSuchElementException e) {
 			if (defaultVal == null) {
 				if (!Config.defaultData.containsKey(key)) {
-					throw new NoSuchElementException();
+					throw new NoSuchElementException(key);
 				}
 				return Float.parseFloat(Config.defaultData.get(key));
 			}
@@ -378,7 +378,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		} catch (NoSuchElementException e) {
 			if (defaultVal == null) {
 				if (!Config.defaultData.containsKey(key)) {
-					throw new NoSuchElementException();
+					throw new NoSuchElementException(key);
 				}
 				return Integer.parseInt(Config.defaultData.get(key));
 			}
@@ -406,7 +406,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		} catch (NoSuchElementException e) {
 			if (defaultVal == null) {
 				if (!Config.defaultData.containsKey(key)) {
-					throw new NoSuchElementException();
+					throw new NoSuchElementException(key);
 				}
 				return Long.parseLong(Config.defaultData.get(key));
 
@@ -435,7 +435,7 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 		} catch (NoSuchElementException e) {
 			if (defaultVal == null) {
 				if (!Config.defaultData.containsKey(key)) {
-					throw new NoSuchElementException();
+					throw new NoSuchElementException(key);
 				}
 				return Config.defaultData.get(key);
 
@@ -811,6 +811,8 @@ public class Config extends HashMap<String, String> implements ICloudRAIDConfig 
 	 */
 	protected void startup(BundleContext context) throws InvalidKeyException {
 		System.out.println("Config: startup: begin");
+		System.out.println("Config file: " + Config.CONFIG_PATH);
+		System.out.println("CloudRAID home: " + Config.CLOUDRAID_HOME);
 		this.doSaveOnShutdown = true;
 		if (this.init(this.passwordmgr.getCredentials()) == null) {
 			this.doSaveOnShutdown = false;
