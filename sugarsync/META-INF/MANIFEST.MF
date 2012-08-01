@@ -2,11 +2,11 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CloudRAID-SugarSync
 Bundle-SymbolicName: CloudRAID-SugarSync
-Bundle-Version: 0.0.1.prealpha
-Bundle-Vendor: cloudraid
+Bundle-Version: 1.0.0.beta-1
+Bundle-Vendor: CloudRAID Team
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: javax.xml.parsers,
  org.w3c.dom,
  org.xml.sax
-Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1"
+Require-Bundle: CloudRAID-Interfaces;bundle-version="1.0.0.beta-1"
 Export-Package: de.dhbw_mannheim.cloudraid.sugarsync.impl.net.connector

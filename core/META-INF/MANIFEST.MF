@@ -2,11 +2,11 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CloudRAID-Core
 Bundle-SymbolicName: CloudRAID-Core
-Bundle-Version: 0.0.1.prealpha
-Bundle-Vendor: cloudraid
+Bundle-Version: 1.0.0.beta-1
+Bundle-Vendor: CloudRAID Team
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Service-Component: OSGI-INF/component.xml
 Import-Package: org.osgi.framework;version="1.6.0"
-Require-Bundle: CloudRAID-Interfaces;bundle-version="0.0.1"
+Require-Bundle: CloudRAID-Interfaces;bundle-version="1.0.0.beta-1"
 Bundle-NativeCode: lib/linux64/libcloudraid.so; osname = linux; processor=x86_64,
  lib/linux/libcloudraid.so; osname = linux; processor=x86

@@ -43,9 +43,9 @@
 #error "invalid RAID5BLOCKSIZE. Twice the RAID5 BLOCKSIZE must be a factor of SHA256_BLOCKSIZE"
 #endif
 
-#define _VERSION_ "0.0.2prealpha"
+#define _VERSION_ "1.0.0-beta.1"
 #define _NAME_ "CloudRAID-RAID5"
-#define _VENDOR_ "cloudraid"
+#define _VENDOR_ "CloudRAID Team"
 
 #define SUCCESS_MERGE  0x0001
 #define MEMERR_BUF     0x0002
