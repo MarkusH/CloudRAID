@@ -156,8 +156,9 @@ public class AmazonS3Connector implements IStorageConnector {
 				this.secretAccessKey = this.config.getString(ksecretAccessKey);
 				this.bucketname = this.config.getString(kBucketName);
 			} else {
-				throw new InstantiationException(kAccessKeyId + " and "
-						+ ksecretAccessKey + " have to be set in the config!");
+				throw new InstantiationException(kAccessKeyId + ", "
+						+ ksecretAccessKey + " and " + kBucketName
+						+ " have to be set in the config!");
 			}
 		} catch (MissingConfigValueException e) {
 			e.printStackTrace();
