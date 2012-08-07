@@ -20,7 +20,7 @@
  * under the License.
  */
 
-package de.dhbw_mannheim.cloudraid.api.impl.responses;
+package de.dhbw_mannheim.cloudraid.api.responses;
 
 import java.io.IOException;
 import java.io.OutputStream;

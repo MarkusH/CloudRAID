@@ -49,9 +49,9 @@ import org.osgi.framework.ServiceReference;
 
 import de.dhbw_mannheim.cloudraid.api.impl.RestApiUrlMapping.MatchResult;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.GZIPPlainApiResponse;
-import de.dhbw_mannheim.cloudraid.api.impl.responses.IRestApiResponse;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.PlainApiResponse;
 import de.dhbw_mannheim.cloudraid.api.impl.responses.ZLIBPlainApiResponse;
+import de.dhbw_mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.core.ICoreAccess;

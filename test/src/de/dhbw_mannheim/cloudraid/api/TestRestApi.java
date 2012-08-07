@@ -36,7 +36,7 @@ import org.junit.Test;
 
 import de.dhbw_mannheim.cloudraid.api.impl.RestApiUrlMapping;
 import de.dhbw_mannheim.cloudraid.api.impl.RestApiUrlMapping.MatchResult;
-import de.dhbw_mannheim.cloudraid.api.impl.responses.IRestApiResponse;
+import de.dhbw_mannheim.cloudraid.api.responses.IRestApiResponse;
 
 /**
  * @author Markus Holtermann

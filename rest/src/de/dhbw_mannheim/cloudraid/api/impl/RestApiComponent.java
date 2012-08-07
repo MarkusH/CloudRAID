@@ -28,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
-import de.dhbw_mannheim.cloudraid.api.impl.responses.IRestApiResponse;
+import de.dhbw_mannheim.cloudraid.api.responses.IRestApiResponse;
 import de.dhbw_mannheim.cloudraid.config.ICloudRAIDConfig;
 import de.dhbw_mannheim.cloudraid.core.ICloudRAIDService;
 import de.dhbw_mannheim.cloudraid.metadatamgr.IMetadataManager;

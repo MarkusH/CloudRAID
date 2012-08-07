@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-import de.dhbw_mannheim.cloudraid.api.impl.responses.IRestApiResponse;
+import de.dhbw_mannheim.cloudraid.api.responses.IRestApiResponse;
 
 /**
  * @author Markus Holtermann

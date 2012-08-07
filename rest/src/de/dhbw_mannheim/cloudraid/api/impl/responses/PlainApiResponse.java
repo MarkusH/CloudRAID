@@ -28,6 +28,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import de.dhbw_mannheim.cloudraid.api.responses.IRestApiResponse;
+
 /**
  * @author Markus Holtermann
  * 
