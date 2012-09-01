@@ -21,7 +21,7 @@
  */
 
 #include "utils.h"
-#include "sha256.h"
+#include "sha2.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,8 +59,7 @@ int main(void)
         "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54",
         "9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2",
     };
-    unsigned char hash[32] = {0x00};
-    unsigned char ascii[65] = {0x00};
+    unsigned char hash[65] = {0x00};
     int ret = 0, i = 0;
 
     printf("Running test for hmac:\n");
@@ -81,11 +80,10 @@ int main(void)
             printf("%s", salt[i]);
         }
         printf("\nExp:  %s\n", expected[i]);
-        ret = hmac(key[i], strlen(key[i]), salt[i], strlen(salt[i]), hash);
-        ascii_from_resbuf(ascii, hash);
+        ret = hmac_hex(key[i], strlen(key[i]), salt[i], strlen(salt[i]), hash);
         if(ret == 0) {
-            printf("HMAC: %s\n", ascii);
-            if(memcmp(ascii, expected[i], 64) == 0) {
+            printf("HMAC: %s\n", hash);
+            if(memcmp(hash, expected[i], 64) == 0) {
                 printf("Salted Key correct\n");
             } else {
                 printf("Salted Key failed!\n");

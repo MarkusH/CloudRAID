@@ -21,7 +21,7 @@
  */
 
 #include "utils.h"
-#include "sha256.h"
+#include "sha2.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,8 +72,8 @@ LIBEXPORT void print_salt(FILE *__stream, unsigned char *salt, const unsigned in
 
 LIBEXPORT unsigned long hmac(const unsigned char *key, const unsigned int keylen, const unsigned char *salt, const unsigned int saltlen, unsigned char *hash)
 {
-#define B 64
-#define L 32
+#define B SHA256_BLOCK_LENGTH
+#define L SHA256_DIGEST_LENGTH
 #define IPAD 0x36
 #define OPAD 0x5c
     unsigned char *k0 = NULL, *k0_ipad = NULL, *k0_ipad_text = NULL, *h_k0_ipad_text = NULL,
@@ -102,10 +102,10 @@ LIBEXPORT unsigned long hmac(const unsigned char *key, const unsigned int keylen
         memcpy(k0, key, keylen);
         /* FOR STEP 3: No need to append zeros here, since calloc already filles the memory with zeros */
     } else if(keylen > B) {  /* STEP 2 */
-      /* The key is larger than the hash internal block size, thus hash it */
-        sha256_init_ctx(&sha256_ctx);
-        sha256_process_bytes(key, keylen, &sha256_ctx);
-        sha256_finish_ctx(&sha256_ctx, k0);
+        /* The key is larger than the hash internal block size, thus hash it */
+        sha256_init(&sha256_ctx);
+        sha256_update(key, keylen, &sha256_ctx);
+        sha256_final(k0, &sha256_ctx);
         /* No need to append zeros here, since calloc already filles the memory with zeros */
     }
 
@@ -135,9 +135,9 @@ LIBEXPORT unsigned long hmac(const unsigned char *key, const unsigned int keylen
         goto end;
     }
     memset(&sha256_ctx, 0, sizeof(struct sha256_ctx));
-    sha256_init_ctx(&sha256_ctx);
-    sha256_process_bytes(k0_ipad_text, B + saltlen, &sha256_ctx);
-    sha256_finish_ctx(&sha256_ctx, h_k0_ipad_text);
+    sha256_init(&sha256_ctx);
+    sha256_update(k0_ipad_text, B + saltlen, &sha256_ctx);
+    sha256_final(h_k0_ipad_text, &sha256_ctx);
 
     /* STEP 7: byte-wise XOR the key with the OPAD */
     k0_opad = (unsigned char *) calloc(B, sizeof(unsigned char));
@@ -165,9 +165,9 @@ LIBEXPORT unsigned long hmac(const unsigned char *key, const unsigned int keylen
         goto end;
     }
     memset(&sha256_ctx, 0, sizeof(struct sha256_ctx));
-    sha256_init_ctx(&sha256_ctx);
-    sha256_process_bytes(k0_opad_h_k0_ipad_text, B + L, &sha256_ctx);
-    sha256_finish_ctx(&sha256_ctx, h_k0_opad_h_k0_ipad_text);
+    sha256_init(&sha256_ctx);
+    sha256_update(k0_opad_h_k0_ipad_text, B + L, &sha256_ctx);
+    sha256_final(h_k0_opad_h_k0_ipad_text, &sha256_ctx);
 
     /* STEP 10: copy the final hash to the call-by-reference hash */
     memcpy(hash, h_k0_opad_h_k0_ipad_text, L);
@@ -196,4 +196,15 @@ end:
     }
 
     return status;
+}
+
+LIBEXPORT unsigned long hmac_hex(const unsigned char *key, const unsigned int keylen, const unsigned char *salt, const unsigned int saltlen, unsigned char *ascii)
+{
+    unsigned char hash[SHA256_DIGEST_LENGTH] = {0x00};
+    int i = 0;
+    unsigned long ret = hmac(key, keylen, salt, saltlen, hash);
+    for(i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        sprintf(((char *) ascii) + i * 2, "%02x", ((unsigned char *) hash) [i]);
+    }
+    return ret;
 }

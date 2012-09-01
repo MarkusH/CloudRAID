@@ -21,7 +21,7 @@
  */
 
 #include "raid5.h"
-#include "sha256.h"
+#include "sha2.h"
 #include "rc4.h"
 
 #include <stdio.h>

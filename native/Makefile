@@ -33,7 +33,7 @@ endif
 
 JAVASOURCE = ./../core/src
 JAVABIN = ./../core/bin
-SRC = raid5.c sha256.c rc4.c utils.c
+SRC = raid5.c sha2.c rc4.c utils.c
 OBJ = $(SRC:.c=.o)
 LIB = ./build/usr/lib/libcloudraid.so
 ifneq ($(ARCH),)

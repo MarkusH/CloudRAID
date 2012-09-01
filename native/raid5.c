@@ -21,7 +21,7 @@
  */
 
 #include "raid5.h"
-#include "sha256.h"
+#include "sha2.h"
 #include "rc4.h"
 #include "utils.h"
 #include "de_dhbw_mannheim_cloudraid_core_impl_jni_RaidAccessInterface.h"
@@ -226,10 +226,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned c
 
     /* sha context
        the last element [3] is for the input file */
-    struct sha256_ctx sha256_ctx[4];
-    size_t sha256_len[4];
-    char *sha256_buf[4] = {NULL, NULL, NULL, NULL};
-    void *sha256_resblock[4] = {NULL, NULL, NULL, NULL};
+    sha256_ctx sha256_ctx[4];
     int i;
     unsigned char *salted_key = NULL;
     rc4_key rc4key;
@@ -272,21 +269,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned c
 
     /* create the sha256 context */
     for(i = 0; i < 4; i++) {
-        sha256_resblock[i] = calloc(32, sizeof(unsigned char));
-        if(sha256_resblock[i] == NULL) {
-            status |= MEMERR_SHA;
-            DEBUGPRINT("Cannot allocate memory for SHA256 resources");
-            goto end;
-        }
-
-        sha256_buf[i] = (char *) calloc(SHA256_BLOCKSIZE + 72, sizeof(unsigned char));
-        if(sha256_buf[i] == NULL) {
-            status |= MEMERR_SHA;
-            DEBUGPRINT("Cannot allocate memory for buffer");
-            goto end;
-        }
-        sha256_init_ctx(&sha256_ctx[i]);
-        sha256_len[i] = 0;
+        sha256_init(&sha256_ctx[i]);
     }
 
     rlen = fread(chars, sizeof(unsigned char), 2 * RAID5BLOCKSIZE, in);
@@ -315,14 +298,8 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned c
         DEBUG1("Encryption enabled");
         rc4(chars, rlen, &rc4key);
 #endif
-        if(sha256_len[3] == SHA256_BLOCKSIZE) {
-            sha256_process_block(sha256_buf[3], SHA256_BLOCKSIZE, &sha256_ctx[3]);
-            sha256_len[3] = 0;
-        }
-        if(sha256_len[3] < SHA256_BLOCKSIZE) {
-            memcpy(sha256_buf[3] + sha256_len[3], chars, rlen);
-            sha256_len[3] += rlen;
-        }
+        sha256_update(chars, rlen, &sha256_ctx[3]);
+
         split_byte_block(chars, rlen, out, out_len);
         DEBUG3("Split %lu input bytes into %lu (%lu/%lu/%lu) for devices %d/%d/%d", rlen, out_len[0] + out_len[1] + out_len[2], out_len[0], out_len[1], out_len[2], (parity_pos + 1) % 3, (parity_pos + 2) % 3, parity_pos);
         fwrite(&out[0], sizeof(unsigned char), out_len[0], devices[(parity_pos + 1) % 3]);
@@ -332,38 +309,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned c
         fwrite(&out[2 * RAID5BLOCKSIZE], sizeof(unsigned char), out_len[2], devices[parity_pos]);
 
         for(i = 0; i < 3; i++) {
-            if(sha256_len[i] == SHA256_BLOCKSIZE) {
-                sha256_process_block(sha256_buf[i], SHA256_BLOCKSIZE, &sha256_ctx[i]);
-                sha256_len[i] = 0;
-            }
-        }
-        /*
-         * parity_pos = 2
-         * i =          0       1       2
-         * Begin        0       BS      2*BS
-         *
-         * parity_pos = 0
-         * i =          0       1       2
-         * Begin        2*BS    0       BS
-         *
-         * parity_pos = 1
-         * i =          0       1       2
-         * Begin        BS      2*BS    0
-         */
-        if(sha256_len[0] < SHA256_BLOCKSIZE) {
-            i = (parity_pos == 2) ? 0 : (parity_pos == 0) ? 2 : 1;
-            memcpy(sha256_buf[0] + sha256_len[0], &out[i * RAID5BLOCKSIZE], out_len[i]);
-            sha256_len[0] += out_len[i];
-        }
-        if(sha256_len[1] < SHA256_BLOCKSIZE) {
-            i = (parity_pos == 2) ? 1 : (parity_pos == 0) ? 0 : 2;
-            memcpy(sha256_buf[1] + sha256_len[1], &out[i * RAID5BLOCKSIZE], out_len[i]);
-            sha256_len[1] += out_len[i];
-        }
-        if(sha256_len[2] < SHA256_BLOCKSIZE) {
-            i = (parity_pos == 2) ? 2 : (parity_pos == 0) ? 1 : 0;
-            memcpy(sha256_buf[2] + sha256_len[2], &out[i * RAID5BLOCKSIZE], out_len[i]);
-            sha256_len[2] += out_len[i];
+            sha256_update(&out[i * RAID5BLOCKSIZE], out_len[i], &sha256_ctx[(parity_pos + 1 + i) % 3]);
         }
 
         parity_pos = (parity_pos + 1) % 3;
@@ -377,15 +323,7 @@ LIBEXPORT int split_file(FILE *in, FILE *devices[], FILE *meta, const unsigned c
     }
 
     for(i = 0; i < 4; i++) {
-        if(sha256_len[i] == SHA256_BLOCKSIZE) {
-            sha256_process_block(sha256_buf[i], SHA256_BLOCKSIZE, &sha256_ctx[i]);
-        } else {
-            if(sha256_len[i] > 0) {
-                sha256_process_bytes(sha256_buf[i], sha256_len[i], &sha256_ctx[i]);
-            }
-        }
-        sha256_finish_ctx(&sha256_ctx[i], sha256_resblock[i]);
-        ascii_from_resbuf(hash, sha256_resblock[i]);
+        sha256_end(hash, &sha256_ctx[i]);
         set_metadata_hash(&metadata, i, hash);
         if(i < 3) {
             DEBUG2("The hash for device file %d is %s", i, hash);
@@ -415,14 +353,6 @@ end:
         free(hash);
     }
 
-    for(i = 0; i < 4; i++) {
-        if(sha256_buf[i] != NULL) {
-            free(sha256_buf[i]);
-        }
-        if(sha256_resblock[i] != NULL) {
-            free(sha256_resblock[i]);
-        }
-    }
     if(salted_key != NULL) {
         free(salted_key);
     }
@@ -459,10 +389,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned 
     raid5md metadata, md_read;
     unsigned char *salted_key = NULL;
     rc4_key rc4key;
-    struct sha256_ctx sha256_ctx;
-    size_t sha256_len = 0;
-    char *sha256_buf = NULL;
-    void *sha256_resblock = NULL;
+    sha256_ctx sha256_ctx;
     unsigned long hmac_ret = 0;
 
     new_metadata(&metadata);
@@ -499,8 +426,6 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned 
     in_len = (size_t *) calloc(3, sizeof(size_t));
     buf = (unsigned char *) calloc(2 * RAID5BLOCKSIZE, sizeof(unsigned char));
     salted_key = (unsigned char *) calloc(ENCRYPTION_SALT_BYTES, sizeof(unsigned char));
-    sha256_resblock = calloc(32, sizeof(unsigned char));
-    sha256_buf = (char *) calloc(SHA256_BLOCKSIZE + 72, sizeof(unsigned char));
     hash = (unsigned char *) calloc(65, sizeof(unsigned char));
     if(in == NULL) {
         status |= MEMERR_BUF;
@@ -522,23 +447,12 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned 
         DEBUGPRINT("Cannot allocate memory for salt");
         goto end;
     }
-    if(sha256_resblock == NULL) {
-        status |= MEMERR_BUF;
-        DEBUGPRINT("Cannot allocate memory for SHA256 resources");
-        goto end;
-    }
-    if(sha256_buf == NULL) {
-        status |= MEMERR_BUF;
-        DEBUGPRINT("Cannot allocate memory for buffer");
-        goto end;
-    }
     if(hash == NULL) {
         status |= MEMERR_BUF;
         DEBUGPRINT("Cannot allocate memory for hash");
         goto end;
     }
-    sha256_init_ctx(&sha256_ctx);
-    sha256_len = 0;
+    sha256_init(&sha256_ctx);
 
     in_len[0] = (devices[(parity_pos + 1) % 3]) ? fread(&in[0], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 1) % 3]) : 0;
     in_len[1] = (devices[(parity_pos + 2) % 3]) ? fread(&in[RAID5BLOCKSIZE], sizeof(char), RAID5BLOCKSIZE, devices[(parity_pos + 2) % 3]) : 0;
@@ -579,14 +493,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned 
             goto end;
         }
 
-        if(sha256_len == SHA256_BLOCKSIZE) {
-            sha256_process_block(sha256_buf, SHA256_BLOCKSIZE, &sha256_ctx);
-            sha256_len = 0;
-        }
-        if(sha256_len < SHA256_BLOCKSIZE) {
-            memcpy(sha256_buf + sha256_len, buf, out_len);
-            sha256_len += out_len;
-        }
+        sha256_update(buf, out_len, &sha256_ctx);
 
 
 #if ENCRYPT_DATA != 0
@@ -619,15 +526,7 @@ LIBEXPORT int merge_file(FILE *out, FILE *devices[], FILE *meta, const unsigned 
         goto end;
     }
 
-    if(sha256_len == SHA256_BLOCKSIZE) {
-        sha256_process_block(sha256_buf, SHA256_BLOCKSIZE, &sha256_ctx);
-    } else {
-        if(sha256_len > 0) {
-            sha256_process_bytes(sha256_buf, sha256_len, &sha256_ctx);
-        }
-    }
-    sha256_finish_ctx(&sha256_ctx, sha256_resblock);
-    ascii_from_resbuf(hash, sha256_resblock);
+    sha256_end(hash, &sha256_ctx);
 
     if(memcmp(hash, metadata.hash_in, 64) != 0) {
         status |= METADATA_ERROR;
@@ -642,12 +541,6 @@ end:
 
     if(hash != NULL) {
         free(hash);
-    }
-    if(sha256_buf != NULL) {
-        free(sha256_buf);
-    }
-    if(sha256_resblock != NULL) {
-        free(sha256_resblock);
     }
     if(salted_key != NULL) {
         free(salted_key);
@@ -976,7 +869,7 @@ end:
     (*env)->ReleaseStringUTFChars(env, _tempInputDirPath, tempInputDirPath);
     (*env)->ReleaseStringUTFChars(env, _hash, hash);
     (*env)->ReleaseStringUTFChars(env, _outputFilePath, outputFilePath);
-    (*env)->ReleaseStringUTFChars(env, _key, (char*)key);
+    (*env)->ReleaseStringUTFChars(env, _key, (char *)key);
     return status;
 }
 
@@ -1039,8 +932,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     }
     memcpy(outputBaseName, tempOutputDirPath, tmpLength);
     /* build the hash */
-    sha256_buffer(inputFilePath, strlen(inputFilePath), resblock);
-    ascii_from_resbuf((unsigned char *) &outputBaseName[ tmpLength ], resblock);
+    sha256_data(inputFilePath, strlen(inputFilePath), (unsigned char *) &outputBaseName[ tmpLength ]);
 
     /* open the files */
     for(i = 0; i < 3; i++) {
@@ -1116,7 +1008,7 @@ end:
     (*env)->ReleaseStringUTFChars(env, _inputFilePath, inputBasePath);
     (*env)->ReleaseStringUTFChars(env, _inputFilePath, inputFilePath);
     (*env)->ReleaseStringUTFChars(env, _tempOutputDirPath, tempOutputDirPath);
-    (*env)->ReleaseStringUTFChars(env, _key, (char*)key);
+    (*env)->ReleaseStringUTFChars(env, _key, (char *)key);
     return (*env)->NewStringUTF(env, retvalue);
 }
 

@@ -26,7 +26,7 @@
 #include "defines.h"
 #include "rc4.h"
 #include "utils.h"
-#include "sha256.h"
+#include "sha2.h"
 
 #include <stdio.h>
 #include <stddef.h>
@@ -83,7 +83,7 @@ extern "C"
     } raid5md;
 
     static const unsigned char RAID5_METADATA_VERSION = 2;
-    static const unsigned int RAID5_METADATA_BYTES = 2 + 4*64 + ENCRYPTION_SALT_BYTES + 4;
+    static const unsigned int RAID5_METADATA_BYTES = 2 + 4 * 64 + ENCRYPTION_SALT_BYTES + 4;
 
     void merge_byte_block(const unsigned char *in, const size_t in_len[], const unsigned int parity_pos, const unsigned int dead_device, const unsigned int missing, unsigned char *out, size_t *out_len);
     void split_byte_block(const unsigned char *in, const size_t in_len, unsigned char *out, size_t out_len[]);
