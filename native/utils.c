@@ -70,6 +70,10 @@ LIBEXPORT void print_salt(FILE *__stream, unsigned char *salt, const unsigned in
     }
 }
 
+/**
+ * Compute the HMAC for the given key and salt. The HMAC will be stored in `*hash`
+ * as 32 byte digest.
+ */
 LIBEXPORT unsigned long hmac(const unsigned char *key, const unsigned int keylen, const unsigned char *salt, const unsigned int saltlen, unsigned char *hash)
 {
 #define B SHA256_BLOCK_LENGTH
@@ -198,6 +202,12 @@ end:
     return status;
 }
 
+/**
+ * Compute the HMAC for the given key and salt. The HMAC will be stored in `*ascii`
+ * as the well-known 64 byte character array. This is the printable representation
+ *
+ * See hmac()
+ */
 LIBEXPORT unsigned long hmac_hex(const unsigned char *key, const unsigned int keylen, const unsigned char *salt, const unsigned int saltlen, unsigned char *ascii)
 {
     unsigned char hash[SHA256_DIGEST_LENGTH] = {0x00};
