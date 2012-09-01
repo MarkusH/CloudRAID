@@ -39,10 +39,6 @@
 #define RAID5BLOCKSIZE 1024
 #endif
 
-#if SHA256_BLOCKSIZE % (RAID5BLOCKSIZE * 2) != 0
-#error "invalid RAID5BLOCKSIZE. Twice the RAID5 BLOCKSIZE must be a factor of SHA256_BLOCKSIZE"
-#endif
-
 #define _VERSION_ "1.0.0-beta.1"
 #define _NAME_ "CloudRAID-RAID5"
 #define _VENDOR_ "CloudRAID Team"

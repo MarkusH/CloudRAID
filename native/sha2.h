@@ -45,11 +45,11 @@ extern "C" {
     } sha256_ctx;
 
     /*** SHA-256 functions ***/
-    void sha256_init(sha256_ctx *context);
-    void sha256_update(const unsigned char *data, size_t len, sha256_ctx *context);
-    void sha256_final(unsigned char digest[SHA256_DIGEST_LENGTH], sha256_ctx *context);
-    char *sha256_end(char buffer[], sha256_ctx *context);
-    char *sha256_data(const unsigned char *data, size_t len, char digest[SHA256_DIGEST_STRING_LENGTH]);
+    LIBEXPORT void sha256_init(sha256_ctx *context);
+    LIBEXPORT void sha256_update(const unsigned char *data, size_t len, sha256_ctx *context);
+    LIBEXPORT void sha256_final(unsigned char digest[SHA256_DIGEST_LENGTH], sha256_ctx *context);
+    LIBEXPORT void sha256_end(unsigned char buffer[], sha256_ctx *context);
+    LIBEXPORT void sha256_data(const unsigned char *data, size_t len, unsigned char digest[SHA256_DIGEST_STRING_LENGTH]);
 
     LIBEXPORT int build_sha256_sum_file(FILE *filename, unsigned char *hash);
     LIBEXPORT int build_sha256_sum(char *filename, unsigned char *hash);

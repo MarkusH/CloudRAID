@@ -66,7 +66,7 @@ LIBEXPORT void print_salt(FILE *__stream, unsigned char *salt, const unsigned in
 {
     int i;
     for(i = 0; i < saltlen; i++) {
-        fprintf(__stream, "%02x", ((unsigned char *) salt) [i]);
+        fprintf(__stream, "%02x", salt[i]);
     }
 }
 

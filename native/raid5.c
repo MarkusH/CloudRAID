@@ -932,7 +932,7 @@ JNIEXPORT jstring JNICALL Java_de_dhbw_1mannheim_cloudraid_core_impl_jni_RaidAcc
     }
     memcpy(outputBaseName, tempOutputDirPath, tmpLength);
     /* build the hash */
-    sha256_data(inputFilePath, strlen(inputFilePath), (unsigned char *) &outputBaseName[ tmpLength ]);
+    sha256_data((unsigned char *) inputFilePath, strlen(inputFilePath), (unsigned char *) &outputBaseName[ tmpLength ]);
 
     /* open the files */
     for(i = 0; i < 3; i++) {

@@ -186,7 +186,7 @@ static const char *sha2_hex_digits = "0123456789abcdef";
 
 
 /*** SHA-256: *********************************************************/
-void sha256_init(sha256_ctx *context)
+LIBEXPORT void sha256_init(sha256_ctx *context)
 {
     if(context == (sha256_ctx *)0) {
         return;
@@ -275,7 +275,7 @@ void sha256_transform(sha256_ctx *context, const sha2_word32 *data)
     a = b = c = d = e = f = g = h = T1 = T2 = 0;
 }
 
-void sha256_update(const unsigned char *data, size_t len, sha256_ctx *context)
+LIBEXPORT void sha256_update(const unsigned char *data, size_t len, sha256_ctx *context)
 {
     unsigned int freespace, usedspace;
 
@@ -325,7 +325,7 @@ void sha256_update(const unsigned char *data, size_t len, sha256_ctx *context)
     usedspace = freespace = 0;
 }
 
-void sha256_final(sha2_byte digest[], sha256_ctx *context)
+LIBEXPORT void sha256_final(sha2_byte digest[], sha256_ctx *context)
 {
     sha2_word32 *d = (sha2_word32 *)digest;
     unsigned int usedspace;
@@ -390,7 +390,7 @@ void sha256_final(sha2_byte digest[], sha256_ctx *context)
     usedspace = 0;
 }
 
-char *sha256_end(char buffer[], sha256_ctx *context)
+LIBEXPORT void sha256_end(unsigned char buffer[], sha256_ctx *context)
 {
     sha2_byte digest[SHA256_DIGEST_LENGTH], *d = digest;
     int i;
@@ -398,7 +398,7 @@ char *sha256_end(char buffer[], sha256_ctx *context)
     /* Sanity check: */
     assert(context != (sha256_ctx *)0);
 
-    if(buffer != (char *)0) {
+    if(buffer != (unsigned char *)0) {
         sha256_final(digest, context);
 
         for(i = 0; i < SHA256_DIGEST_LENGTH; i++) {
@@ -406,20 +406,19 @@ char *sha256_end(char buffer[], sha256_ctx *context)
             *buffer++ = sha2_hex_digits[*d & 0x0f];
             d++;
         }
-        *buffer = (char)0;
+        *buffer = (unsigned char)0;
     } else {
         MEMSET_BZERO(context, sizeof(*context));
     }
     MEMSET_BZERO(digest, SHA256_DIGEST_LENGTH);
-    return buffer;
 }
 
-char *sha256_data(const unsigned char *data, size_t len, char digest[SHA256_DIGEST_STRING_LENGTH])
+LIBEXPORT void sha256_data(const unsigned char *data, size_t len, unsigned char digest[SHA256_DIGEST_STRING_LENGTH])
 {
     sha256_ctx context;
     sha256_init(&context);
     sha256_update(data, len, &context);
-    return sha256_end(digest, &context);
+    sha256_end(digest, &context);
 }
 
 /*
