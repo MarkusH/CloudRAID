@@ -214,7 +214,7 @@ LIBEXPORT unsigned long hmac_hex(const unsigned char *key, const unsigned int ke
     int i = 0;
     unsigned long ret = hmac(key, keylen, salt, saltlen, hash);
     for(i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-        sprintf(((char *) ascii) + i * 2, "%02x", ((unsigned char *) hash) [i]);
+        sprintf(((char *) ascii) + i * 2, "%02x", (unsigned char *)(hash[i]));
     }
     return ret;
 }

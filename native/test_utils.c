@@ -70,17 +70,17 @@ int main(void)
             printf("%s", key[i]);
         } else {
             printf("0x");
-            print_salt(stdout, (unsigned char *)key[i], strlen(key[i]));
+            print_salt(stdout, (unsigned char *)(key[i]), strlen(key[i]));
         }
         printf("\nSalt: ");
         if(i == 4 || i == 5) {
             printf("0x");
-            print_salt(stdout, ((unsigned char *) salt) [i], strlen(salt[i]));
+            print_salt(stdout, (unsigned char *)(salt[i]), strlen(salt[i]));
         } else {
             printf("%s", salt[i]);
         }
         printf("\nExp:  %s\n", expected[i]);
-        ret = hmac_hex(((unsigned char *) key) [i], strlen(key[i]), ((unsigned char *) salt) [i], strlen(salt[i]), hash);
+        ret = hmac_hex((unsigned char *)(key[i]), strlen(key[i]), (unsigned char *)(salt[i]), strlen(salt[i]), hash);
         if(ret == 0) {
             printf("HMAC: %s\n", hash);
             if(memcmp(hash, expected[i], 64) == 0) {
