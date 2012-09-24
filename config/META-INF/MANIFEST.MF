@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CloudRAID-Config
 Bundle-SymbolicName: CloudRAID-Config;singleton:=true
-Bundle-Version: 1.0.0.beta-1
+Bundle-Version: 1.0.0.final
 Bundle-Vendor: CloudRAID Team
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Service-Component: OSGI-INF/component.xml
-Require-Bundle: CloudRAID-Interfaces;bundle-version="1.0.0.beta-1",
+Require-Bundle: CloudRAID-Interfaces;bundle-version="1.0.0.final",
  MiGBase64;bundle-version="2.2.0"
 Import-Package: org.osgi.framework

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CloudRAID-Interfaces
 Bundle-SymbolicName: CloudRAID-Interfaces
-Bundle-Version: 1.0.0.beta-1
+Bundle-Version: 1.0.0.final
 Bundle-Vendor: CloudRAID Team
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.dhbw_mannheim.cloudraid.config,

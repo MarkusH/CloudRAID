@@ -2,7 +2,7 @@
 <feature
       id="CloudRAID"
       label="CloudRAID"
-      version="1.0.0.beta-1"
+      version="1.0.0.final"
       provider-name="CloudRAID Team">
 
    <description url="https://github.com/Markush2010/CloudRAID">

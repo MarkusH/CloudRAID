@@ -39,7 +39,7 @@
 #define RAID5BLOCKSIZE 1024
 #endif
 
-#define _VERSION_ "1.0.0-beta.1"
+#define _VERSION_ "1.0.0"
 #define _NAME_ "CloudRAID-RAID5"
 #define _VENDOR_ "CloudRAID Team"
 
