@@ -31,6 +31,10 @@ ifdef C
 CC = $(C)
 endif
 
+ifndef JAVA_HOME
+    exit 1
+endif
+
 JAVASOURCE = ./../core/src
 JAVABIN = ./../core/bin
 SRC = raid5.c sha2.c rc4.c utils.c

@@ -71,6 +71,9 @@ There are two ways to compile and use the shared objects:
 #. Compile it for your architecture (x86 or x86_64), and install it to /usr/lib.
 #. Compile it for x86 and x86_64, and install it into the CloudRAID core/lib directory.
 
+For both ways make sure the JAVA_HOME variable is set correctly. If not, the build
+will fail since the file jni.h cannot be located.
+
 First Approach
 --------------
 
