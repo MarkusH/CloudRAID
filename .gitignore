@@ -2,8 +2,6 @@ bin/
 native/build/
 native/testing/
 .*
-*.classpath
-*.project
 *.cproject
 *.class
 *.so
@@ -21,17 +19,5 @@ native/testing/
 *.def
 native/DevC++/test*
 
-# Allow .project and .classpath files for main bundles
-!config/.classpath
-!config/.project
-!core/.classpath
-!core/.project
-!interfaces/.classpath
-!interfaces/.project
-!metadatamgr/.classpath
-!metadatamgr/.project
-!osgi-feature/.project
-!passwordmgr/.classpath
-!passwordmgr/.project
-!rest/.classpath
-!rest/.project
+!.classpath
+!.project
